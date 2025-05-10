@@ -1,0 +1,35 @@
+// Base colors
+$white: #ffffff;
+$black: #000000;
+
+// Brand colors
+$primary: #1e90ff;
+$secondary: #ff7f50;
+$accent: #ffd700;
+
+// Muted Brand colors
+$primary-muted: #125291;
+$secondary-muted: #913412;
+$accent-muted: #917e12;
+
+// Backgrounds
+$bg-light: #f8f9fa;
+$bg-dark: #1f1f1f;
+$bg-white-transparent: rgba(255, 255, 255, 0.11);
+
+// Text
+$text-primary: #212529;
+$text-muted: #6c757d;
+
+// Semantic button colors
+$button-primary-bg: $primary;
+$button-primary-text: $text-primary;
+
+$button-secondary-bg: $secondary;
+$button-secondary-text: $text-muted;
+
+// // UI states
+// $success: #28a745;
+// $warning: #ffc107;
+// $error:   #dc3545;
+// $info:    #17a2b8;

@@ -1,0 +1,19 @@
+{
+  "name": "boggle-rewrite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "sass src/pages/scss:src/pages/css && electron .",
+    "sass": "sass --watch src/pages/scss:src/pages/css"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "electron": "^36.1.0",
+    "sass": "^1.87.0"
+  },
+  "dependencies": {
+    "ssvep-stimuli": "^0.1.5"
+  }
+}

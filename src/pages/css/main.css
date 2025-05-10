@@ -1,0 +1,137 @@
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../../../resources/icons/MaterialSymbolsRounded-Regular.ttf") format("truetype");
+}
+.material-icons, .material-icons--xl, .material-icons--l, .material-icons--m, .material-icons--s, .material-icons--xs, .material-icons--xxs {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 2.3rem;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+.material-icons--xxs {
+  font-size: 1.5rem;
+}
+.material-icons--xs {
+  font-size: 1.7rem;
+}
+.material-icons--s {
+  font-size: 2rem;
+}
+.material-icons--m {
+  font-size: 4.3rem;
+}
+.material-icons--l {
+  font-size: 6rem;
+}
+.material-icons--xl {
+  font-size: 8rem;
+}
+
+body {
+  height: 100%;
+  display: block;
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+}
+
+.image__splash {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+#browser {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #1f1f1f;
+}
+
+#browsing-container {
+  flex: 75%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+#browsing-container #navbar {
+  flex: 12%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  gap: 20px;
+  padding-right: 20px;
+  margin: 15px 0 20px;
+  box-sizing: border-box;
+  justify-content: space-around;
+}
+#browsing-container #navbar #urlHolder {
+  flex: 3;
+  display: flex;
+  background: rgba(255, 255, 255, 0.11);
+  padding: 23px;
+  justify-content: flex-start;
+  border-radius: 6px;
+  height: 100%;
+  box-sizing: border-box;
+  align-items: center;
+}
+#browsing-container #navbar #urlHolder #url {
+  padding: 23px;
+  font-size: x-large;
+  background: transparent;
+  border: none;
+}
+#browsing-container #webpage {
+  flex: 88%;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.11);
+}
+
+#sidebar {
+  flex: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 7%;
+  padding: 15px 35px;
+  box-sizing: border-box;
+  justify-content: space-evenly;
+}
+
+button {
+  flex: 1;
+  color: #212529;
+  font-size: 25px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 6px;
+  background-color: #125291;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10%;
+}
+
+/*# sourceMappingURL=main.css.map */

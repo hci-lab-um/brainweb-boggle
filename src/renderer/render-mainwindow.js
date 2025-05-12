@@ -6,20 +6,35 @@ const { browserConfig } = require('../../configs/browserConfig');
 let buttons = [];
 let manager;
 
-ipcRenderer.on('ipc-mainwindow-loaded', async (event, scenarioId) => {
+ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId);
         attachEventListeners();
     } catch (error) {
-        console.error('Error in ipc-mainwindow-loaded handler:', error);
+        console.error('Error in mainWindow-loaded handler:', error);
     }
 });
 
-ipcRenderer.on('ipc-update-scenarioId', async (event, scenarioId) => {
+ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId);
     } catch (error) {
-        console.error('Error in ipc-update-scenarioId handler:', error);
+        console.error('Error in scenarioId-update handler:', error);
+    }
+});
+
+ipcRenderer.on('webpageBounds-get', () => {
+    const element = document.querySelector('#webpage');
+    if (element) {
+        const rect = element.getBoundingClientRect();
+        ipcRenderer.send('webpageBounds-response', {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+        });
+    } else {
+        ipcRenderer.send('webpageBounds-response', null);
     }
 });
 

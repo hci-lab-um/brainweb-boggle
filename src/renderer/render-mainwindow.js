@@ -109,7 +109,7 @@ function attachEventListeners() {
                     }
                     break;
                 case "searchBtn":
-                    // tbi
+                    ipcRenderer.send('overlay-create');
                     break;
                 case "moreBtn":
                     // tbi

@@ -5,6 +5,7 @@ let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
+let overlayList = [];
 
 app.whenReady().then(() => {
     try {
@@ -179,3 +180,42 @@ function updateWebpageBounds(webContents) {
         }, 5000);
     });
 }
+
+ipcMain.on('overlay-create', (event, overlayId) => {
+    let mainWindowContentBounds = mainWindow.getContentBounds();
+
+    let overlayContent = new WebContentsView({
+        webPreferences: {
+            nodeIntegrationInWorker: true,
+            contextIsolation: true,
+            preload: path.join(__dirname, '../renderer/render-keyboard.js'),
+            // transparent: isTransparent,
+        },
+    })
+    overlayList.push(overlayContent);
+
+    mainWindow.contentView.addChildView(overlayContent)
+    overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
+    overlayContent.webContents.loadURL(path.join(__dirname, '../pages/html/keyboard.html'))
+    overlayContent.webContents.openDevTools();
+
+    // .then(async () => {
+
+    //     isKeyboardOverlay = overlayAreaToShow === 'keyboard';
+
+    //     let overlaysData = {
+    //         overlayAreaToShow: overlayAreaToShow,
+    //         tabList: [],
+    //         bookmarks: [],
+    //         canGoBack: true,
+    //         canGoForward: true,
+    //         isReadModeActive: isReadModeActive,
+    //         useNavAreas: useNavAreas,
+    //         useRobotJS: useRobotJS,
+    //         dwellTime: dwellTime,
+    //         quickDwellRange: quickDwellRange,
+    //         settings: [],
+    //         appVersion: app.getVersion(),
+    //     };
+    // })
+});

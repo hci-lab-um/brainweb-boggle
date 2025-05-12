@@ -139,6 +139,12 @@ function resizeMainWindow() {
     try {
         mainWindowContent.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height })
 
+        if (overlayList.length > 0) {
+            overlayList.forEach(overlay => {
+                overlay.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
+            });
+        }
+        
         updateWebpageBounds(mainWindowContent.webContents)
             .then(webpageBounds => {
                 try {

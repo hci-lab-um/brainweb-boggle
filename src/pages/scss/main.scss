@@ -1,11 +1,14 @@
 @use "colors";
 @use "icons";
 
+// * {
+//     cursor: none !important;
+//   }
+
 body {
     height: 100%;
     display: block;
     font-family: "Roboto", sans-serif;
-    // cursor: none;
     margin: 0;
 }
 

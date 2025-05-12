@@ -2,7 +2,7 @@ const scenarioConfig = {
     scenario_0: {
         name: 'Home screen',
         description: 'Disabled nav buttons, inactive read mode, hidden scrollbars',
-        buttonIds: ['selectBtn', 'readBtn', 'searchBtn', 'moreBtn'],        
+        buttonIds: ['searchBtn', 'readBtn', 'selectBtn', 'moreBtn'],        
         frequencies: [6, 14.5, 10.5, 8],
         phases: [1, 0.5, 1.5, 1.5],
     },

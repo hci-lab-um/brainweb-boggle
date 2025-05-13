@@ -13,12 +13,47 @@ const scenarioConfig = {
         frequencies: [14.5],
         phases: [0.5],
     },
-    scenario_79:{
+    scenario_79: {
         name: 'Keyboard screen',
         description: 'No text in search field',
         buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn' ,'symbolsBtn', 'dotComBtn', 'spaceBtn', 'keyboardSendBtn'],
         frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9],
         phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5],
+    },
+    scenario_83: {
+        name: 'Keyboard screen',
+        description: '10 keys, and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'ninthKeyBtn', 'tenthKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10],
+        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1],
+    },
+    scenario_84: {
+        name: 'Keyboard screen',
+        description: '6 keys, and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8],
+        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5],
+    },
+    scenario_85: {
+        name: 'Keyboard screen',
+        description: '5 keys, and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5],
+        phases: [0, 0.5, 1, 0, 1, 1.5],
+    },
+    scenario_86: {
+        name: 'Keyboard screen',
+        description: '4 keys, and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6],
+        phases: [0, 0.5, 1, 0, 1],
+    },
+    scenario_87: {
+        name: 'Keyboard screen',
+        description: '3 keys, and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5],
+        phases: [0, 0.5, 1, 0],
     },
     stimuliFrequenciesScenarioMapping: [
         // Home screen

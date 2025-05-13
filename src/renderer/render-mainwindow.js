@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron')
-const { OverlayNames } = require('../utils/constants/enums');
+const { ViewNames } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 
 let buttons = [];
@@ -7,7 +7,7 @@ let buttons = [];
 ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
-        await updateScenarioId(scenarioId, buttons, OverlayNames.MAIN_WINDOW);
+        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
         attachEventListeners();
     } catch (error) {
         console.error('Error in mainWindow-loaded handler:', error);
@@ -16,7 +16,7 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
 
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
-        await updateScenarioId(scenarioId, buttons, OverlayNames.MAIN_WINDOW);
+        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
     } catch (error) {
         console.error('Error in scenarioId-update handler:', error);
     }
@@ -54,11 +54,11 @@ function attachEventListeners() {
                         if (textElement.textContent.trim() === "Read") {
                             stopManager();
                             textElement.textContent = "Stop Reading";
-                            await updateScenarioId(4, buttons, OverlayNames.MAIN_WINDOW);
+                            await updateScenarioId(4, buttons, ViewNames.MAIN_WINDOW);
                         } else {
                             stopManager();
                             textElement.textContent = "Read";
-                            await updateScenarioId(0, buttons, OverlayNames.MAIN_WINDOW);
+                            await updateScenarioId(0, buttons, ViewNames.MAIN_WINDOW);
                         }
                     } catch (error) {
                         console.error('Error toggling read mode:', error);
@@ -67,7 +67,7 @@ function attachEventListeners() {
                 case "searchBtn":
                     try {
                         stopManager();
-                        ipcRenderer.send('overlay-create', OverlayNames.KEYBOARD, 79);
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 79);
                     } catch (error) {
                         console.error('Error creating keyboard overlay:', error);
                     }

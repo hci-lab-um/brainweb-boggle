@@ -1,5 +1,5 @@
 const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
-const { OverlayNames } = require('../utils/constants/enums')
+const { ViewNames } = require('../utils/constants/enums')
 const path = require('path')
 
 let splashWindow;
@@ -55,7 +55,7 @@ function createMainWindow() {
 
         viewsList.push({
             webContentsView: mainWindowContent,
-            name: OverlayNames.MAIN_WINDOW,
+            name: ViewNames.MAIN_WINDOW,
         });
 
         mainWindow.removeMenu()

@@ -1,0 +1,139 @@
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../../../resources/icons/MaterialSymbolsRounded-Regular.ttf") format("truetype");
+}
+.material-icons, .material-icons--xl, .material-icons--l, .material-icons--m, .material-icons--s, .material-icons--xs, .material-icons--xxs {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 2.3rem;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+.material-icons--xxs {
+  font-size: 1.5rem;
+}
+.material-icons--xs {
+  font-size: 1.7rem;
+}
+.material-icons--s {
+  font-size: 2rem;
+}
+.material-icons--m {
+  font-size: 4.3rem;
+}
+.material-icons--l {
+  font-size: 6rem;
+}
+.material-icons--xl {
+  font-size: 8rem;
+}
+
+body {
+  background-color: #061524;
+}
+
+#keyboard {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+#textarea {
+  flex: 4 1 0%;
+  border-radius: 6px;
+  background: #f8f9fa;
+  width: 669px;
+  resize: none;
+}
+
+.keyboard__key {
+  color: #ffffff;
+  height: 9.5vh;
+  flex-grow: 1;
+  border-radius: 4px;
+  border: none;
+  font-size: 1.8rem;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+  padding: 0;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.keyboard__key--vertical {
+  height: min-content;
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  width: 100%;
+  gap: 20px;
+}
+.row--first {
+  flex: 0.5;
+}
+
+.arrow-keys__row {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  gap: 6px;
+}
+
+button {
+  flex: 1;
+  display: flex;
+  border: none;
+  border: none;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.329);
+  color: #ffffff;
+  padding: 7px;
+}
+
+.button__close {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+.button__numbers {
+  flex-grow: 2.65;
+}
+.button__space {
+  flex: 2.5;
+}
+.button__arrow-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 2;
+  border: none;
+  border-radius: 5px;
+  padding: 7px;
+  margin: 0;
+  height: unset;
+}
+.button--three-keys {
+  flex-grow: 1.5;
+}
+.button--four-keys {
+  flex-grow: 2;
+}
+
+/*# sourceMappingURL=keyboard.css.map */

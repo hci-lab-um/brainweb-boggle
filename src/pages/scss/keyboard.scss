@@ -1,0 +1,109 @@
+@use "colors";
+@use "icons";
+
+body {
+    background-color: colors.$bg-dark-blue;
+}
+
+#keyboard {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+}
+
+#textarea {
+    flex: 4 1 0%;
+    border-radius: 6px;
+    background: colors.$bg-light;
+    width: 669px;
+    resize: none;
+}
+
+.keyboard__key {
+    color: colors.$white;
+    height: 9.5vh;
+    flex-grow: 1;
+    border-radius: 4px;
+    border: none;
+    font-size: 1.8rem;
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: top;
+    padding: 0;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+
+    &--vertical {
+        height: min-content;
+        width: 100%;
+    }
+}
+
+.row {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+
+    &--first {
+        flex: 0.5;
+    }
+}
+
+.arrow-keys__row {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    gap: 6px;
+}
+
+button {
+    flex: 1;
+    display: flex;
+    border: none;
+    border: none;
+    border-radius: 6px;
+    background-color: colors.$bg-black-transparent;
+    color: colors.$white;
+    padding: 7px;
+}
+
+.button {
+    &__close {
+        flex: 1;
+        justify-content: center;
+        align-items: center;
+    }
+
+    &__numbers {
+        flex-grow: 2.65;
+    }
+
+    &__space {
+        flex: 2.5;
+    }
+
+    &__arrow-keys {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 2;
+        border: none;
+        border-radius: 5px;
+        padding: 7px;
+        margin: 0;
+        height: unset;
+    }
+
+    &--three-keys {
+        flex-grow: 1.5;
+    }
+
+    &--four-keys {
+        flex-grow: 2;
+    }
+}

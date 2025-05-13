@@ -76,7 +76,7 @@ function createMainWindow() {
                 });
 
             } catch (err) {
-                console.error('Error sending scenarioId to renderer:', err.message);
+                console.error('Error sending scenarioId to render-mainwindow:', err.message);
             }
         });
 
@@ -144,7 +144,7 @@ function resizeMainWindow() {
                 overlay.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
             });
         }
-        
+
         updateWebpageBounds(mainWindowContent.webContents)
             .then(webpageBounds => {
                 try {
@@ -202,10 +202,18 @@ ipcMain.on('overlay-create', (event, overlayId) => {
 
     mainWindow.contentView.addChildView(overlayContent)
     overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
-    overlayContent.webContents.loadURL(path.join(__dirname, '../pages/html/keyboard.html'))
     overlayContent.webContents.openDevTools();
 
-    // .then(async () => {
+    overlayContent.webContents.loadURL(path.join(__dirname, '../pages/html/keyboard.html')).then(async () => {
+        try {
+            overlayContent.webContents.send('keyboard-loaded', 79);
+        } catch (err) {
+            console.error('Error sending scenarioId to the render-keyboard:', err.message);
+        }
+    }).catch(err => {
+        console.error('Error loading keyboard overlay:', err.message);
+    });
+
 
     //     isKeyboardOverlay = overlayAreaToShow === 'keyboard';
 

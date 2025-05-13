@@ -13,6 +13,13 @@ const scenarioConfig = {
         frequencies: [14.5],
         phases: [0.5],
     },
+    scenario_79:{
+        name: 'Keyboard screen',
+        description: 'No text in search field',
+        buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn' ,'symbolsBtn', 'dotComBtn', 'spaceBtn', 'keyboardSendBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5],
+    },
     stimuliFrequenciesScenarioMapping: [
         // Home screen
         // Scenario 0: disabled nav buttons, inactive read mode, hidden scrollbars

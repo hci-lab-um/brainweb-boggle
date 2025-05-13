@@ -28,12 +28,14 @@ function attachEventListeners() {
             console.log(`Button ${index + 1} clicked:`, button.textContent.trim());
             const buttonId = button.getAttribute('id');
 
+            stopManager();
+
             switch (buttonId) {
                 case "keyboardCloseBtn":
-                    stopManager();
                     ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                     break;
                 case 'numbersBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 83, 'numbersBtn');
                     break;
                 case 'qwertBtn':
                     break;

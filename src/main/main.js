@@ -121,7 +121,6 @@ function createMainWindow() {
     }
 }
 
-
 async function createTabView(webpageBounds) {
     try {
         tabView = new WebContentsView({
@@ -192,15 +191,15 @@ function updateWebpageBounds(webContents) {
     });
 }
 
-ipcMain.on('overlay-create', (event, overlayName, scenarioId) => {
+ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null) => {
     let mainWindowContentBounds = mainWindow.getContentBounds();
 
     let overlayContent = new WebContentsView({
         webPreferences: {
             nodeIntegrationInWorker: true,
             contextIsolation: true,
-            preload: path.join(__dirname, '../renderer/render-keyboard.js'),
-            // transparent: isTransparent,
+            preload: path.join(__dirname, `../renderer/render-${overlayName}.js`),
+            transparent: true,
         },
     })
 
@@ -215,7 +214,7 @@ ipcMain.on('overlay-create', (event, overlayName, scenarioId) => {
 
     overlayContent.webContents.loadURL(path.join(__dirname, `../pages/html/${overlayName}.html`)).then(async () => {
         try {
-            overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId);
+            overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId, buttonId);
         } catch (err) {
             console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
         }

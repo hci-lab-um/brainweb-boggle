@@ -80,6 +80,29 @@ body {
   height: min-content;
   width: 100%;
 }
+.keyboard__key--large {
+  border-radius: 6px;
+  font-size: 4.5rem;
+}
+.keyboard__key--wide {
+  flex: 2;
+}
+
+.keyboard__keysContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
+  flex: 6;
+}
+.keyboard__keysContainer > * {
+  flex: 1 1 calc(20% - 10px);
+  max-width: calc(20% - 40px);
+  box-sizing: border-box;
+  height: 40%;
+}
 
 .row {
   display: flex;
@@ -101,7 +124,6 @@ button {
   flex: 1;
   display: flex;
   border: none;
-  border: none;
   border-radius: 6px;
   background-color: rgba(0, 0, 0, 0.329);
   color: #ffffff;
@@ -112,6 +134,9 @@ button {
   flex: 1;
   justify-content: center;
   align-items: center;
+}
+.button__close--wide {
+  width: 100%;
 }
 .button__numbers {
   flex-grow: 2.65;

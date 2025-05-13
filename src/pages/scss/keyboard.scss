@@ -20,6 +20,7 @@ body {
     background: colors.$bg-light;
     width: 669px;
     resize: none;
+    font-size: 40px;
 }
 
 .keyboard__key {
@@ -91,7 +92,7 @@ button {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        flex: 2;
+        flex: 1.3;
         border: none;
         border-radius: 5px;
         padding: 7px;

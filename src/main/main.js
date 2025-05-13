@@ -187,7 +187,7 @@ function updateWebpageBounds(webContents) {
     });
 }
 
-ipcMain.on('overlay-create', (event, overlayId) => {
+ipcMain.on('overlay-create', (event, overlayName) => {
     let mainWindowContentBounds = mainWindow.getContentBounds();
 
     let overlayContent = new WebContentsView({
@@ -198,20 +198,24 @@ ipcMain.on('overlay-create', (event, overlayId) => {
             // transparent: isTransparent,
         },
     })
-    overlayList.push(overlayContent);
+
+    overlayList.push({
+        overlayContent: overlayContent,
+        name: overlayName, // IMP: overlayName must be the same as the .html and the renderer file
+    });
 
     mainWindow.contentView.addChildView(overlayContent)
     overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
     overlayContent.webContents.openDevTools();
 
-    overlayContent.webContents.loadURL(path.join(__dirname, '../pages/html/keyboard.html')).then(async () => {
+    overlayContent.webContents.loadURL(path.join(__dirname, `../pages/html/${overlayName}.html`)).then(async () => {
         try {
-            overlayContent.webContents.send('keyboard-loaded', 79);
+            overlayContent.webContents.send(`${overlayName}-loaded`, 79);
         } catch (err) {
-            console.error('Error sending scenarioId to the render-keyboard:', err.message);
+            console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
         }
     }).catch(err => {
-        console.error('Error loading keyboard overlay:', err.message);
+        console.error(`Error loading ${overlayName} overlay:`, err.message);
     });
 
 
@@ -232,4 +236,16 @@ ipcMain.on('overlay-create', (event, overlayId) => {
     //         appVersion: app.getVersion(),
     //     };
     // })
+});
+
+ipcMain.on('overlay-close', (event, overlayName) => {
+    try {
+        const overlay = overlayList.find(overlay => overlay.name === overlayName);
+        if (overlay) {
+            mainWindow.contentView.removeChildView(overlay.overlayContent);
+            overlayList = overlayList.filter(overlay => overlay.name !== overlayName);
+        }
+    } catch (err) {
+        console.error('Error closing overlay:', err.message);
+    }
 });

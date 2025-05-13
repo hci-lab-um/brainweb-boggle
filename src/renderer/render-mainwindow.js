@@ -66,7 +66,7 @@ function attachEventListeners() {
                 case "searchBtn":
                     try {
                         stopManager();
-                        ipcRenderer.send('overlay-create');
+                        ipcRenderer.send('overlay-create', 'keyboard');
                         await updateScenarioId(79, buttons);
                     } catch (error) {
                         console.error('Error creating keyboard overlay:', error);

@@ -1,4 +1,5 @@
 const { ipcRenderer } = require('electron')
+const { OverlayNames } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 
 let buttons = [];
@@ -6,10 +7,18 @@ let buttons = [];
 ipcRenderer.on('keyboard-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
-        await updateScenarioId(scenarioId, buttons);
+        await updateScenarioId(scenarioId, buttons, OverlayNames.KEYBOARD);
         attachEventListeners();
     } catch (error) {
         console.error('Error in keyboard-loaded handler:', error);
+    }
+});
+
+ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+    try {
+        await updateScenarioId(scenarioId, buttons, OverlayNames.KEYBOARD);
+    } catch (error) {
+        console.error('Error in scenarioId-update handler:', error);
     }
 });
 
@@ -22,7 +31,7 @@ function attachEventListeners() {
             switch (buttonId) {
                 case "keyboardCloseBtn":
                     stopManager();
-                    ipcRenderer.send('overlay-close', "keyboard");
+                    ipcRenderer.send('overlay-close', OverlayNames.KEYBOARD);
                     break;
                 case 'numbersBtn':
                     break;

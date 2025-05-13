@@ -1,11 +1,13 @@
 const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
+const { OverlayNames } = require('../utils/constants/enums')
 const path = require('path')
 
 let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
-let overlayList = [];
+let viewsList = [];             // This contains all the views that are created. IMP: it excludes the tabs 
+let scenarioIdDict = {};        // This is a dictionary that contains the scenarioId for each view
 
 app.whenReady().then(() => {
     try {
@@ -49,6 +51,11 @@ function createMainWindow() {
                 preload: path.join(__dirname, '../renderer/render-mainwindow.js')
             },
             show: false
+        });
+
+        viewsList.push({
+            webContentsView: mainWindowContent,
+            name: OverlayNames.MAIN_WINDOW,
         });
 
         mainWindow.removeMenu()
@@ -137,11 +144,9 @@ async function createTabView(webpageBounds) {
 
 function resizeMainWindow() {
     try {
-        mainWindowContent.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height })
-
-        if (overlayList.length > 0) {
-            overlayList.forEach(overlay => {
-                overlay.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
+        if (viewsList.length > 0) {
+            viewsList.forEach(view => {
+                view.webContentsView.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
             });
         }
 
@@ -187,7 +192,7 @@ function updateWebpageBounds(webContents) {
     });
 }
 
-ipcMain.on('overlay-create', (event, overlayName) => {
+ipcMain.on('overlay-create', (event, overlayName, scenarioId) => {
     let mainWindowContentBounds = mainWindow.getContentBounds();
 
     let overlayContent = new WebContentsView({
@@ -199,8 +204,8 @@ ipcMain.on('overlay-create', (event, overlayName) => {
         },
     })
 
-    overlayList.push({
-        overlayContent: overlayContent,
+    viewsList.push({
+        webContentsView: overlayContent,
         name: overlayName, // IMP: overlayName must be the same as the .html and the renderer file
     });
 
@@ -210,7 +215,7 @@ ipcMain.on('overlay-create', (event, overlayName) => {
 
     overlayContent.webContents.loadURL(path.join(__dirname, `../pages/html/${overlayName}.html`)).then(async () => {
         try {
-            overlayContent.webContents.send(`${overlayName}-loaded`, 79);
+            overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId);
         } catch (err) {
             console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
         }
@@ -239,13 +244,30 @@ ipcMain.on('overlay-create', (event, overlayName) => {
 });
 
 ipcMain.on('overlay-close', (event, overlayName) => {
+    // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
     try {
-        const overlay = overlayList.find(overlay => overlay.name === overlayName);
-        if (overlay) {
-            mainWindow.contentView.removeChildView(overlay.overlayContent);
-            overlayList = overlayList.filter(overlay => overlay.name !== overlayName);
-        }
+        mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
+
+        // Deleting the dictionary entry for the closed overlay
+        delete scenarioIdDict[overlayName];
+
+        // This was done because the contentView does not have a function that returns the top most child view
+        let topMostView = viewsList[viewsList.length - 1];
+        let lastScenarioId = scenarioIdDict[topMostView.name].pop();
+        topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
     } catch (err) {
         console.error('Error closing overlay:', err.message);
+    }
+});
+
+ipcMain.on('scenarioIdDict-update', (event, scenarioId, viewName) => {
+    try {
+        if (!scenarioIdDict[viewName]) {
+            scenarioIdDict[viewName] = [];
+        }
+        scenarioIdDict[viewName].push(scenarioId);
+        console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
+    } catch (err) {
+        console.error('Error updating scenarioIdDict:', err.message);
     }
 });

@@ -1,11 +1,15 @@
 const stimuli = require("ssvep-stimuli");
 const { scenarioConfig } = require('../../configs/scenarioConfig');
 const { browserConfig } = require('../../configs/browserConfig');
+const { ipcRenderer } = require("electron");
 
 let manager;
 
-async function updateScenarioId(scenarioId, buttons) {
+async function updateScenarioId(scenarioId, buttons, viewName) {
     try {
+        console.log(viewName);
+        ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);
+
         let index = 0;
         const frequencies = scenarioConfig[`scenario_${scenarioId}`].frequencies;
         const phases = scenarioConfig[`scenario_${scenarioId}`].phases;

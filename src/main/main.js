@@ -210,6 +210,7 @@ ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null) =
 
     mainWindow.contentView.addChildView(overlayContent)
     overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
+    overlayContent.webContents.focus();
     overlayContent.webContents.openDevTools();
 
     overlayContent.webContents.loadURL(path.join(__dirname, `../pages/html/${overlayName}.html`)).then(async () => {
@@ -268,5 +269,15 @@ ipcMain.on('scenarioIdDict-update', (event, scenarioId, viewName) => {
         console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
     } catch (err) {
         console.error('Error updating scenarioIdDict:', err.message);
+    }
+});
+
+ipcMain.on('textarea-populate', (event, text) => {
+    try {
+        // Finding the overlay with name keyboard
+        let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
+        keyboardOverlay.webContentsView.webContents.send('textarea-populate', text);
+    } catch (err) {
+        console.error('Error populating textarea:', err.message);
     }
 });

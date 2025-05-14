@@ -39,15 +39,17 @@ function initKeyboardKeys(buttonId) {
             switch (buttonId) {
                 case 'numbersBtn':
                     keys = '1234567890'.split('');
-                    keysContainer.classList.add('keyboard__keysContainer--doubleRow');   
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow');
                     break;
                 case 'symbolsBtn':
-                    keys = `.,;:'"+-*=/()?!@#€%&_^[]`.split('');  
+                    keys = `.,;:'"+-*=/()?!@#€%&_^[]`.split('');
                     keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--fourColumns');
 
                     keysAndArrowsContainer = document.createElement('div');
                     keysAndArrowsContainer.classList.add('keyboard__keysAndArrowsContainer');
                     break;
+                case 'arrowKeysBtn':
+                // TO IMPLEMENT
                 default:
                     keys = buttonId.replace('Btn', '').split('');
             }
@@ -115,7 +117,7 @@ function initKeyboardKeys(buttonId) {
 
                     // Waiting for the page to render all the buttons before updating the scenarioId 
                     // (IMP requestAnimationFrame remains in the event loop)
-                    requestAnimationFrame(() => { 
+                    requestAnimationFrame(() => {
                         if (currentPage === 0) {
                             updateScenarioId(82, buttons, ViewNames.KEYBOARD_KEYS);
                         } else if (currentPage === 1) {
@@ -129,7 +131,7 @@ function initKeyboardKeys(buttonId) {
             };
 
             renderPage();
-            resolve(); 
+            resolve();
         } else {
             console.error('Keyboard keys element not found');
             reject(new Error('Keyboard keys element not found'));
@@ -159,29 +161,16 @@ function attachEventListeners() {
 
             stopManager();
 
+            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+
             switch (buttonId) {
-                case "firstKeyBtn":
+                case 'arrowKeysBtn':
                     break;
-                case 'secondKeyBtn':
-                    break;
-                case 'thirdKeyBtn':
-                    break;
-                case 'fourthKeyBtn':
-                    break;
-                case 'fifthKeyBtn':
-                    break;
-                case 'sixthKeyBtn':
-                    break;
-                case 'seventhKeyBtn':
-                    break;
-                case 'eighthKeyBtn':
-                    break;
-                case 'ninthKeyBtn':
-                    break;
-                case 'tenthKeyBtn':
-                    break;
-                case 'cancelBtn':
-                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);  
+                // TO IMPLEMENT
+                default:
+                    const buttonText = button.textContent.trim();
+                    console.log(`Button text: ${buttonText}`);
+                    ipcRenderer.send('textarea-populate', buttonText);
                     break;
             }
         });

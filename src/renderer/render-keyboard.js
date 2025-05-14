@@ -7,6 +7,13 @@ let buttons = [];
 ipcRenderer.on('keyboard-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
+
+        // Ensuring textarea stays focused by refocusing it if focus is lost
+        const textarea = document.querySelector('#textarea');
+        textarea.addEventListener("focusout", (event) => {
+            setTimeout(() => textarea.focus(), 0);
+        });
+
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
         attachEventListeners();
     } catch (error) {
@@ -19,6 +26,19 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
     } catch (error) {
         console.error('Error in scenarioId-update handler:', error);
+    }
+});
+
+ipcRenderer.on('textarea-populate', (event, text) => {
+    try {
+        const textarea = document.querySelector('#textarea');
+        console.log(`textarea: ${textarea}`);
+        if (textarea) {
+            console.log(` text: ${text}`);
+            textarea.value += text;
+        }
+    } catch (error) {
+        console.error('Error in textarea-populate handler:', error);
     }
 });
 
@@ -70,6 +90,12 @@ function attachEventListeners() {
                 case 'spaceBtn':
                     break;
                 case 'keyboardSendBtn':
+                    break;
+                case 'arrowKeysBtn':
+                    break;
+                case 'backspaceBtn':
+                    break;
+                case 'autoCompleteBtn':
                     break;
             }
         });

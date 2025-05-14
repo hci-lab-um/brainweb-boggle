@@ -43,7 +43,7 @@ body {
 }
 
 #keyboard {
-  padding: 20px;
+  padding: 3vw;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -89,39 +89,18 @@ body {
 }
 
 .keyboard__keysContainer {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 3vw;
-  padding-bottom: 3vw;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   width: 100%;
   height: 100%;
-  justify-content: space-around;
-  align-items: center;
   flex: 4;
+  align-items: stretch;
+  justify-items: stretch;
 }
 .keyboard__keysContainer > * {
-  flex: 1 1 calc(20% - 10px);
-  max-width: calc(20% - 40px);
-  box-sizing: border-box;
-  height: 60%;
-}
-.keyboard__keysContainer--doubleRow > * {
-  height: 40%;
-}
-.keyboard__keysContainer--fourColumns {
-  flex: 7;
-}
-.keyboard__keysContainer--fourColumns > * {
-  flex: 1 1 calc(25% - 10px);
-  max-width: calc(25% - 40px);
-}
-
-.keyboard__keysAndArrowsContainer {
-  display: flex;
-  height: 100%;
-  flex-direction: row;
-  align-items: center;
-  gap: 3vw;
+  height: auto;
 }
 
 .row {
@@ -150,17 +129,6 @@ button {
   padding: 7px;
 }
 
-.button__triangle {
-  width: 100%;
-  height: 40%;
-  padding: 0;
-}
-.button__triangle--left {
-  clip-path: polygon(75% 0%, 0% 50%, 75% 100%);
-}
-.button__triangle--right {
-  clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
-}
 .button__close {
   flex: 1;
   justify-content: center;
@@ -193,4 +161,4 @@ button {
   flex-grow: 2;
 }
 
-/*# sourceMappingURL=keyboard.css.map */
+/*# sourceMappingURL=keyboard%20copy.css.map */

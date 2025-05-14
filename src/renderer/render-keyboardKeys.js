@@ -27,7 +27,10 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, scenarioId, buttonId) => {
 
 function initKeyboardKeys(buttonId) {
     return new Promise((resolve, reject) => {
+        const keyboard = document.querySelector('#keyboard');
         const keysContainer = document.querySelector('.keyboard__keysContainer');
+        let keysAndArrowsContainer = null;
+
         if (keysContainer) {
             let keys = [];
             const pageSize = 8;  // Number of symbols per page
@@ -36,9 +39,14 @@ function initKeyboardKeys(buttonId) {
             switch (buttonId) {
                 case 'numbersBtn':
                     keys = '1234567890'.split('');
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow');   
                     break;
                 case 'symbolsBtn':
-                    keys = `.,;:'"+-*=/()?!@#€%&_^[]`.split('');
+                    keys = `.,;:'"+-*=/()?!@#€%&_^[]`.split('');  
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--fourColumns');
+
+                    keysAndArrowsContainer = document.createElement('div');
+                    keysAndArrowsContainer.classList.add('keyboard__keysAndArrowsContainer');
                     break;
                 default:
                     keys = buttonId.replace('Btn', '').split('');
@@ -48,6 +56,8 @@ function initKeyboardKeys(buttonId) {
                 keysContainer.innerHTML = '';
 
                 if (buttonId === 'symbolsBtn') {
+                    keysAndArrowsContainer.innerHTML = '';
+
                     // Calculate start and end indices for the current page
                     const start = currentPage * pageSize;
                     const end = Math.min(start + pageSize, keys.length);
@@ -55,7 +65,7 @@ function initKeyboardKeys(buttonId) {
                     // Add left navigation button                    
                     if (currentPage > 0) {
                         const leftArrow = createNavigationButton('left', 'keyboard_arrow_left');
-                        keysContainer.appendChild(leftArrow);
+                        keysAndArrowsContainer.insertBefore(leftArrow, keysAndArrowsContainer.firstChild);
                     }
 
                     // Add symbols for the current page
@@ -63,13 +73,16 @@ function initKeyboardKeys(buttonId) {
                         const pageIndex = i - start; // Index within the current page
                         const keyElement = createKey(keys[i], pageIndex);
                         keysContainer.appendChild(keyElement);
+                        keysAndArrowsContainer.appendChild(keysContainer);
                     }
 
                     // Add right navigation button                    
                     if (end < keys.length) {
                         const rightArrow = createNavigationButton('right', 'keyboard_arrow_right');
-                        keysContainer.appendChild(rightArrow);
+                        keysAndArrowsContainer.appendChild(rightArrow);
                     }
+
+                    keyboard.insertBefore(keysAndArrowsContainer, keyboard.firstChild);
                 } else {
                     // Render all keys for non-symbol buttons
                     keys.forEach((keyValue, index) => {
@@ -77,13 +90,14 @@ function initKeyboardKeys(buttonId) {
                         keysContainer.appendChild(keyElement);
                     });
                 }
+
                 buttons = document.querySelectorAll('button');
             };
 
             // Function to create navigation buttons
             const createNavigationButton = (direction, icon) => {
                 const button = document.createElement('button');
-                button.classList.add('keyboard__key', 'keyboard__key--l');
+                button.classList.add('button__triangle', `button__triangle--${direction}`);
                 button.innerHTML = `<i class="material-icons">${icon}</i>`;
 
                 if (!document.getElementById('firstArrowKeyBtn')) {
@@ -167,7 +181,7 @@ function attachEventListeners() {
                 case 'tenthKeyBtn':
                     break;
                 case 'cancelBtn':
-                    // TO DO NEXT  
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);  
                     break;
             }
         });

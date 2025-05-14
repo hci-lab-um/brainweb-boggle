@@ -119,11 +119,11 @@ function initKeyboardKeys(buttonId) {
                     // (IMP requestAnimationFrame remains in the event loop)
                     requestAnimationFrame(() => {
                         if (currentPage === 0) {
-                            updateScenarioId(82, buttons, ViewNames.KEYBOARD_KEYS);
+                            updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
                         } else if (currentPage === 1) {
-                            updateScenarioId(83, buttons, ViewNames.KEYBOARD_KEYS);
+                            updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
                         } else if (currentPage === 2) {
-                            updateScenarioId(82, buttons, ViewNames.KEYBOARD_KEYS);
+                            updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
                         }
                     });
                 });

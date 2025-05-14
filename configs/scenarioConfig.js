@@ -1,69 +1,97 @@
+const { ViewNames } = require('../src/utils/constants/enums');
+
 const scenarioConfig = {
+    // HOME
     scenario_0: {
-        name: 'Home screen',
+        name: ViewNames.MAIN_WINDOW,
         description: 'Disabled nav buttons, inactive read mode, hidden scrollbars',
-        buttonIds: ['searchBtn', 'readBtn', 'selectBtn', 'moreBtn'],        
+        buttonIds: ['searchBtn', 'readBtn', 'selectBtn', 'moreBtn'],
         frequencies: [6, 14.5, 10.5, 8],
         phases: [1, 0.5, 1.5, 1.5],
     },
     scenario_4: {
-        name: 'Home screen',
+        name: ViewNames.MAIN_WINDOW,
         description: 'Disabled nav buttons, active read mode, hidden scrollbars',
         buttonIds: ['readBtn'],
         frequencies: [14.5],
         phases: [0.5],
     },
-    scenario_79: {
-        name: 'Keyboard screen',
+
+    // KEYBOARD
+    scenario_80: {
+        name: ViewNames.KEYBOARD,
         description: 'No text in search field',
-        buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn' ,'symbolsBtn', 'dotComBtn', 'spaceBtn', 'keyboardSendBtn'],
+        buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'keyboardSendBtn'],
         frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9],
         phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5],
     },
+    scenario_81: {
+        name: ViewNames.KEYBOARD,
+        description: 'Text in search field, word suggestion available, cursor at end position',
+        buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'autoCompleteBtn', 'backspaceBtn', 'keyboardSendBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 14.5],
+        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 0.5],
+    },
     scenario_82: {
-        name: 'Keyboard screen',
+        name: ViewNames.KEYBOARD,
+        description: 'Text in search field, word suggestion unavailable, cursor at start position',
+        buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'keyboardSendBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
+        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0],
+    },
+    scenario_83: {
+        name: ViewNames.KEYBOARD,
+        description: 'Text in search field, word suggestion unavailable, cursor NOT at start position',
+        buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'backspaceBtn', 'keyboardSendBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 14.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
+        phases: [0, 0.5, 1, 0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0],
+    },
+
+    // KEYBOARD KEYS
+    scenario_90: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '8 keys, 1 arrow button and cancel button',
-        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'firstArrowKeyBtn', 'cancelBtn'],
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'cancelBtn', 'firstArrowKeyBtn'],
         frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5],
         phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0]
     },
-    scenario_83: {
-        name: 'Keyboard screen',
+    scenario_91: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '8 keys, 2 arrow button and cancel button',
-        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'firstArrowKeyBtn', 'secondArrowKeyBtn', 'cancelBtn'],
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'cancelBtn', 'firstArrowKeyBtn', 'secondArrowKeyBtn'],
         frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5],
         phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5]
     },
-    scenario_84: {
-        name: 'Keyboard screen',
+    scenario_92: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '10 keys, and cancel button',
         buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'ninthKeyBtn', 'tenthKeyBtn', 'cancelBtn'],
         frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5],
         phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5]
     },
-    scenario_85: {
-        name: 'Keyboard screen',
+    scenario_93: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '6 keys, and cancel button',
         buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'cancelBtn'],
         frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8],
         phases: [0, 0.5, 1, 0, 1, 1.5, 1.5],
     },
-    scenario_86: {
-        name: 'Keyboard screen',
+    scenario_94: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '5 keys, and cancel button',
         buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'cancelBtn'],
         frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5],
         phases: [0, 0.5, 1, 0, 1, 1.5],
     },
-    scenario_87: {
-        name: 'Keyboard screen',
+    scenario_95: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '4 keys, and cancel button',
         buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'cancelBtn'],
         frequencies: [7, 6.5, 8.5, 12.5, 6],
         phases: [0, 0.5, 1, 0, 1],
     },
-    scenario_88: {
-        name: 'Keyboard screen',
+    scenario_96: {
+        name: ViewNames.KEYBOARD_KEYS,
         description: '3 keys, and cancel button',
         buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'cancelBtn'],
         frequencies: [7, 6.5, 8.5, 12.5],

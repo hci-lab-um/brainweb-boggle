@@ -43,7 +43,7 @@ function attachEventListeners() {
         button.addEventListener('click', async () => {
             console.log(`Button ${index + 1} clicked:`, button.textContent.trim());
             const buttonId = button.getAttribute('id');
-            
+
             stopManager();
 
             switch (buttonId) {
@@ -66,7 +66,7 @@ function attachEventListeners() {
                     break;
                 case "searchBtn":
                     try {
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 79);
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
                     } catch (error) {
                         console.error('Error creating keyboard overlay:', error);
                     }

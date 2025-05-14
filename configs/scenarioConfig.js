@@ -20,12 +20,19 @@ const scenarioConfig = {
         frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9],
         phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5],
     },
+    scenario_82: {
+        name: 'Keyboard screen',
+        description: '8 keys, 1 arrow button and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'firstArrowKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0]
+    },
     scenario_83: {
         name: 'Keyboard screen',
-        description: '12 keys, and cancel button',
-        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'ninthKeyBtn', 'tenthKeyBtn', 'eleventhKeyBtn', 'twelfthKeyBtn', 'cancelBtn'],
-        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5],
-        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1]
+        description: '8 keys, 2 arrow button and cancel button',
+        buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'firstArrowKeyBtn', 'secondArrowKeyBtn', 'cancelBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5]
     },
     scenario_84: {
         name: 'Keyboard screen',

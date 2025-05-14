@@ -63,7 +63,7 @@ function attachEventListeners() {
                 case 'enterBtn':
                     break;
                 case 'symbolsBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 83, 'symbolsBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 82, 'symbolsBtn');
                     break;
                 case 'dotComBtn':
                     break;

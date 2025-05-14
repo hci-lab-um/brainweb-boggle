@@ -35,7 +35,7 @@ function attachEventListeners() {
                     ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                     break;
                 case 'numbersBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 83, 'numbersBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 84, 'numbersBtn');
                     break;
                 case 'qwertBtn':
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 86, 'qwertBtn');

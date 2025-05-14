@@ -14,14 +14,7 @@ async function updateScenarioId(scenarioId, buttons, viewName) {
         const phases = scenarioConfig[`scenario_${scenarioId}`].phases;
         const buttonIds = scenarioConfig[`scenario_${scenarioId}`].buttonIds;
 
-        console.log(`Frequencies: ${frequencies}`);
-        console.log(`Phases: ${phases}`);
-        console.log(`Button IDs: ${buttonIds}`);        
-
         manager = new stimuli.CSS('approximation', frequencies.length);
-
-        console.log(`Manager: ${manager}`);
-        console.log(`Scenario ID: ${scenarioId}`);
 
         if (!frequencies) {
             console.error(`No frequencies found for scenario ID: ${scenarioId}`);

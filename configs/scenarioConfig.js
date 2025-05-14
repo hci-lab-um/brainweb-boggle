@@ -38,8 +38,8 @@ const scenarioConfig = {
         name: 'Keyboard screen',
         description: '10 keys, and cancel button',
         buttonIds: ['firstKeyBtn', 'secondKeyBtn', 'thirdKeyBtn', 'fourthKeyBtn', 'fifthKeyBtn', 'sixthKeyBtn', 'seventhKeyBtn', 'eighthKeyBtn', 'ninthKeyBtn', 'tenthKeyBtn', 'cancelBtn'],
-        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10],
-        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5],
+        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5]
     },
     scenario_85: {
         name: 'Keyboard screen',

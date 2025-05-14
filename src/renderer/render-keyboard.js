@@ -38,24 +38,32 @@ function attachEventListeners() {
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 83, 'numbersBtn');
                     break;
                 case 'qwertBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 86, 'qwertBtn');
                     break;
                 case 'yuiopBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 86, 'yuiopBtn');
                     break;
                 case 'asdBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 88, 'asdBtn');
                     break;
                 case 'fghBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 88, 'fghBtn');
                     break;
                 case 'jklBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 88, 'jklBtn');
                     break;
                 case 'upperCaseBtn':
                     break;
                 case 'zxcBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 88, 'zxcBtn');
                     break;
                 case 'vbnmBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 87, 'vbnmBtn');
                     break;
                 case 'enterBtn':
                     break;
                 case 'symbolsBtn':
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 83, 'symbolsBtn');
                     break;
                 case 'dotComBtn':
                     break;

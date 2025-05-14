@@ -60,7 +60,8 @@ body {
     gap: 10px;
     width: 100%;
     height: 100%;
-    justify-content: space-between;
+    justify-content: space-around;
+    align-items: center;
     flex: 6;
 
     & > * {

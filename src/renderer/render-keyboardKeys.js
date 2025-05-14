@@ -36,7 +36,8 @@ function initKeyboardKeys(buttonId) {
                     keys = '1234567890';
                     break;
                 case 'symbolsBtn':
-                    keys = '+-?@/!():.,#'; // To be revised
+                    // keys = '+-?@/!():.,#'; // To be revised
+                    keys = `.,;:'"+-*=/()?!@#€%&_^[]`; 
                     break;
                 default:
                     keys = buttonId.replace('Btn', ''); // Extract keys from buttonId
@@ -57,7 +58,7 @@ function initKeyboardKeys(buttonId) {
 
 function createKey(keyValue, index) {
     try {
-        const idSuffix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'][index] || `${index + 1}th`;
+        const idSuffix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth'][index] || `${index + 1}th`;
 
         const key = document.createElement('button');
         key.classList.add('keyboard__key', 'keyboard__key--large');

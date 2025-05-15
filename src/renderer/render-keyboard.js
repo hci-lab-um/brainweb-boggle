@@ -36,6 +36,10 @@ ipcRenderer.on('textarea-populate', (event, text) => {
         if (textarea) {
             console.log(` text: ${text}`);
             textarea.value += text;
+            getScenarioNumber().then(scenarioNumber => {
+                console.log(scenarioNumber);                        
+                updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+            });
         }
     } catch (error) {
         console.error('Error in textarea-populate handler:', error);
@@ -82,23 +86,38 @@ function attachEventListeners() {
                     break;
                 case 'enterBtn':
                     textarea.value += '\n';
+                    getScenarioNumber().then(scenarioNumber => {
+                        console.log(scenarioNumber);                        
+                        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                    });
                     break;
                 case 'symbolsBtn':
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 90, 'symbolsBtn');
                     break;
                 case 'dotComBtn':
                     textarea.value += '.com';
+                    getScenarioNumber().then(scenarioNumber => {
+                        console.log(scenarioNumber);                        
+                        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                    });
                     break;
                 case 'spaceBtn':
-                    updateScenarioId(83, buttons, ViewNames.KEYBOARD);
                     textarea.value += ' ';
+                    getScenarioNumber().then(scenarioNumber => {
+                        console.log(scenarioNumber);                        
+                        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                    });
                     break;
                 case 'keyboardSendBtn':
                     break;
-                case 'arrowKeysBtn':
+                case 'arrowKeysBtn':                    
                     break;
                 case 'backspaceBtn':
                     textarea.value = textarea.value.slice(0, -1);
+                    getScenarioNumber().then(scenarioNumber => {
+                        console.log(scenarioNumber);                        
+                        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                    });
                     break;
                 case 'autoCompleteBtn':
                     break;
@@ -107,15 +126,31 @@ function attachEventListeners() {
     });
 }
 
-function isSuggestionAvailable(){
-    // TO BE IMPLEMENTED
+let corpusWords = null;
+
+async function loadCorpus() {
+    if (corpusWords) return corpusWords;
+    const response = await fetch('../../../resources/corpus/en.csv');
+    const text = await response.text();
+    corpusWords = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    return corpusWords;
 }
 
-function getScenarioNumber() {
+async function isSuggestionAvailable() {
+    if (!textarea) return false;
+    const words = await loadCorpus();
+    // Get the last word after the last whitespace
+    const input = textarea.value;
+    const lastWord = input.split(/\s+/).pop().toLowerCase();
+    if (!lastWord) return false;
+    return words.some(word => word.toLowerCase().startsWith(lastWord));
+}
+
+async function getScenarioNumber() {
     const textAreaPopulated = textarea.value.length > 0;
     const cursorAtStart = textarea.selectionStart === 0;
     const cursorAtEnd = textarea.selectionStart === textarea.value.length;
-    const suggestionAvailable = isSuggestionAvailable();
+    const suggestionAvailable = await isSuggestionAvailable();
 
     if (!textAreaPopulated) {
         return 80; // Scenario: No text in search field
@@ -125,7 +160,8 @@ function getScenarioNumber() {
         return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
     }
 
-    if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
+    if (textAreaPopulated && cursorAtStart) { // && !suggestionAvailable. 
+        // It doesn't matter if suggestion is available or not because the cursor is at the start position
         return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
     }
 

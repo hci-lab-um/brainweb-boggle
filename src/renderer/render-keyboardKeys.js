@@ -169,7 +169,6 @@ function createMaterialIcon(icon_name) {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
-            console.log(`Button ${index + 1} clicked:`, button.textContent.trim());
             const buttonId = button.getAttribute('id');
             const isArrowKey = button.classList.contains('arrowKeyBtn');
             const buttonText = button.textContent.trim();
@@ -180,7 +179,6 @@ function attachEventListeners() {
                 ipcRenderer.send('overlay-close');
                 ipcRenderer.send('textarea-moveCursor', buttonText);
             } else if (buttonId !== 'cancelBtn') {
-                console.log(`Button text: ${buttonText}`);
                 ipcRenderer.send('overlay-close');
                 ipcRenderer.send('textarea-populate', buttonText);
             } else if (buttonId === 'cancelBtn') {

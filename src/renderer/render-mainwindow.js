@@ -41,7 +41,6 @@ ipcRenderer.on('webpageBounds-get', () => {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
-            console.log(`Button ${index + 1} clicked:`, button.textContent.trim());
             const buttonId = button.getAttribute('id');
 
             stopManager();

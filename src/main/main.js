@@ -294,7 +294,7 @@ ipcMain.on('scenarioIdDict-update', (event, scenarioId, viewName) => {
             scenarioIdDict[viewName] = [];
         }
         scenarioIdDict[viewName].push(scenarioId);
-        // console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
+        console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
     } catch (err) {
         console.error('Error updating scenarioIdDict:', err.message);
     }

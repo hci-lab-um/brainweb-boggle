@@ -41,7 +41,6 @@ ipcRenderer.on('textarea-populate', (event, text) => {
 
 ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
-        console.log("Icon name:", iconName);
         switch (iconName) {
             case 'first_page':
                 textarea.selectionStart = 0;
@@ -56,9 +55,7 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
                 textarea.selectionEnd = textarea.value.length;
                 break;
             case 'keyboard_arrow_left':
-                console.log("Left arrow pressed");
                 if (textarea.selectionStart > 0) {
-                    console.log("Left arrow pressed INSIDE IF");
                     textarea.selectionStart -= 1;
                     textarea.selectionEnd = textarea.selectionStart;
                 }
@@ -77,19 +74,9 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
                 break;
         }
 
-        // getScenarioNumber().then(scenarioNumber => () => {
-        //     console.log("DHANLAN");
-        //     console.log(scenarioNumber);
-        //     updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-        // });
-
         let scenarioNumber = await getScenarioNumber();
-        console.log("DHANLAN");
-        console.log(scenarioNumber);
-        console.log("buttons", buttons);
         await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-
-        // textarea.focus();
+        textarea.focus();
     } catch (error) {
         console.error('Error in textarea-moveCursor handler:', error);
     }
@@ -98,7 +85,6 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
-            console.log(`Button ${index + 1} clicked:`, button.textContent.trim());
             const buttonId = button.getAttribute('id');
 
             await stopManager();
@@ -161,7 +147,6 @@ function attachEventListeners() {
                         textarea.selectionStart = textarea.selectionEnd = start - 1;
                     }
                     getScenarioNumber().then(scenarioNumber => {
-                        console.log(scenarioNumber);
                         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
                     });
                     break;
@@ -182,7 +167,6 @@ function insertAtCursor(insertText) {
     textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
 
     getScenarioNumber().then(scenarioNumber => {
-        console.log(scenarioNumber);
         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
     });
 
@@ -214,29 +198,20 @@ async function getScenarioNumber() {
     const cursorAtEnd = textarea.selectionStart === textarea.value.length;
     const suggestionAvailable = await isSuggestionAvailable();
 
-    console.log('cursor at start', cursorAtStart);
-    console.log('cursor at end', cursorAtEnd);
-    console.log('text area populated', textAreaPopulated);
-    console.log('suggestion available', suggestionAvailable);
-
     if (!textAreaPopulated) {
-        console.log(`Scenario ID : 80`);
         return 80; // Scenario: No text in search field
     }
 
     if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
-        console.log(`Scenario ID : 81`);
         return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
     }
 
     if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
-        console.log(`Scenario ID : 82`);
         // It doesn't matter if suggestion is available or not because the cursor is at the start position
         return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
     }
 
     if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
-        console.log(`Scenario ID : 83`);
         return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
     }
 

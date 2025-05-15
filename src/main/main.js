@@ -243,7 +243,15 @@ ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null) =
     // })
 });
 
-ipcMain.on('overlay-close', (event, overlayName) => {
+/**
+ * This IPC event is used when an overlay is closed and we need to get the scenario of the view that was behind it.
+ * For example, when I open the keyboard with an empty text area, I am initially on scenario 80. If I press the space
+ * bar, the scenario changes to 83. If I then press on the arrow keys, a new overlay displaying each arrow key opens up.
+ * If I press the cancel button (with id 'cancelBtn'), I would need to get the scenarioId that was last used in the
+ * keybord overlay (i.e. 83) and send it to the keyboard so that the same buttons that were flickering before the arrow
+ * keys overlay was opened, start flickering again.
+ */
+ipcMain.on('overlay-closeAndGetPreviousScenario', (event, overlayName) => {
     // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
     try {
         mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
@@ -251,12 +259,30 @@ ipcMain.on('overlay-close', (event, overlayName) => {
         // Deleting the dictionary entry for the closed overlay
         delete scenarioIdDict[overlayName];
 
-        if (overlayName !== ViewNames.KEYBOARD_KEYS) {
-            // This was done because the contentView does not have a function that returns the top most child view
-            let topMostView = viewsList[viewsList.length - 1];
-            let lastScenarioId = scenarioIdDict[topMostView.name].pop();
-            topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
-        }
+        // This was done because the contentView does not have a function that returns the top most child view
+        let topMostView = viewsList[viewsList.length - 1];
+        let lastScenarioId = scenarioIdDict[topMostView.name].pop();
+        topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+    } catch (err) {
+        console.error('Error closing overlay:', err.message);
+    }
+});
+
+/**
+ * This IPC event is used when an overlay is closed but we DO NOT need to get the scenario of the view that was behind it.
+ * For example, when I open the keyboard with an empty text area, I am initially on scenario 80. If I press the space
+ * bar, the scenario changes to 83. If I then press on the arrow keys, a new overlay displaying each arrow key opens up.
+ * If I DO NOT press the cancel button (with id 'cancelBtn'), and select an arrow key instead, then I would NOT need to 
+ * get the previous scenarioId (i.e. 83). This is because when a key is pressed, the scenario in keyboard changes (most
+ * of the time). Therefore, the exact scenario that is needed is calculated through a function 'getScenarioNumber()' that
+ * is found in the render-keybaord.js file.
+ */
+ipcMain.on('overlay-close', (event) => {
+    try {
+        mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
+
+        // Deleting the dictionary entry for the closed overlay (i.e. the keyboard keys overlay)
+        delete scenarioIdDict[ViewNames.KEYBOARD_KEYS];
     } catch (err) {
         console.error('Error closing overlay:', err.message);
     }

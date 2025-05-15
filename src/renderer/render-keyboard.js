@@ -40,7 +40,6 @@ ipcRenderer.on('textarea-populate', (event, text) => {
 });
 
 ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
-    // await stopManager();
     try {
         console.log("Icon name:", iconName);
         switch (iconName) {
@@ -106,7 +105,7 @@ function attachEventListeners() {
 
             switch (buttonId) {
                 case "keyboardCloseBtn":
-                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                     break;
                 case 'numbersBtn':
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 92, 'numbersBtn');

@@ -176,13 +176,15 @@ function attachEventListeners() {
 
             await stopManager();
 
-            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
-
             if (isArrowKey) {
+                ipcRenderer.send('overlay-close');
                 ipcRenderer.send('textarea-moveCursor', buttonText);
             } else if (buttonId !== 'cancelBtn') {
                 console.log(`Button text: ${buttonText}`);
+                ipcRenderer.send('overlay-close');
                 ipcRenderer.send('textarea-populate', buttonText);
+            } else if (buttonId === 'cancelBtn') {
+                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
             }
         });
     });

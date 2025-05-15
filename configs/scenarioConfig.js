@@ -34,7 +34,7 @@ const scenarioConfig = {
     },
     scenario_82: {
         name: ViewNames.KEYBOARD,
-        description: 'Text in search field, word suggestion unavailable, cursor at start position',
+        description: 'Text in search field, word suggestion unavailable, cursor at start position (autocomplete and backspace buttons disabled)',
         buttonIds: ['keyboardCloseBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'keyboardSendBtn'],
         frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
         phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0],

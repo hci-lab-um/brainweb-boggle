@@ -115,6 +115,13 @@ body {
   flex: 1 1 calc(25% - 10px);
   max-width: calc(25% - 40px);
 }
+.keyboard__keysContainer--threeColumns {
+  flex: 7;
+}
+.keyboard__keysContainer--threeColumns > * {
+  flex: 1 1 calc(33.333% - 10px);
+  max-width: calc(33.333% - 40px);
+}
 
 .keyboard__keysAndArrowsContainer {
   display: flex;

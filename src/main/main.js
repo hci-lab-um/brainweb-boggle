@@ -251,10 +251,12 @@ ipcMain.on('overlay-close', (event, overlayName) => {
         // Deleting the dictionary entry for the closed overlay
         delete scenarioIdDict[overlayName];
 
-        // This was done because the contentView does not have a function that returns the top most child view
-        let topMostView = viewsList[viewsList.length - 1];
-        let lastScenarioId = scenarioIdDict[topMostView.name].pop();
-        topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+        if (overlayName !== ViewNames.KEYBOARD_KEYS) {
+            // This was done because the contentView does not have a function that returns the top most child view
+            let topMostView = viewsList[viewsList.length - 1];
+            let lastScenarioId = scenarioIdDict[topMostView.name].pop();
+            topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+        }
     } catch (err) {
         console.error('Error closing overlay:', err.message);
     }
@@ -266,7 +268,7 @@ ipcMain.on('scenarioIdDict-update', (event, scenarioId, viewName) => {
             scenarioIdDict[viewName] = [];
         }
         scenarioIdDict[viewName].push(scenarioId);
-        console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
+        // console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
     } catch (err) {
         console.error('Error updating scenarioIdDict:', err.message);
     }
@@ -274,10 +276,26 @@ ipcMain.on('scenarioIdDict-update', (event, scenarioId, viewName) => {
 
 ipcMain.on('textarea-populate', (event, text) => {
     try {
+        // Clearing the keyboard entry from the scenarioIdDict
+        delete scenarioIdDict[ViewNames.KEYBOARD];
+
         // Finding the overlay with name keyboard
         let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
         keyboardOverlay.webContentsView.webContents.send('textarea-populate', text);
     } catch (err) {
         console.error('Error populating textarea:', err.message);
+    }
+});
+
+ipcMain.on('textarea-moveCursor', (event, iconName) => {
+    try {
+        // Clearing the keyboard entry from the scenarioIdDict
+        delete scenarioIdDict[ViewNames.KEYBOARD];
+
+        // Finding the overlay with name keyboard
+        let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
+        keyboardOverlay.webContentsView.webContents.send('textarea-moveCursor', iconName);
+    } catch (err) {
+        console.error('Error moving cursor in textarea:', err.message);
     }
 });

@@ -52,12 +52,36 @@ body {
 }
 
 #textarea {
-  flex: 4 1 0%;
+  position: relative;
+  height: 100%;
   border-radius: 6px;
   background: #f8f9fa;
-  width: 669px;
+  width: 100%;
   resize: none;
   font-size: 40px;
+  font-family: monospace;
+  z-index: 1;
+  border: none;
+}
+
+#textarea-autocomplete {
+  position: absolute;
+  color: gray;
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: 40px;
+  font-family: monospace;
+  padding: 2px;
+  border: none;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  z-index: 2;
+}
+
+#textarea-wrapper {
+  position: relative;
+  flex: 4 1 0%;
 }
 
 .keyboard__key {

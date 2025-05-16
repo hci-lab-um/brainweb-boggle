@@ -8,7 +8,10 @@
 <body>
   <div id="keyboard">
     <div class="row row--first">
-      <textarea id="textarea" autofocus></textarea>
+      <div id="textarea-wrapper">
+        <div id="textarea-autocomplete"></div>
+        <textarea id="textarea" autofocus placeholder="Type here..."></textarea>
+      </div>
       <button id="arrowKeysBtn" class="button__arrow-keys expandable-group">
         <div class="arrow-keys__row">
           <span class="keyboard__key">

@@ -6,11 +6,14 @@ let buttons = [];
 let textarea;
 let corpusWords = null;
 let isUpperCase = false;
+let suggestion = '';
+let wrapper;
 
 ipcRenderer.on('keyboard-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
+        wrapper = document.getElementById('textarea-autocomplete');
 
         // Ensuring textarea stays focused by refocusing it if focus is lost
         textarea.addEventListener("focusout", (event) => {
@@ -76,6 +79,7 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
                 break;
         }
 
+        updateGhostText();
         let scenarioNumber = await getScenarioNumber();
         await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
         textarea.focus();
@@ -116,9 +120,10 @@ function attachEventListeners() {
                     break;
                 case 'upperCaseBtn':
                     isUpperCase = !isUpperCase;
-                    let span = button.querySelector('.keyboard__key'); 
+                    let span = button.querySelector('.keyboard__key');
                     span.classList.toggle("keyboard__key--active", isUpperCase);
                     toggleLetterCase(isUpperCase);
+                    updateGhostText();
                     break;
                 case 'zxcBtn':
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'zxcBtn', isUpperCase);
@@ -147,6 +152,10 @@ function attachEventListeners() {
                     updateTextareaAtCursor();
                     break;
                 case 'autoCompleteBtn':
+                    if (suggestion && textarea.selectionStart === textarea.value.length) {
+                        updateTextareaAtCursor(suggestion);
+                        suggestion = '';
+                    }
                     break;
             }
         });
@@ -172,12 +181,12 @@ function toggleLetterCase(toUpper) {
     });
 }
 
-
 function updateTextareaAtCursor(insertText = null) {
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const value = textarea.value;
+    insertText = isUpperCase ? insertText.toUpperCase() : insertText;
 
     if (insertText) {
         textarea.value = value.slice(0, start) + insertText + value.slice(end);
@@ -187,6 +196,8 @@ function updateTextareaAtCursor(insertText = null) {
         textarea.value = value.slice(0, start - 1) + value.slice(end);
         textarea.selectionStart = textarea.selectionEnd = start - 1;
     }
+
+    updateGhostText();
 
     getScenarioNumber().then(scenarioNumber => {
         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
@@ -199,7 +210,10 @@ async function loadCorpus() {
     if (corpusWords) return corpusWords;
     const response = await fetch('../../../resources/corpus/en.csv');
     const text = await response.text();
-    corpusWords = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    corpusWords = text
+        .split(/\r?\n/)
+        .map(line => line.split(',')[0].trim().toLowerCase()) // get only the word
+        .filter(word => /^[a-z]+$/.test(word)); // remove junk lines
     return corpusWords;
 }
 
@@ -212,6 +226,42 @@ async function isSuggestionAvailable() {
     const lastWord = input.split(/\s+/).pop().toLowerCase();
     if (!lastWord) return false;
     return words.some(word => word.toLowerCase().startsWith(lastWord));
+}
+
+// Get suggestion for the last word
+function getSuggestion(partialWord, corpus) {
+    if (!partialWord) return '';
+    partialWord = partialWord.toLowerCase();
+    const match = corpus.find(word => word.startsWith(partialWord) && word !== partialWord);
+    return match ? match.slice(partialWord.length) : '';
+}
+
+// Sync ghost text with textarea input
+async function updateGhostText() {
+    const text = textarea.value;
+    const words = await loadCorpus();
+    const parts = text.split(/\s+/);
+    const lastWord = parts.pop();
+    suggestion = getSuggestion(lastWord, words);
+
+    // Show suggestion only if cursor is at end
+    if (textarea.selectionStart === textarea.value.length && suggestion) {
+        // If isUpperCase, show suggestion in caps
+        const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
+        // Replace each character in the textarea with a space (except newlines)
+        let ghost = '';
+        let textIdx = 0;
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === '\n') {
+                ghost += '\n';
+            } else {
+                ghost += ' ';
+            }
+        }
+        wrapper.innerHTML = ghost + `<span style="color:#aaa;">${displaySuggestion}</span>`;
+    } else {
+        wrapper.textContent = '';
+    }
 }
 
 async function getScenarioNumber() {

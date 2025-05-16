@@ -5,6 +5,7 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 let buttons = [];
 let textarea;
 let corpusWords = null;
+let isUpperCase = false;
 
 ipcRenderer.on('keyboard-loaded', async (event, scenarioId) => {
     try {
@@ -42,6 +43,7 @@ ipcRenderer.on('textarea-populate', (event, text) => {
 ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
         switch (iconName) {
+            // THESE NEED TO BE UPDATED USING NUT.JS !!!!!!!!!
             case 'first_page':
                 textarea.selectionStart = 0;
                 textarea.selectionEnd = 0;
@@ -87,37 +89,40 @@ function attachEventListeners() {
         button.addEventListener('click', async () => {
             const buttonId = button.getAttribute('id');
 
-            await stopManager();
+            // The only button that should not stop the manager is the upperCaseBtn
+            if (buttonId !== 'upperCaseBtn') await stopManager();
 
             switch (buttonId) {
                 case "keyboardCloseBtn":
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                     break;
                 case 'numbersBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 92, 'numbersBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 92, 'numbersBtn', isUpperCase);
                     break;
                 case 'qwertBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'qwertBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'qwertBtn', isUpperCase);
                     break;
                 case 'yuiopBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'yuiopBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'yuiopBtn', isUpperCase);
                     break;
                 case 'asdBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'asdBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'asdBtn', isUpperCase);
                     break;
                 case 'fghBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'fghBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'fghBtn', isUpperCase);
                     break;
                 case 'jklBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'jklBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'jklBtn', isUpperCase);
                     break;
                 case 'upperCaseBtn':
+                    isUpperCase = !isUpperCase;
+                    toggleLetterCase(isUpperCase);
                     break;
                 case 'zxcBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'zxcBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'zxcBtn', isUpperCase);
                     break;
                 case 'vbnmBtn':
-                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 95, 'vbnmBtn');
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 95, 'vbnmBtn', isUpperCase);
                     break;
                 case 'symbolsBtn':
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 90, 'symbolsBtn');
@@ -145,6 +150,26 @@ function attachEventListeners() {
         });
     });
 }
+
+function toggleLetterCase(toUpper) {
+    const letterButtonIds = [
+        'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'zxcBtn', 'vbnmBtn'
+    ];
+
+    letterButtonIds.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            const spans = button.querySelectorAll('.keyboard__key');
+            spans.forEach(span => {
+                const text = span.textContent;
+                if (text.length === 1 && /^[a-zA-Z]$/.test(text)) {
+                    span.textContent = toUpper ? text.toUpperCase() : text.toLowerCase();
+                }
+            });
+        }
+    });
+}
+
 
 function updateTextareaAtCursor(insertText = null) {
     if (!textarea) return;

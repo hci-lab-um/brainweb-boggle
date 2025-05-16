@@ -4,9 +4,9 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 
 let buttons = [];
 
-ipcRenderer.on('keyboardKeys-loaded', async (event, scenarioId, buttonId) => {
+ipcRenderer.on('keyboardKeys-loaded', async (event, scenarioId, buttonId, isUpperCase) => {
     try {
-        await initKeyboardKeys(buttonId);
+        await initKeyboardKeys(buttonId, isUpperCase);
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
     } catch (error) {
@@ -24,7 +24,7 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, scenarioId, buttonId) => {
 //     }
 // });
 
-function initKeyboardKeys(buttonId) {
+function initKeyboardKeys(buttonId, isUpperCase) {
     return new Promise((resolve, reject) => {
         const keyboard = document.querySelector('#keyboard');
         const keysContainer = document.querySelector('.keyboard__keysContainer');
@@ -67,7 +67,7 @@ function initKeyboardKeys(buttonId) {
                         key.innerHTML = createMaterialIcon(keyValue);
                         key.classList.add('arrowKeyBtn');
                     } else {
-                        key.textContent = keyValue;
+                        key.textContent = isUpperCase ? keyValue.toUpperCase() : keyValue.toLowerCase();
                     }
                     return key;
                 } catch (error) {

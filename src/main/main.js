@@ -191,7 +191,7 @@ function updateWebpageBounds(webContents) {
     });
 }
 
-ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null) => {
+ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
     let mainWindowContentBounds = mainWindow.getContentBounds();
 
     let overlayContent = new WebContentsView({
@@ -215,7 +215,7 @@ ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null) =
 
     overlayContent.webContents.loadURL(path.join(__dirname, `../pages/html/${overlayName}.html`)).then(async () => {
         try {
-            overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId, buttonId);
+            overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId, buttonId, isUpperCase);
         } catch (err) {
             console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
         }

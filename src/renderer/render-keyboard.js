@@ -33,7 +33,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
 
 ipcRenderer.on('textarea-populate', (event, text) => {
     try {
-        insertAtCursor(text);
+        updateTextareaAtCursor(text);
     } catch (error) {
         console.error('Error in textarea-populate handler:', error);
     }
@@ -123,13 +123,13 @@ function attachEventListeners() {
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 90, 'symbolsBtn');
                     break;
                 case 'spaceBtn':
-                    insertAtCursor(' ');
+                    updateTextareaAtCursor(' ');
                     break;
                 case 'enterBtn':
-                    insertAtCursor('\n');
+                    updateTextareaAtCursor('\n');
                     break;
                 case 'dotComBtn':
-                    insertAtCursor('.com');
+                    updateTextareaAtCursor('.com');
                     break;
                 case 'keyboardSendBtn':
                     break;
@@ -137,18 +137,7 @@ function attachEventListeners() {
                     ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');
                     break;
                 case 'backspaceBtn':
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const value = textarea.value;
-
-                    if (start === end && start > 0) {
-                        // No selection, remove character before cursor
-                        textarea.value = value.slice(0, start - 1) + value.slice(end);
-                        textarea.selectionStart = textarea.selectionEnd = start - 1;
-                    }
-                    getScenarioNumber().then(scenarioNumber => {
-                        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-                    });
+                    updateTextareaAtCursor();
                     break;
                 case 'autoCompleteBtn':
                     break;
@@ -157,14 +146,20 @@ function attachEventListeners() {
     });
 }
 
-function insertAtCursor(insertText) {
+function updateTextareaAtCursor(insertText = null) {
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const value = textarea.value;
 
-    textarea.value = value.slice(0, start) + insertText + value.slice(end);
-    textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+    if (insertText) {
+        textarea.value = value.slice(0, start) + insertText + value.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+    } else if (start === end && start > 0) {
+        // No selection, remove character before cursor
+        textarea.value = value.slice(0, start - 1) + value.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start - 1;
+    }
 
     getScenarioNumber().then(scenarioNumber => {
         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);

@@ -52,6 +52,21 @@ body {
     &--wide {
         flex: 2;
     }
+
+    &--activatable::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 10px;
+        height: 10px;
+        background: colors.$white;
+        border-radius: 50%;
+    }
+
+    &--active::after {
+        background: colors.$bright-green;
+    }
 }
 
 .keyboard__keysContainer {

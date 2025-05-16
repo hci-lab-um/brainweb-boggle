@@ -87,6 +87,19 @@ body {
 .keyboard__key--wide {
   flex: 2;
 }
+.keyboard__key--activatable::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+.keyboard__key--active::after {
+  background: #08FF00;
+}
 
 .keyboard__keysContainer {
   display: flex;

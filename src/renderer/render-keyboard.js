@@ -116,6 +116,8 @@ function attachEventListeners() {
                     break;
                 case 'upperCaseBtn':
                     isUpperCase = !isUpperCase;
+                    let span = button.querySelector('.keyboard__key'); 
+                    span.classList.toggle("keyboard__key--active", isUpperCase);
                     toggleLetterCase(isUpperCase);
                     break;
                 case 'zxcBtn':

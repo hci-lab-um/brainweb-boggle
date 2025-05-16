@@ -259,10 +259,12 @@ ipcMain.on('overlay-closeAndGetPreviousScenario', (event, overlayName) => {
         // Deleting the dictionary entry for the closed overlay
         delete scenarioIdDict[overlayName];
 
-        // This was done because the contentView does not have a function that returns the top most child view
+        // This was done because the contentView does not have a function that returns the top most child view.
+        // Hence we are using our viewsList.
         let topMostView = viewsList[viewsList.length - 1];
         let lastScenarioId = scenarioIdDict[topMostView.name].pop();
         topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+        topMostView.webContentsView.webContents.focus();
     } catch (err) {
         console.error('Error closing overlay:', err.message);
     }
@@ -283,6 +285,9 @@ ipcMain.on('overlay-close', (event) => {
 
         // Deleting the dictionary entry for the closed overlay (i.e. the keyboard keys overlay)
         delete scenarioIdDict[ViewNames.KEYBOARD_KEYS];
+
+        let topMostView = viewsList[viewsList.length - 1];
+        topMostView.webContentsView.webContents.focus();
     } catch (err) {
         console.error('Error closing overlay:', err.message);
     }

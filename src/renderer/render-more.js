@@ -29,16 +29,20 @@ function attachEventListeners() {
                     // tbi
                     break;
                 case "refreshBtn":
-                    // tbi
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                    ipcRenderer.send('webpage-refresh');
                     break;
                 case "zoomInBtn":
-                    // tbi
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                    ipcRenderer.send('webpage-zoomIn');
                     break;
                 case "zoomOutBtn":
-                    // tbi
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                    ipcRenderer.send('webpage-zoomOut');
                     break;
                 case "zoomResetBtn":
-                    // tbi
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                    ipcRenderer.send('webpage-zoomReset');
                     break;
                 case "settingsBtn":
                     // tbi
@@ -47,7 +51,10 @@ function attachEventListeners() {
                     // tbi
                     break;
                 case "exitBtn":
-                    // tbi
+                    ipcRenderer.send('app-exit');
+                    break;
+                case "closeMoreBtn":
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                     break;
             }
         });

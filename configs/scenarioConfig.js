@@ -17,6 +17,15 @@ const scenarioConfig = {
         phases: [0.5],
     },
 
+    // MORE
+    scenario_20: {
+        name: ViewNames.MORE,
+        description: 'More options menu with 10 buttons',
+        buttonIds: ['tabsBtn', 'bookmarksBtn', 'refreshBtn', 'zoomInBtn', 'zoomOutBtn', 'zoomResetBtn', 'settingsBtn', 'aboutBtn', 'exitBtn', 'closeMoreBtn'],
+        frequencies: [7, 6.5, 8.5, 12.5, 6, 9.5, 8, 14, 12, 10],
+        phases: [0, 0.5, 1, 0, 1, 0, 1.5, 0, 0.5, 1],
+    },
+
     // KEYBOARD
     scenario_80: {
         name: ViewNames.KEYBOARD,
@@ -97,6 +106,7 @@ const scenarioConfig = {
         frequencies: [7, 6.5, 8.5, 12.5],
         phases: [0, 0.5, 1, 0],
     },
+
     stimuliFrequenciesScenarioMapping: [
         // Home screen
         // Scenario 0: disabled nav buttons, inactive read mode, hidden scrollbars

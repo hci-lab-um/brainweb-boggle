@@ -4,7 +4,7 @@
   font-weight: 400;
   src: url("../../../resources/icons/MaterialSymbolsRounded-Regular.ttf") format("truetype");
 }
-.material-icons, .material-icons--xl, .material-icons--l, .material-icons--m, .material-icons--s, .material-icons--xs, .material-icons--xxs {
+.material-icons, .material-icons--xl, .material-icons--l, .material-icons--m, .material-icons--sm, .material-icons--s, .material-icons--xs, .material-icons--xxs {
   font-family: "Material Symbols Rounded";
   font-weight: normal;
   font-style: normal;
@@ -27,6 +27,9 @@
 }
 .material-icons--s {
   font-size: 2rem;
+}
+.material-icons--sm {
+  font-size: 3rem;
 }
 .material-icons--m {
   font-size: 4.3rem;

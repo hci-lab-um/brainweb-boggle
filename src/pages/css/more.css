@@ -1,0 +1,105 @@
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../../../resources/icons/MaterialSymbolsRounded-Regular.ttf") format("truetype");
+}
+.material-icons, .material-icons--xl, .material-icons--l, .material-icons--m, .material-icons--sm, .material-icons--s, .material-icons--xs, .material-icons--xxs {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 2.3rem;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+.material-icons--xxs {
+  font-size: 1.5rem;
+}
+.material-icons--xs {
+  font-size: 1.7rem;
+}
+.material-icons--s {
+  font-size: 2rem;
+}
+.material-icons--sm {
+  font-size: 3rem;
+}
+.material-icons--m {
+  font-size: 4.3rem;
+}
+.material-icons--l {
+  font-size: 6rem;
+}
+.material-icons--xl {
+  font-size: 8rem;
+}
+
+body {
+  background-color: #1f1f1f;
+}
+
+#moreOptions {
+  display: grid;
+  gap: 3vw;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas: "tabs bookmarks refresh" "zoomIn zoomOut zoomReset" "settings about exit" "close close close";
+}
+#moreOptions #tabsBtn {
+  grid-area: tabs;
+}
+#moreOptions #bookmarksBtn {
+  grid-area: bookmarks;
+}
+#moreOptions #refreshBtn {
+  grid-area: refresh;
+}
+#moreOptions #zoomInBtn {
+  grid-area: zoomIn;
+}
+#moreOptions #zoomOutBtn {
+  grid-area: zoomOut;
+}
+#moreOptions #zoomResetBtn {
+  grid-area: zoomReset;
+}
+#moreOptions #settingsBtn {
+  grid-area: settings;
+}
+#moreOptions #aboutBtn {
+  grid-area: about;
+}
+#moreOptions #exitBtn {
+  grid-area: exit;
+}
+#moreOptions #closeMoreBtn {
+  grid-area: close;
+}
+#moreOptions #closeMoreBtn i {
+  margin: -20px;
+}
+
+button {
+  color: #212529;
+  font-size: 32px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 6px;
+  background-color: #125291;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10%;
+}
+
+/*# sourceMappingURL=more.css.map */

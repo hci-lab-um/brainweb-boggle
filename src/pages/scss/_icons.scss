@@ -35,6 +35,11 @@
         font-size: 2rem;
     }
 
+    &--sm {
+        @extend .material-icons;
+        font-size: 3rem;
+    }
+
     &--m {
         @extend .material-icons;
         font-size: 4.3rem;

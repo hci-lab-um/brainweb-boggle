@@ -71,7 +71,11 @@ function attachEventListeners() {
                     }
                     break;
                 case "moreBtn":
-                    // tbi
+                    try {
+                        ipcRenderer.send('overlay-create', ViewNames.MORE, 20);
+                    } catch (error) {
+                        console.error('Error creating keyboard overlay:', error);
+                    }
                     break;
             }
         });

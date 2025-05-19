@@ -37,7 +37,6 @@ ipcRenderer.on('webpageBounds-get', () => {
     }
 });
 
-// Add event listeners to each button
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {

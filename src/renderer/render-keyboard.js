@@ -97,7 +97,7 @@ function attachEventListeners() {
             if (buttonId !== 'upperCaseBtn') await stopManager();
 
             switch (buttonId) {
-                case "keyboardCloseBtn":
+                case "closeKeyboardBtn":
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                     break;
                 case 'numbersBtn':

@@ -6,8 +6,8 @@ let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
-let viewsList = [];             // This contains all the views that are created. IMP: it excludes the tabs 
-let scenarioIdDict = {};        // This is a dictionary that contains the scenarioId for each view
+let viewsList = [];        // This contains all the views that are created. IMP: It excludes the tabs 
+let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 
 app.whenReady().then(() => {
     try {
@@ -328,5 +328,49 @@ ipcMain.on('textarea-moveCursor', (event, iconName) => {
         keyboardOverlay.webContentsView.webContents.send('textarea-moveCursor', iconName);
     } catch (err) {
         console.error('Error moving cursor in textarea:', err.message);
+    }
+});
+
+ipcMain.on('webpage-refresh', (event) => {
+    try {
+        // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
+        tabView.webContents.reload();
+    } catch (err) {
+        console.error('Error refreshing webpage:', err.message);
+    }
+});
+
+ipcMain.on('webpage-zoomIn', (event) => {
+    try {
+        // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
+        tabView.webContents.setZoomLevel(tabView.webContents.getZoomLevel() + 1);
+    } catch (err) {
+        console.error('Error zooming in webpage:', err.message);
+    }
+});
+
+ipcMain.on('webpage-zoomOut', (event) => {
+    try {
+        // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
+        tabView.webContents.setZoomLevel(tabView.webContents.getZoomLevel() - 1);
+    } catch (err) {
+        console.error('Error zooming out webpage:', err.message);
+    }
+});
+
+ipcMain.on('webpage-zoomReset', (event) => {
+    try {
+        // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
+        tabView.webContents.setZoomLevel(0);
+    } catch (err) {
+        console.error('Error resetting webpage zoom:', err.message);
+    }
+});
+
+ipcMain.on('app-exit', (event) => {
+    try {
+        app.quit();
+    } catch (err) {
+        console.error('Error exiting app:', err.message);
     }
 });

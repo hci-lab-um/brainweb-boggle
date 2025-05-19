@@ -6,11 +6,11 @@
 </head>
 
 <body>
-  <div id="keyboard">
-    <div class="row row--first">
-      <div id="textarea-wrapper">
-        <div id="textarea-autocomplete"></div>
-        <textarea id="textarea" autofocus placeholder="Type here..."></textarea>
+  <div id="keyboard" class="keyboard">
+    <div class="keyboard__row keyboard__row--first">
+      <div id="textarea-wrapper" class="keyboard__textarea">
+        <div id="textarea-autocomplete" class="textarea__autocomplete"></div>
+        <textarea id="textarea" class="textarea__input" autofocus placeholder="Type here..."></textarea>
       </div>
       <button id="arrowKeysBtn" class="button__arrow-keys expandable-group">
         <div class="arrow-keys__row">
@@ -43,7 +43,7 @@
       </button>
     </div>
 
-    <div class="row row--second">
+    <div class="keyboard__row keyboard__row--second">
       <button id="numbersBtn" class="button__numbers expandable-group">
         <span class="keyboard__key">1</span>
         <span class="keyboard__key">2</span>
@@ -66,7 +66,7 @@
       </button>
     </div>
 
-    <div class="row row--third">
+    <div class="keyboard__row keyboard__row--third">
       <button id="qwertBtn" class="expandable-group">
         <span class="keyboard__key">q</span>
         <span class="keyboard__key">w</span>
@@ -83,7 +83,7 @@
       </button>
     </div>
 
-    <div class="row row--fourth">
+    <div class="keyboard__row keyboard__row--fourth">
       <button id="asdBtn" class="expandable-group">
         <span class="keyboard__key">a</span>
         <span class="keyboard__key">s</span>
@@ -101,7 +101,7 @@
       </button>
     </div>
 
-    <div class="row row--fifth">
+    <div class="keyboard__row keyboard__row--fifth">
       <button id="upperCaseBtn">
         <span class="keyboard__key keyboard__key--activatable">
           <i class="material-icons">keyboard_capslock</i>
@@ -125,7 +125,7 @@
       </button>
     </div>
 
-    <div class="row row--sixth">
+    <div class="keyboard__row keyboard__row--sixth">
       <button id="symbolsBtn">
         <span class="keyboard__key">?!#</span>
       </button>

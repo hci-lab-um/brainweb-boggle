@@ -12,12 +12,10 @@ body {
     margin: 0;
 }
 
-.image {
-    &__splash {
-        max-width: 100%;
-        height: auto;
-        margin: 0 auto;
-    }
+.image__splash {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
 }
 
 #browser {
@@ -70,7 +68,7 @@ body {
             }
         }
     }
-    
+
     #webpage {
         flex: 88%;
         width: 100%;

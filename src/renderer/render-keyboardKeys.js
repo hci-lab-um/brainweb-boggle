@@ -41,7 +41,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     keysContainer.classList.add('keyboard__keysContainer--doubleRow');
                     break;
                 case 'symbolsBtn':
-                    keys = `.,;:'"+-*=/()?!@#€%&_^[]`.split('');
+                    keys = `.,;:'"?!+-*=/()@#€%&_^[]`.split('');
                     keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--fourColumns');
 
                     keysAndArrowsContainer = document.createElement('div');

@@ -147,6 +147,8 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                             updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
                         }
                     });
+
+                    updatePageIndicators(button, currentPage);
                 });
                 return button;
             };
@@ -192,4 +194,24 @@ function attachEventListeners() {
             ipcRenderer.send('textarea-populate', buttonText);
         }
     });
+}
+
+function updatePageIndicators(button, currentPage) {
+    var paginationWrapper = document.querySelector('.pagination-wrapper');
+    
+    if (button.classList.contains('button__triangle--left')) {
+        paginationWrapper.classList.add('transition-prev');
+    } else {
+        paginationWrapper.classList.add('transition-next');
+    }
+
+    var timeout = setTimeout(cleanClasses, 500);
+
+    function cleanClasses() {
+        if (paginationWrapper.classList.contains('transition-next')) {
+            paginationWrapper.classList.remove('transition-next')
+        } else if (paginationWrapper.classList.contains('transition-prev')) {
+            paginationWrapper.classList.remove('transition-prev')
+        }
+    }
 }

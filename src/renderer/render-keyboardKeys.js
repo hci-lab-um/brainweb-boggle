@@ -1,6 +1,7 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames } = require('../utils/constants/enums');
+const { ViewNames, CssConstants  } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
+const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 
@@ -192,20 +193,23 @@ function attachEventListeners() {
         const button = event.target.closest('button');
         if (!button) return;
 
+        addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
         const buttonText = button.textContent.trim();
         const isArrowKey = button.classList.contains('arrowKeyBtn');
 
-        await stopManager();
+        setTimeout(async () => {
+            await stopManager();
 
-        if (isArrowKey) {
-            ipcRenderer.send('overlay-close');
-            ipcRenderer.send('textarea-moveCursor', buttonText);
-        } else if (buttonId === 'cancelBtn') {
-            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
-        } else if (!['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
-            ipcRenderer.send('overlay-close');
-            ipcRenderer.send('textarea-populate', buttonText);
-        }
+            if (isArrowKey) {
+                ipcRenderer.send('overlay-close');
+                ipcRenderer.send('textarea-moveCursor', buttonText);
+            } else if (buttonId === 'cancelBtn') {
+                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
+            } else if (!['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
+                ipcRenderer.send('overlay-close');
+                ipcRenderer.send('textarea-populate', buttonText);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
 }

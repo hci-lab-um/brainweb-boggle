@@ -1,22 +1,16 @@
 @use "colors";
 
-.pagination {
-    &__container {
-        padding: 0 0 2.5vw;
-        display: flex;
-        gap: 18px;
-        align-items: center;
-        justify-content: center;
-    }
+.border {
+    box-sizing: border-box;
+    border-radius: 10px;
+    box-shadow:
+        0 0 50px rgb(255 255 255 / 50%),
+        0 0 0 3px rgba(255, 255, 255, 0.8) inset;
 
-    &__indicator {
-        width: 15px;
-        height: 15px;
-        background-color: colors.$bg-white-transparent-5;
-        border-radius: 20px;
-
-        &--active {
-            width: 50px;
-        }
+    &--accent {
+        border: none;
+        box-shadow:
+            0 0 50px rgba(colors.$accent, 0.5),
+            0 0 0 3px colors.$accent inset;
     }
 }

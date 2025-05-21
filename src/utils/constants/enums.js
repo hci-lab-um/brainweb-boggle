@@ -5,6 +5,11 @@ const ViewNames = Object.freeze({
     MORE: "more",
 });
 
+const CssConstants = Object.freeze({
+    SELECTION_ANIMATION_DURATION: 500, // This is in milliseconds. It is used in the addButtonSelectionAnimation function.
+});
+
 module.exports = {
     ViewNames,
+    CssConstants
 };

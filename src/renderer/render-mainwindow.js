@@ -1,6 +1,7 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames } = require('../utils/constants/enums');
+const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
+const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 
@@ -40,43 +41,46 @@ ipcRenderer.on('webpageBounds-get', () => {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            addButtonSelectionAnimation(button);
             const buttonId = button.getAttribute('id');
 
-            stopManager();
+            setTimeout(async () => {
+                await stopManager();
 
-            switch (buttonId) {
-                case "selectBtn":
-                    // tbi
-                    break;
-                case "readBtn":
-                    try {
-                        const textElement = button.querySelector('p'); // Fix to access the <p> element inside the button
-                        if (textElement.textContent.trim() === "Read") {
-                            textElement.textContent = "Stop Reading";
-                            await updateScenarioId(4, buttons, ViewNames.MAIN_WINDOW);
-                        } else {
-                            textElement.textContent = "Read";
-                            await updateScenarioId(0, buttons, ViewNames.MAIN_WINDOW);
+                switch (buttonId) {
+                    case "selectBtn":
+                        // tbi
+                        break;
+                    case "readBtn":
+                        try {
+                            const textElement = button.querySelector('p'); // Fix to access the <p> element inside the button
+                            if (textElement.textContent.trim() === "Read") {
+                                textElement.textContent = "Stop Reading";
+                                await updateScenarioId(4, buttons, ViewNames.MAIN_WINDOW);
+                            } else {
+                                textElement.textContent = "Read";
+                                await updateScenarioId(0, buttons, ViewNames.MAIN_WINDOW);
+                            }
+                        } catch (error) {
+                            console.error('Error toggling read mode:', error);
                         }
-                    } catch (error) {
-                        console.error('Error toggling read mode:', error);
-                    }
-                    break;
-                case "searchBtn":
-                    try {
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
-                    } catch (error) {
-                        console.error('Error creating keyboard overlay:', error);
-                    }
-                    break;
-                case "moreBtn":
-                    try {
-                        ipcRenderer.send('overlay-create', ViewNames.MORE, 20);
-                    } catch (error) {
-                        console.error('Error creating keyboard overlay:', error);
-                    }
-                    break;
-            }
+                        break;
+                    case "searchBtn":
+                        try {
+                            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
+                        } catch (error) {
+                            console.error('Error creating keyboard overlay:', error);
+                        }
+                        break;
+                    case "moreBtn":
+                        try {
+                            ipcRenderer.send('overlay-create', ViewNames.MORE, 20);
+                        } catch (error) {
+                            console.error('Error creating keyboard overlay:', error);
+                        }
+                        break;
+                }
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         });
     });
 }

@@ -32,8 +32,8 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
         if (keysContainer) {
             let keys = [];
-            const pageSize = 8;  // Number of symbols per page
             let currentPage = 0; // Track the current page
+            const pageSize = 8;  // Number of symbols per page
 
             switch (buttonId) {
                 case 'numbersBtn':
@@ -76,6 +76,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
             };
 
             const renderPage = () => {
+                const totalPages = Math.ceil(keys.length / pageSize);
                 keysContainer.innerHTML = '';
 
                 if (buttonId === 'symbolsBtn') {
@@ -103,6 +104,21 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     if (end < keys.length) {
                         const rightArrow = createNavigationButton('right', 'keyboard_arrow_right');
                         keysAndArrowsContainer.appendChild(rightArrow);
+                    }
+
+                    // Add pagination indicators
+                    const paginationContainer = document.querySelector('.pagination__container');
+                    paginationContainer.innerHTML = '';
+
+                    for (let i = 0; i < totalPages; i++) {
+                        const pageIndicator = document.createElement('div');
+                        pageIndicator.classList.add('pagination__indicator');
+
+                        if (i === currentPage) {
+                            pageIndicator.classList.add('pagination__indicator--active');
+                        }
+
+                        paginationContainer.appendChild(pageIndicator);
                     }
 
                     keyboard.insertBefore(keysAndArrowsContainer, keyboard.firstChild);

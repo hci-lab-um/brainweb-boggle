@@ -41,6 +41,24 @@
   font-size: 8rem;
 }
 
+.pagination__container {
+  padding: 0 0 2.5vw;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+}
+.pagination__indicator {
+  width: 15px;
+  height: 15px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  transition: 0.4s ease width;
+}
+.pagination__indicator--active {
+  width: 50px;
+}
+
 body {
   background-color: #061524;
 }

@@ -1,4 +1,7 @@
 @use "colors";
+.accent {
+    border: 2px solid colors.$accent;
+}
 
 .pagination {
     &__container {

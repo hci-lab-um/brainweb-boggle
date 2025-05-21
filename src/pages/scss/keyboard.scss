@@ -169,7 +169,7 @@ button {
     display: flex;
     border: none;
     border-radius: 6px;
-    background-color: colors.$bg-black-transparent;
+    background-color: colors.$primary-muted;
     color: colors.$white;
     padding: 7px;
 }
@@ -226,8 +226,4 @@ button {
     &--four-keys {
         flex-grow: 2;
     }
-}
-
-.accent {
-    border: 2px solid colors.$accent;
 }

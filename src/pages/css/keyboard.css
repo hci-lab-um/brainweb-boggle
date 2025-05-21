@@ -41,6 +41,16 @@
   font-size: 8rem;
 }
 
+.border {
+  box-sizing: border-box;
+  border-radius: 10px;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.8) inset;
+}
+.border--accent {
+  border: none;
+  box-shadow: 0 0 50px rgba(183, 255, 0, 0.5), 0 0 0 3px #b7ff00 inset;
+}
+
 .pagination__container {
   padding: 0 0 2.5vw;
   display: flex;
@@ -53,7 +63,6 @@
   height: 15px;
   background-color: rgba(255, 255, 255, 0.5);
   border-radius: 20px;
-  transition: 0.4s ease width;
 }
 .pagination__indicator--active {
   width: 50px;
@@ -88,7 +97,6 @@ body {
   height: 9.5vh;
   flex-grow: 1;
   border-radius: 4px;
-  border: none;
   font-size: 1.8rem;
   outline: none;
   display: inline-flex;
@@ -252,6 +260,10 @@ button {
 }
 .button--four-keys {
   flex-grow: 2;
+}
+
+.accent {
+  border: 2px solid #b7ff00;
 }
 
 /*# sourceMappingURL=keyboard.css.map */

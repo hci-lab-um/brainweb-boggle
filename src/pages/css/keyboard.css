@@ -51,6 +51,10 @@
   box-shadow: 0 0 50px rgba(183, 255, 0, 0.5), 0 0 0 3px #b7ff00 inset;
 }
 
+.accent {
+  border: 2px solid #b7ff00;
+}
+
 .pagination__container {
   padding: 0 0 2.5vw;
   display: flex;
@@ -214,7 +218,7 @@ button {
   display: flex;
   border: none;
   border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.329);
+  background-color: rgba(41, 57, 143, 0.4901960784);
   color: #ffffff;
   padding: 7px;
 }
@@ -260,10 +264,6 @@ button {
 }
 .button--four-keys {
   flex-grow: 2;
-}
-
-.accent {
-  border: 2px solid #b7ff00;
 }
 
 /*# sourceMappingURL=keyboard.css.map */

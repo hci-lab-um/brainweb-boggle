@@ -49,7 +49,7 @@ function attachEventListeners() {
 
                 switch (buttonId) {
                     case "selectBtn":
-                        // tbi
+                        ipcRenderer.send('webpage-split');
                         break;
                     case "readBtn":
                         try {

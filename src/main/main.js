@@ -2,6 +2,7 @@ const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
 const { ViewNames } = require('../utils/constants/enums')
 const path = require('path')
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
+const { QuadtreeBuilder, InteractiveElement, HTMLSerializableElement, QtPageDocument, QtBuilderOptions, QtRange } = require('cactus-quadtree-builder');
 
 let splashWindow;
 let mainWindow;
@@ -9,6 +10,8 @@ let mainWindowContent;
 let tabView;
 let viewsList = [];        // This contains all the views that are created. IMP: It excludes the tabs 
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
+let qtBuilder;
+let webpageBounds;
 
 app.whenReady().then(() => {
     try {
@@ -75,7 +78,7 @@ function createMainWindow() {
 
                 updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
                     try {
-                        createTabView(webpageBounds);
+                        createTabView();
                     } catch (err) {
                         console.error('Error processing webpage bounds:', err.message);
                     }
@@ -131,7 +134,7 @@ function createMainWindow() {
     }
 }
 
-async function createTabView(webpageBounds) {
+async function createTabView() {
     try {
         tabView = new WebContentsView({
             webPreferences: {
@@ -182,7 +185,7 @@ function updateWebpageBounds(webContents) {
 
         ipcMain.once('webpageBounds-response', (event, bounds) => {
             if (bounds) {
-                let webpageBounds = {
+                webpageBounds = {
                     x: Math.floor(bounds.x),
                     y: Math.floor(bounds.y),
                     width: Math.floor(bounds.width),
@@ -200,3 +203,81 @@ function updateWebpageBounds(webContents) {
         }, 5000);
     });
 }
+
+async function splitSelectScreen() {
+    let qtOptions = new QtBuilderOptions(webpageBounds.width, webpageBounds.height, 'new', 36);
+    qtBuilder = new QuadtreeBuilder(qtOptions);
+
+    const currentUrl = tabView.webContents.getURL();
+    const noOfElementsInTabView = await qtBuilder.getInteractiveElementsAsync(currentUrl).length
+
+    if (noOfElementsInTabView <= 36) {
+        // Ma jinqasamx just label the elements
+    }
+    else {
+        let splitIntoSix = false;
+
+        // Split the tabView screen into 4 quadrants
+        const quadrants = getScreenRegions(4, webpageBounds)
+
+        // You can now use these quadrant bounds for further processing, e.g., highlighting or labeling
+        // Use a regular for loop instead of forEach to allow breaking out of the loop
+        for (let idx = 0; idx < quadrants.length; idx++) {
+            const quad = quadrants[idx];
+            qtOptions = new QtBuilderOptions(quad.width, quad.height, 'new', 36);
+            qtBuilder = new QuadtreeBuilder(qtOptions);
+
+            const noOfElementsInQuadrant = await qtBuilder.getInteractiveElementsAsync(currentUrl).length;
+            if (noOfElementsInQuadrant > 36) {
+                splitIntoSix = true;
+                break; // Exit the loop early
+            }
+        }
+
+        if (splitIntoSix) {
+            let splitRegionIntoFour = false;
+            const sixRegions = getScreenRegions(6, webpageBounds)
+
+            // WAIT for user to select Region and then CHECK if that region has got more than 36 elements
+            // If so split the Region into 4
+        }
+        else {
+            // split into 4 - use quadrants
+        }
+    }
+
+}
+
+function getScreenRegions(numRegions, bounds) {
+    // Find the grid size (rows x cols) as close to square as possible
+    let rows = Math.floor(Math.sqrt(numRegions));
+    let cols = Math.ceil(numRegions / rows);
+
+    // Adjust if not enough regions
+    while (rows * cols < numRegions) {
+        rows++;
+    }
+
+    const regionWidth = Math.floor(bounds.width / cols);
+    const regionHeight = Math.floor(bounds.height / rows);
+    const regions = [];
+
+    let count = 0;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            if (count >= numRegions) break;
+            regions.push({
+                x: col * regionWidth,
+                y: row * regionHeight,
+                width: regionWidth,
+                height: regionHeight
+            });
+            count++;
+        }
+    }
+    return regions;
+}
+
+ipcMain.on('webpage-split', async (event) => {
+    await splitSelectScreen()
+});

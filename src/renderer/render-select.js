@@ -4,15 +4,15 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
-let webpageURL = null;
+let regions = [];
 let webpageBounds = null;
 
-ipcRenderer.on('select-loaded', async (event, webpageData) => {
+ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
-        ({ webpageURL, webpageBounds } = webpageData);
+        ({ webpageBounds } = overlayData);
         console.log('webpageBounds:', webpageBounds);
         await initSelectOverlay();
-        
+
         buttons = document.querySelectorAll('button');
         // await updateScenarioId(scenarioId, buttons, ViewNames.SELECT);
         attachEventListeners();
@@ -22,50 +22,19 @@ ipcRenderer.on('select-loaded', async (event, webpageData) => {
 });
 
 async function initSelectOverlay() {
-    const noOfRegions = await getNoOfRegions();
-    console.log('No of Regions:', noOfRegions);
-
-    // // dynamically create a grid that splits the screen into 4 or 6 regions
-    // const regions = getScreenRegions(noOfRegions);
-    // const regionElements = regions.map((region, index) => {
-    //     const regionElement = document.createElement('div');
-    //     regionElement.className = 'region';
-    //     regionElement.style.position = 'absolute';
-    //     regionElement.style.left = `${region.x}px`;
-    //     regionElement.style.top = `${region.y}px`;
-    //     regionElement.style.width = `${region.width}px`;
-    //     regionElement.style.height = `${region.height}px`;
-    //     regionElement.style.border = '1px solid red';
-    //     regionElement.style.zIndex = 1000 + index; // Ensure regions are on top
-    //     return regionElement;
-    // });
-    // document.body.append(...regionElements);
-    // regionElements.forEach((regionElement, index) => {
-    //     regionElement.addEventListener('click', async () => {
-    //         const selectedRegion = regions[index];
-    //         const noOfElementsInRegion = await getNoOfInteractiveElementsInRegion(selectedRegion);
-    //         console.log(`Number of interactive elements in selected region: ${noOfElementsInRegion}`);
-    //         // Handle the click event for the selected region
-    //         // You can add your logic here to process the selected region
-    //     });
-    // });
-    
-}
-
-async function getNoOfRegions() {
     // let noOfElementsInTabView = await getNoOfInteractiveElementsInRegion(webpageBounds);
     let elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
     console.log('elementsInTabView: ', elementsInTabView);
-    let regions = [];
+    let rows = 1, cols = 1;
 
     if (elementsInTabView.length <= 36) {
-        return 1;
+        // display the numbers associated with the elements (grouped if need be)
     }
     else {
         let splitIntoSix = false;
 
         // Splits the tabView screen into 4 quadrants
-        regions = getScreenRegions(4)
+        ({ regions, rows, cols } = calculateRegionLayout(4));
         console.log('regions: ', regions);
 
         for (let idx = 0; idx < regions.length; idx++) {
@@ -80,21 +49,18 @@ async function getNoOfRegions() {
         }
 
         if (splitIntoSix) {
-            return 6;
             let splitRegionIntoFour = false;
-            regions = getScreenRegions(6)
+            ({ regions, rows, cols } = calculateRegionLayout(6));
 
             // WAIT for user to select Region and then CHECK if that region has got more than 36 elements
             // If so split the Region into 4
         }
-        else {
-            return 4;
-        }
     }
 
+    createGrid(regions.length, rows, cols);
 }
 
-function getScreenRegions(numRegions) {
+function calculateRegionLayout(numRegions) {
     // Finds the grid size (rows x cols) as close to square as possible
     let rows = Math.floor(Math.sqrt(numRegions));
     let cols = Math.ceil(numRegions / rows);
@@ -121,7 +87,7 @@ function getScreenRegions(numRegions) {
             count++;
         }
     }
-    return regions;
+    return { regions, rows, cols };
 }
 
 async function getNoOfInteractiveElementsInRegion(elements, region) {
@@ -135,6 +101,26 @@ async function getNoOfInteractiveElementsInRegion(elements, region) {
         );
     });
     return elementsInRegion.length;
+}
+
+function createGrid(noOfRegions, rows, cols) {
+    const gridContainer = document.getElementById('webpage');
+    gridContainer.classList.add('grid__container');
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+    // add a child div to the grid for each region
+    regions.forEach(region => {
+        const regionDiv = document.createElement('div');
+        regionDiv.classList.add('grid__region');
+
+        const labelDiv = document.createElement('div');
+        labelDiv.classList.add('grid__label');
+        labelDiv.textContent = String.fromCharCode(65 + regions.indexOf(region));
+
+        regionDiv.appendChild(labelDiv);
+        gridContainer.appendChild(regionDiv);
+    });
 }
 
 function attachEventListeners() {

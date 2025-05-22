@@ -32,7 +32,6 @@ function registerIpcHandlers(context) {
             scenarioId: scenarioId,
             buttonId: buttonId,
             isUpperCase: isUpperCase,
-            webpageURL: tabView.webContents.getURL(),
             webpageBounds: webpageBounds,
         }
 

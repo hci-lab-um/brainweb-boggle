@@ -10,6 +10,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
         ];
         const clickableElements = Array.from(document.querySelectorAll(clickableSelectors.join(', ')));
         const visibleElements = filterVisibleElements(clickableElements);
+        console.log('visibleElements: ', visibleElements);
         const serializedElements = visibleElements.map(serializeElement); //creating an element object for each element in the array
         ipcRenderer.send('interactiveElements-response', serializedElements);
     } catch (error) {

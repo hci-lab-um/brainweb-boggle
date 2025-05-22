@@ -140,4 +140,18 @@ body {
   background-color: transparent;
 }
 
+.grid__container {
+  display: grid;
+}
+.grid__region {
+  border: 2px solid rgba(41, 57, 143, 0.4901960784);
+}
+.grid__label {
+  padding: 5px 10px;
+  color: #212529;
+  font-size: 2.5rem;
+  background-color: rgba(41, 57, 143, 0.4901960784);
+  width: min-content;
+}
+
 /*# sourceMappingURL=select.css.map */

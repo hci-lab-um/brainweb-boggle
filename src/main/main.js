@@ -161,18 +161,16 @@ function resizeMainWindow() {
             });
         }
 
-        updateWebpageBounds(mainWindowContent.webContents)
-            .then(webpageBounds => {
-                try {
-                    tabView.setBounds(webpageBounds);
+        updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
+            try {
+                tabView.setBounds(webpageBounds);
 
-                } catch (err) {
-                    console.error('Error updating webpage bounds:', err.message);
-                }
-            })
-            .catch(err => {
-                log.error(err);
-            });
+            } catch (err) {
+                console.error('Error updating webpage bounds:', err.message);
+            }
+        }).catch(err => {
+            log.error(err);
+        });
     } catch (err) {
         console.error('Error resizing main window:', err.message);
     }

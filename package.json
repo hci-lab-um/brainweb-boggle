@@ -14,7 +14,6 @@
     "sass": "^1.87.0"
   },
   "dependencies": {
-    "ssvep-stimuli": "^0.1.5",
-    "cactus-quadtree-builder": "git+ssh://git@github.com:hci-lab-um/cactus-quadtree-builder.git"
+    "ssvep-stimuli": "^0.1.5"
   }
 }

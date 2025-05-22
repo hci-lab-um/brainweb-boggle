@@ -171,6 +171,23 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.handle('interactiveElements-get', (event) => {
+        return new Promise((resolve, reject) => {
+            try {
+                tabView.webContents.send('interactiveElements-get');
+                ipcMain.once('interactiveElements-response', (event, elements) => {
+                    if (elements) {
+                        resolve(elements);
+                    } else {
+                        reject(new Error('No interactive elements found'));
+                    }
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    });
+
     ipcMain.on('app-exit', (event) => {
         try {
             app.quit();

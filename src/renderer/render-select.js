@@ -1,8 +1,7 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames } = require('../utils/constants/enums');
+const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
-const { QuadtreeBuilder, QtBuilderOptions } = require('cactus-quadtree-builder');
 
 let buttons = [];
 let webpageURL = null;
@@ -13,9 +12,10 @@ ipcRenderer.on('select-loaded', async (event, webpageData) => {
         ({ webpageURL, webpageBounds } = webpageData);
         console.log('webpageBounds:', webpageBounds);
         await initSelectOverlay();
-        // buttons = document.querySelectorAll('button');
+        
+        buttons = document.querySelectorAll('button');
         // await updateScenarioId(scenarioId, buttons, ViewNames.SELECT);
-        // attachEventListeners();
+        attachEventListeners();
     } catch (error) {
         console.error('Error in select-loaded handler:', error);
     }
@@ -23,6 +23,7 @@ ipcRenderer.on('select-loaded', async (event, webpageData) => {
 
 async function initSelectOverlay() {
     const noOfRegions = await getNoOfRegions();
+    console.log('No of Regions:', noOfRegions);
 
     // // dynamically create a grid that splits the screen into 4 or 6 regions
     // const regions = getScreenRegions(noOfRegions);
@@ -52,10 +53,12 @@ async function initSelectOverlay() {
 }
 
 async function getNoOfRegions() {
-    let noOfElementsInTabView = await getNoOfInteractiveElementsInRegion(webpageBounds);
+    // let noOfElementsInTabView = await getNoOfInteractiveElementsInRegion(webpageBounds);
+    let elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
+    console.log('elementsInTabView: ', elementsInTabView);
     let regions = [];
 
-    if (noOfElementsInTabView <= 36) {
+    if (elementsInTabView.length <= 36) {
         return 1;
     }
     else {
@@ -65,9 +68,10 @@ async function getNoOfRegions() {
         regions = getScreenRegions(4)
         console.log('regions: ', regions);
 
-        for (let idx = 0; idx < regions.length; idx++) {;
+        for (let idx = 0; idx < regions.length; idx++) {
             const region = regions[idx];
-            let noOfElementsInQuadrant = await getNoOfInteractiveElementsInRegion(region);
+            let noOfElementsInQuadrant = await getNoOfInteractiveElementsInRegion(elementsInTabView, region);
+            console.log(`No of elements in quadrant ${idx + 1}: ${noOfElementsInQuadrant}`);
 
             if (noOfElementsInQuadrant > 36) {
                 splitIntoSix = true;
@@ -120,17 +124,34 @@ function getScreenRegions(numRegions) {
     return regions;
 }
 
-async function getNoOfInteractiveElementsInRegion(region) {
-    const qtOptions = new QtBuilderOptions(region.width, region.height, 'new', 36);
-    const qtBuilder = new QuadtreeBuilder(qtOptions);
+async function getNoOfInteractiveElementsInRegion(elements, region) {
+    const elementsInRegion = elements.filter(element => {
+        // This includes elements whose top-left corner (x, y) is within the region
+        return (
+            element.x >= region.x &&
+            element.x <= region.x + region.width &&
+            element.y >= region.y &&
+            element.y <= region.y + region.height
+        );
+    });
+    return elementsInRegion.length;
+}
 
-    const pageDocument = await qtBuilder.initializePageDocumentAsync(webpageURL);
+function attachEventListeners() {
+    buttons.forEach((button, index) => {
+        button.addEventListener('click', async () => {
+            addButtonSelectionAnimation(button);
+            const buttonId = button.getAttribute('id');
 
-    if (pageDocument && pageDocument.interactiveElements) {
-        console.log('Total interactive elements in quadrant:', pageDocument.interactiveElements.length);
-        return pageDocument.interactiveElements.length;
-    } else {
-        console.log('Failed to retrieve interactive elements.');
-        return 0;
-    }
+            setTimeout(async () => {
+                // await stopManager();
+
+                switch (buttonId) {
+                    case "closeSelectBtn":
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                        break;
+                }
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
+        });
+    });
 }

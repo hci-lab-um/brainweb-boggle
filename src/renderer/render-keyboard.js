@@ -10,8 +10,10 @@ let isUpperCase = false;
 let suggestion = '';
 let wrapper;
 
-ipcRenderer.on('keyboard-loaded', async (event, scenarioId) => {
+ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
+        const { scenarioId } = overlayData;
+        
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
         wrapper = document.getElementById('textarea-autocomplete');

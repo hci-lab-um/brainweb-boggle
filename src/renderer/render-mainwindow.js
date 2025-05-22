@@ -49,7 +49,7 @@ function attachEventListeners() {
 
                 switch (buttonId) {
                     case "selectBtn":
-                        ipcRenderer.send('webpage-split');
+                        ipcRenderer.send('overlay-create', ViewNames.SELECT, -1);
                         break;
                     case "readBtn":
                         try {

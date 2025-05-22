@@ -5,8 +5,10 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 
-ipcRenderer.on('keyboardKeys-loaded', async (event, scenarioId, buttonId, isUpperCase) => {
+ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     try {
+        const { scenarioId, buttonId, isUpperCase } = overlayData;
+        
         await initKeyboardKeys(buttonId, isUpperCase);
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);

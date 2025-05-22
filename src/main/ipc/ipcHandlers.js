@@ -3,7 +3,7 @@ const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 
 function registerIpcHandlers(context) {
-    const { mainWindow, mainWindowContent, tabView, viewsList, scenarioIdDict } = context;
+    const { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
     
     ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -27,9 +27,18 @@ function registerIpcHandlers(context) {
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
+        let overlayData = {
+            overlayName: overlayName,
+            scenarioId: scenarioId,
+            buttonId: buttonId,
+            isUpperCase: isUpperCase,
+            webpageURL: tabView.webContents.getURL(),
+            webpageBounds: webpageBounds,
+        }
+
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
             try {
-                overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId, buttonId, isUpperCase);
+                overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
             } catch (err) {
                 console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
             }

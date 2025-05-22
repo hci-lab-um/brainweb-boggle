@@ -5,8 +5,10 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 
-ipcRenderer.on('more-loaded', async (event, scenarioId) => {
+ipcRenderer.on('more-loaded', async (event, overlayData) => {
     try {
+        const { scenarioId } = overlayData;
+
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
         attachEventListeners();

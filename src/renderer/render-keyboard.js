@@ -91,83 +91,6 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     }
 });
 
-function attachEventListeners() {
-    buttons.forEach((button, index) => {
-        button.addEventListener('click', async () => {
-            addButtonSelectionAnimation(button);
-            const buttonId = button.getAttribute('id');
-
-            setTimeout(async () => {
-                // The only button that should not stop the manager is the upperCaseBtn
-                if (buttonId !== 'upperCaseBtn') await stopManager();
-
-                switch (buttonId) {
-                    case "closeKeyboardBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
-                        break;
-                    case 'numbersBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 92, 'numbersBtn', isUpperCase);
-                        break;
-                    case 'qwertBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'qwertBtn', isUpperCase);
-                        break;
-                    case 'yuiopBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'yuiopBtn', isUpperCase);
-                        break;
-                    case 'asdBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'asdBtn', isUpperCase);
-                        break;
-                    case 'fghBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'fghBtn', isUpperCase);
-                        break;
-                    case 'jklBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'jklBtn', isUpperCase);
-                        break;
-                    case 'upperCaseBtn':
-                        isUpperCase = !isUpperCase;
-                        let span = button.querySelector('.keyboard__key');
-                        span.classList.toggle("keyboard__key--active", isUpperCase);
-                        toggleLetterCase(isUpperCase);
-                        updateGhostText();
-                        break;
-                    case 'zxcBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'zxcBtn', isUpperCase);
-                        break;
-                    case 'vbnmBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 95, 'vbnmBtn', isUpperCase);
-                        break;
-                    case 'symbolsBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 90, 'symbolsBtn');
-                        break;
-                    case 'spaceBtn':
-                        updateTextareaAtCursor(' ');
-                        break;
-                    case 'enterBtn':
-                        updateTextareaAtCursor('\n');
-                        break;
-                    case 'dotComBtn':
-                        updateTextareaAtCursor('.com');
-                        break;
-                    case 'keyboardSendBtn':
-                        break;
-                    case 'arrowKeysBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');
-                        break;
-                    case 'backspaceBtn':
-                        updateTextareaAtCursor();
-                        break;
-                    case 'autoCompleteBtn':
-                        if (suggestion && textarea.selectionStart === textarea.value.length) {
-                            updateTextareaAtCursor(suggestion);
-                            suggestion = '';
-                        }
-                        break;
-                }
-            }, CssConstants.SELECTION_ANIMATION_DURATION);
-        });
-    });
-}
-
 function toggleLetterCase(toUpper) {
     const letterButtonIds = [
         'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'zxcBtn', 'vbnmBtn'
@@ -205,8 +128,8 @@ function updateTextareaAtCursor(insertText = null) {
 
     updateGhostText();
 
-    getScenarioNumber().then(scenarioNumber => {
-        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+    getScenarioNumber().then(scenarioNumber => async() => {
+        await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
     });
 
     textarea.focus();
@@ -294,4 +217,81 @@ async function getScenarioNumber() {
     }
 
     console.error("No matching scenario");
+}
+
+function attachEventListeners() {
+    buttons.forEach((button, index) => {
+        button.addEventListener('click', async () => {
+            addButtonSelectionAnimation(button);
+            const buttonId = button.getAttribute('id');
+
+            setTimeout(async () => {
+                // The only button that should not stop the manager is the upperCaseBtn
+                if (buttonId !== 'upperCaseBtn') await stopManager();
+
+                switch (buttonId) {
+                    case "closeKeyboardBtn":
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
+                        break;
+                    case 'numbersBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 92, 'numbersBtn', isUpperCase);
+                        break;
+                    case 'qwertBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'qwertBtn', isUpperCase);
+                        break;
+                    case 'yuiopBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'yuiopBtn', isUpperCase);
+                        break;
+                    case 'asdBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'asdBtn', isUpperCase);
+                        break;
+                    case 'fghBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'fghBtn', isUpperCase);
+                        break;
+                    case 'jklBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'jklBtn', isUpperCase);
+                        break;
+                    case 'upperCaseBtn':
+                        isUpperCase = !isUpperCase;
+                        let span = button.querySelector('.keyboard__key');
+                        span.classList.toggle("keyboard__key--active", isUpperCase);
+                        toggleLetterCase(isUpperCase);
+                        updateGhostText();
+                        break;
+                    case 'zxcBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'zxcBtn', isUpperCase);
+                        break;
+                    case 'vbnmBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 95, 'vbnmBtn', isUpperCase);
+                        break;
+                    case 'symbolsBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 90, 'symbolsBtn');
+                        break;
+                    case 'spaceBtn':
+                        updateTextareaAtCursor(' ');
+                        break;
+                    case 'enterBtn':
+                        updateTextareaAtCursor('\n');
+                        break;
+                    case 'dotComBtn':
+                        updateTextareaAtCursor('.com');
+                        break;
+                    case 'keyboardSendBtn':
+                        break;
+                    case 'arrowKeysBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');
+                        break;
+                    case 'backspaceBtn':
+                        updateTextareaAtCursor();
+                        break;
+                    case 'autoCompleteBtn':
+                        if (suggestion && textarea.selectionStart === textarea.value.length) {
+                            updateTextareaAtCursor(suggestion);
+                            suggestion = '';
+                        }
+                        break;
+                }
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
+        });
+    });
 }

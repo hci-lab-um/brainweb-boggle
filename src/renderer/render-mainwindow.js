@@ -10,6 +10,7 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
         attachEventListeners();
+        ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
         console.error('Error in mainWindow-loaded handler:', error);
     }

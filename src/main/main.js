@@ -15,7 +15,7 @@ app.whenReady().then(() => {
     try {
         createSplashWindow()
         setTimeout(() => {
-            createMainWindow()
+            createMainWindow();
         }, 4000);
     } catch (err) {
         console.error('Error during app initialisation:', err)
@@ -48,13 +48,14 @@ function createMainWindow() {
 
         mainWindowContent = new WebContentsView({
             webPreferences: {
-                nodeIntegration: true,  // confirm if this should be true or false
+                nodeIntegration: true,
                 contextIsolation: true,
                 preload: path.join(__dirname, '../renderer/render-mainwindow.js')
             },
             show: false
         });
 
+        // ADDDDDDDD
         viewsList.push({
             webContentsView: mainWindowContent,
             name: ViewNames.MAIN_WINDOW,
@@ -72,28 +73,34 @@ function createMainWindow() {
 
         mainWindowContent.webContents.loadURL(path.join(__dirname, '../pages/html/index.html')).then(() => {
             try {
+
+                //ADDDDDDDDDDDDDDDDDDDDDDDDDDDdd 0
                 mainWindowContent.webContents.send('mainWindow-loaded', 0);
 
-                updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
-                    try {
-                        createTabView().then(() => {
-                            // Register IPC handlers after the main window is created to be able to send messages to the renderer process
-                            registerIpcHandlers({
-                                mainWindow,
-                                mainWindowContent,
-                                tabView,
-                                webpageBounds,
-                                viewsList,
-                                scenarioIdDict
+                // hard-coding 
+                scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
+                
+                ipcMain.on('mainWindow-loaded-complete', (event) => {
+                    updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
+                        try {
+                            createTabView().then(() => {
+                                // Register IPC handlers after the main window is created to be able to send messages to the renderer process
+                                registerIpcHandlers({
+                                    mainWindow,
+                                    mainWindowContent,
+                                    tabView,
+                                    webpageBounds,
+                                    viewsList,
+                                    scenarioIdDict
+                                });
                             });
-                        });
-                    } catch (err) {
-                        console.error('Error processing webpage bounds:', err.message);
-                    }
-                }).catch(err => {
-                    console.error('Error executing JavaScript in main window:', err.message);
-                });
-
+                        } catch (err) {
+                            console.error('Error processing webpage bounds:', err.message);
+                        }
+                    }).catch(err => {
+                        console.error('Error executing JavaScript in main window:', err.message);
+                    });
+                })
             } catch (err) {
                 console.error('Error sending scenarioId to render-mainwindow:', err.message);
             }

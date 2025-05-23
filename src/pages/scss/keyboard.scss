@@ -165,12 +165,12 @@ body {
 }
 
 button {
+    color: colors.$white;
     flex: 1;
     display: flex;
     border: none;
     border-radius: 6px;
     background-color: colors.$primary-muted;
-    color: colors.$white;
     padding: 7px;
 }
 

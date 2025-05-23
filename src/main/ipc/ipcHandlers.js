@@ -3,7 +3,7 @@ const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 
 function registerIpcHandlers(context) {
-    const { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
     
     ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();

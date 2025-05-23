@@ -24,7 +24,7 @@ function attachEventListeners() {
             const buttonId = button.getAttribute('id');
 
             setTimeout(async () => {
-                stopManager();
+                await stopManager();
 
                 switch (buttonId) {
                     case "tabsBtn":

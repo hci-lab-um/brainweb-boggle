@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants  } = require('../utils/constants/enums');
+const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
@@ -8,7 +8,7 @@ let buttons = [];
 ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     try {
         const { scenarioId, buttonId, isUpperCase } = overlayData;
-        
+
         await initKeyboardKeys(buttonId, isUpperCase);
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
@@ -62,7 +62,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     const idSuffix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'][index] || `${index + 1}th`;
 
                     const key = document.createElement('button');
-                    key.classList.add('keyboard__key', 'keyboard__key--large');
+                    key.classList.add('button', 'keyboard__key', 'keyboard__key--large');
                     key.setAttribute('id', `${idSuffix}KeyBtn`);
 
                     if (buttonId === 'arrowKeysBtn') {
@@ -91,7 +91,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
                     // Add left navigation button                    
                     if (currentPage > 0) {
-                        const leftArrow = createNavigationButton('left', 'keyboard_arrow_left');
+                        const leftArrow = createNavigationButton('left');
                         keysAndArrowsContainer.insertBefore(leftArrow, keysAndArrowsContainer.firstChild);
                     }
 
@@ -105,7 +105,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
                     // Add right navigation button                    
                     if (end < keys.length) {
-                        const rightArrow = createNavigationButton('right', 'keyboard_arrow_right');
+                        const rightArrow = createNavigationButton('right');
                         keysAndArrowsContainer.appendChild(rightArrow);
                     }
 
@@ -137,10 +137,9 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                 attachEventListeners();
             };
 
-            const createNavigationButton = (direction, icon) => {
+            const createNavigationButton = (direction) => {
                 const button = document.createElement('button');
-                button.classList.add('button__triangle', `button__triangle--${direction}`);
-                button.innerHTML = `<i class="material-icons">${icon}</i>`;
+                button.classList.add('button', 'button__triangle', `button__triangle--${direction}`);
 
                 if (!document.getElementById('firstArrowKeyBtn')) {
                     button.setAttribute('id', 'firstArrowKeyBtn');
@@ -148,22 +147,22 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     button.setAttribute('id', 'secondArrowKeyBtn');
                 }
 
-                button.addEventListener('click', () => {
+                button.addEventListener('click', async () => {
                     // Update current page based on the direction
                     currentPage += direction === 'left' ? -1 : 1;
 
-                    stopManager();
+                    await stopManager();
                     renderPage();
 
                     // Waiting for the page to render all the buttons before updating the scenarioId 
                     // (IMP requestAnimationFrame remains in the event loop)
-                    requestAnimationFrame(() => {
+                    requestAnimationFrame(async () => {
                         if (currentPage === 0) {
-                            updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
+                            await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
                         } else if (currentPage === 1) {
-                            updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
+                            await updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
                         } else if (currentPage === 2) {
-                            updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
+                            await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
                         }
                     });
                 });
@@ -199,6 +198,13 @@ function attachEventListeners() {
         const buttonId = button.getAttribute('id');
         const buttonText = button.textContent.trim();
         const isArrowKey = button.classList.contains('arrowKeyBtn');
+
+        // Navigation buttons (pagination) should NOT be delayed
+        if (['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
+            await stopManager();
+            // Navigation is handled by their own event listeners in createNavigationButton
+            return;
+        }
 
         setTimeout(async () => {
             await stopManager();

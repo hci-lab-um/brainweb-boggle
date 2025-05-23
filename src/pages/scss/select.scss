@@ -22,14 +22,14 @@ body {
     }
 
     &__region {
-        border: 2px solid colors.$primary-muted;
+        border: 2px solid colors.$accent-transparent;
     }
 
     &__label {
         padding: 5px 10px;
         color: colors.$text-primary;
-        font-size: 2.5rem;
-        background-color: colors.$primary-muted;
+        font-size: 1.5rem;
+        background-color: colors.$accent-transparent;
         width: min-content;
     }
 }

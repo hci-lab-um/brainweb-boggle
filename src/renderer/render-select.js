@@ -4,18 +4,18 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon } = require('../utils/utilityFunctions');
 
+const idPrefix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 let buttons = [];
 let regions = [];
 let webpageBounds = null;
+let sidebar;
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
         ({ webpageBounds } = overlayData);
-        console.log('webpageBounds:', webpageBounds);
-        await initSelectOverlay();
+        sidebar = document.getElementById('sidebar-buttons');
 
-        buttons = document.querySelectorAll('button');
-        // await updateScenarioId(scenarioId, buttons, ViewNames.SELECT);
+        await initSelectOverlay();
         attachEventListeners();
     } catch (error) {
         console.error('Error in select-loaded handler:', error);
@@ -36,7 +36,6 @@ async function initSelectOverlay() {
 
         // Splits the tabView screen into 4 quadrants
         ({ regions, rows, cols } = calculateRegionLayout(4));
-        console.log('regions: ', regions);
 
         for (let idx = 0; idx < regions.length; idx++) {
             const region = regions[idx];
@@ -47,11 +46,21 @@ async function initSelectOverlay() {
                 splitIntoSix = true;
                 break; // Exit the loop early
             }
+
+            await renderButtonsInSidebarForGrid(idx);
+            buttons = document.querySelectorAll('button');
+            await updateScenarioId(49, buttons, ViewNames.SELECT);
         }
 
         if (splitIntoSix) {
             let splitRegionIntoFour = false;
             ({ regions, rows, cols } = calculateRegionLayout(6));
+
+            for (let idx = 0; idx < regions.length; idx++) {
+                await renderButtonsInSidebarForGrid(idx);
+                buttons = document.querySelectorAll('button');
+                await updateScenarioId(51, buttons, ViewNames.SELECT);
+            }
 
             // WAIT for user to select Region and then CHECK if that region has got more than 36 elements
             // If so split the Region into 4
@@ -131,7 +140,7 @@ function attachEventListeners() {
             const buttonId = button.getAttribute('id');
 
             setTimeout(async () => {
-                // await stopManager();
+                await stopManager();
 
                 switch (buttonId) {
                     case "closeSelectBtn":
@@ -148,8 +157,6 @@ function attachEventListeners() {
  * of 6 (e.g., 1-6, 7-12, ...) if more than 6 elements, up to 36.
  */
 async function renderButtonsInSidebar(elementsInTabView) {
-    const idSuffix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
-
     const sidebar = document.getElementById('sidebar-buttons');
     sidebar.innerHTML = ''; // Clear existing buttons
 
@@ -162,7 +169,7 @@ async function renderButtonsInSidebar(elementsInTabView) {
 
         groups.forEach((group, groupIdx) => {
             const button = document.createElement('button');
-            button.setAttribute('id', `${idSuffix[groupIdx]}GroupBtn`);
+            button.setAttribute('id', `${idPrefix[groupIdx]}GroupBtn`);
             button.classList.add('button');
 
             const start = groupIdx * 6 + 1;
@@ -173,7 +180,7 @@ async function renderButtonsInSidebar(elementsInTabView) {
             sidebar.appendChild(button);
         });
 
-        const buttons = document.querySelectorAll('button');
+        buttons = document.querySelectorAll('button');
         switch (buttons.length) {
             case 2: await updateScenarioId(46, buttons, ViewNames.SELECT); break;
             case 3: await updateScenarioId(47, buttons, ViewNames.SELECT); break;
@@ -186,7 +193,7 @@ async function renderButtonsInSidebar(elementsInTabView) {
         // Just create one button per element
         elementsInTabView.forEach((element, idx) => {
             const button = document.createElement('button');
-            button.setAttribute('id', `${idSuffix[idx]}ElementBtn`);
+            button.setAttribute('id', `${idPrefix[idx]}ElementBtn`);
             button.classList.add('button');
             button.textContent = (idx + 1).toString();
 
@@ -199,7 +206,7 @@ async function renderButtonsInSidebar(elementsInTabView) {
 
         sidebar.appendChild(toggleNumbersButton);
 
-        const buttons = document.querySelectorAll('button');
+        buttons = document.querySelectorAll('button');
         switch (buttons.length) {
             case 3: await updateScenarioId(40, buttons, ViewNames.SELECT); break;
             case 4: await updateScenarioId(41, buttons, ViewNames.SELECT); break;
@@ -210,3 +217,12 @@ async function renderButtonsInSidebar(elementsInTabView) {
         }
     }
 }
+
+async function renderButtonsInSidebarForGrid(idx) {
+    const button = document.createElement('button');
+    button.setAttribute('id', `${idPrefix[idx]}GroupBtn`);
+    button.classList.add('button');
+    button.textContent = String.fromCharCode(65 + idx);
+
+    await sidebar.appendChild(button);
+};

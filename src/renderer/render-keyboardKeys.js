@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const { createMaterialIcon } = require('../utils/utilityFunctions');
 
 let buttons = [];
 
@@ -67,7 +68,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
                     if (buttonId === 'arrowKeysBtn') {
                         keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
-                        key.innerHTML = createMaterialIcon(keyValue);
+                        key.innerHTML = createMaterialIcon('l', keyValue);
                         key.classList.add('arrowKeyBtn');
                     } else {
                         key.textContent = isUpperCase ? keyValue.toUpperCase() : keyValue.toLowerCase();
@@ -176,10 +177,6 @@ function initKeyboardKeys(buttonId, isUpperCase) {
             reject(new Error('Keyboard keys element not found'));
         }
     });
-}
-
-function createMaterialIcon(icon_name) {
-    return `<i class="material-icons--l">${icon_name}</i>`;
 }
 
 function attachEventListeners() {

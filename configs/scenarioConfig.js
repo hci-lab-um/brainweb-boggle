@@ -26,6 +26,107 @@ const scenarioConfig = {
         phases: [0, 0.5, 1, 0, 1, 0, 1.5, 0, 0.5, 1],
     },
 
+    // SELECT
+    scenario_40: {
+        name: ViewNames.SELECT,
+        description: '1 element, with CLOSE button & toggle', // ELEMENTS: selectable elements on the webpage numbered from 1 to 36
+        buttonIds: ['firstElementBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 14.5, 10.5],
+        phases: [1, 0.5, 1.5],
+    },
+
+    scenario_41: {
+        name: ViewNames.SELECT,
+        description: '2 elements, with CLOSE button & toggle',
+        buttonIds: ['firstElementBtn', 'secondElementBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 14.5, 10.5], // Frequencies of the firstElementBtn, closeSelectBtn and toggleNumbersBtn remained the same
+        phases: [1, 1.5, 0.5, 1.5],
+    },
+
+    scenario_42: {
+        name: ViewNames.SELECT,
+        description: '3 elements, with CLOSE button & toggle',
+        buttonIds: ['firstElementBtn', 'secondElementBtn', 'thirdElementBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 0.5, 1.5],
+    },
+
+    scenario_43: {
+        name: ViewNames.SELECT,
+        description: '4 elements, with CLOSE button & toggle',
+        buttonIds: ['firstElementBtn', 'secondElementBtn', 'thirdElementBtn', 'fourthElementBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 7.5, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 1.5, 0.5, 1.5],
+    },
+
+    scenario_44: {
+        name: ViewNames.SELECT,
+        description: '5 elements, with CLOSE button & toggle',
+        buttonIds: ['firstElementBtn', 'secondElementBtn', 'thirdElementBtn', 'fourthElementBtn', 'fifthElementBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 1.5],
+    },
+
+    scenario_45: {
+        name: ViewNames.SELECT,
+        description: '6 elements, with CLOSE button & toggle',
+        buttonIds: ['firstElementBtn', 'secondElementBtn', 'thirdElementBtn', 'fourthElementBtn', 'fifthElementBtn', 'sixthElementBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5, 1.5],
+    },
+
+    scenario_46: {
+        name: ViewNames.SELECT,
+        description: '1 grouping, with CLOSE/BACK button', // CLOSE: when the screen is not split into sections beforehand  
+                                                           // BACK: when the screen is split into sections beforehand
+        buttonIds: ['firstGroupBtn', 'closeSelectBtn'],
+        frequencies: [6, 14.5],
+        phases: [1, 0.5],
+    },
+
+    scenario_47: {
+        name: ViewNames.SELECT,
+        description: '2 groupings, with CLOSE/BACK button',
+        buttonIds: ['firstGroupBtn', 'secondGroupBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 14.5], // Frequencies of the firstGroupBtn and closeSelectBtn remained the same
+        phases: [1, 1.5, 0.5],
+    },
+
+    scenario_48: {
+        name: ViewNames.SELECT,
+        description: '3 groupings, with CLOSE/BACK button',
+        buttonIds: ['firstGroupBtn', 'secondGroupBtn', 'thirdGroupBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 9, 14.5], 
+        phases: [1, 1.5, 0.5, 0.5],
+    },
+
+    scenario_49: {
+        name: ViewNames.SELECT,
+        description: '4 groupings, with CLOSE/BACK button OR 4 sections with CLOSE button', // GROUPINGS: 1-6, 7-12, ...etc.
+                                                                                            // SECTIONS: A, B, C, D
+        buttonIds: ['firstGroupBtn', 'secondGroupBtn', 'thirdGroupBtn', 'fourthGroupBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 9, 7.5, 14.5], 
+        phases: [1, 1.5, 0.5, 1.5, 0.5],
+    },
+
+    scenario_50: {
+        name: ViewNames.SELECT,
+        description: '5 groupings, with CLOSE/BACK button',
+        buttonIds: ['firstGroupBtn', 'secondGroupBtn', 'thirdGroupBtn', 'fourthGroupBtn', 'fifthGroupBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 14.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5],
+    },
+
+    scenario_51: {
+        name: ViewNames.SELECT,
+        description: '6 groupings, with CLOSE/BACK button OR 6 sections with CLOSE button', // GROUPINGS: 1-6, 7-12, ...etc.
+                                                                                            // SECTIONS: A, B, ..., F
+        buttonIds: ['firstGroupBtn', 'secondGroupBtn', 'thirdGroupBtn', 'fourthGroupBtn', 'fifthGroupBtn', 'sixthGroupBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5],
+    },
+
+
     // KEYBOARD
     scenario_80: {
         name: ViewNames.KEYBOARD,

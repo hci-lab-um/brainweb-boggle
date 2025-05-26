@@ -52,7 +52,7 @@
 }
 
 .accent {
-  border: 2px solid #b7ff00;
+  border: 2px solid #b7ff00 !important;
 }
 
 .pagination__container {

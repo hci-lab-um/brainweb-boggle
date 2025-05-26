@@ -33,3 +33,21 @@ body {
         width: min-content;
     }
 }
+
+#sidebar {
+    background-color: colors.$bg-dark;
+    gap: 5%;
+}
+
+#sidebar-buttons {
+    @include components.sidebar;
+    border-radius: 10px;
+    padding: 15px;
+    gap: 6%;
+    flex: 6;
+    background-color: colors.$bg-white-transparent-7;
+}
+
+.button {
+    max-height: 20%;
+}

@@ -52,7 +52,7 @@
 }
 
 .accent {
-  border: 2px solid #b7ff00;
+  border: 2px solid #b7ff00 !important;
 }
 
 .pagination__container {
@@ -151,6 +151,33 @@ body {
   font-size: 1.5rem;
   background-color: rgba(183, 255, 0, 0.7019607843);
   width: min-content;
+}
+
+#sidebar {
+  background-color: #1f1f1f;
+  gap: 5%;
+}
+
+#sidebar-buttons {
+  flex: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 7%;
+  padding: 15px 35px;
+  box-sizing: border-box;
+  justify-content: space-evenly;
+  border-radius: 10px;
+  padding: 15px;
+  gap: 6%;
+  flex: 6;
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.button {
+  max-height: 100px;
 }
 
 /*# sourceMappingURL=select.css.map */

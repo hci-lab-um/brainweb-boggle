@@ -90,6 +90,8 @@
   margin: 15px 0 20px;
   box-sizing: border-box;
   border: none;
+  display: flex;
+  justify-content: center;
 }
 
 #webpage {
@@ -177,7 +179,17 @@ body {
 }
 
 .button {
-  max-height: 100px;
+  max-height: 20%;
+  font-size: 2rem;
+}
+.button--toggle {
+  max-height: unset;
+}
+
+.toggle-numbers-container {
+  flex: 0.59;
+  background-color: #1f1f1f;
+  border-radius: 6px;
 }
 
 /*# sourceMappingURL=select.css.map */

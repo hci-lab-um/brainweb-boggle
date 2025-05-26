@@ -50,4 +50,15 @@ body {
 
 .button {
     max-height: 20%;
+    font-size: 2rem;
+
+    &--toggle {
+        max-height: unset;
+    }
+}
+
+.toggle-numbers-container {
+    flex: 0.59;
+    background-color: colors.$bg-dark;
+    border-radius: 6px;
 }

@@ -25,14 +25,14 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
 async function initSelectOverlay() {
     // let noOfElementsInTabView = await getNoOfInteractiveElementsInRegion(webpageBounds);
     let elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
-    console.log('elementsInTabView: ', elementsInTabView);
     let rows = 1, cols = 1;
+    let splitIntoSix = false;
+    console.log('elementsInTabView: ', elementsInTabView);
 
     if (elementsInTabView.length <= 36) {
         renderButtonsInSidebar(elementsInTabView);
     }
     else {
-        let splitIntoSix = false;
 
         // Splits the tabView screen into 4 quadrants
         ({ regions, rows, cols } = calculateRegionLayout(4));
@@ -46,21 +46,11 @@ async function initSelectOverlay() {
                 splitIntoSix = true;
                 break; // Exit the loop early
             }
-
-            await renderButtonsInSidebarForGrid(idx);
-            buttons = document.querySelectorAll('button');
-            await updateScenarioId(49, buttons, ViewNames.SELECT);
         }
 
         if (splitIntoSix) {
             let splitRegionIntoFour = false;
             ({ regions, rows, cols } = calculateRegionLayout(6));
-
-            for (let idx = 0; idx < regions.length; idx++) {
-                await renderButtonsInSidebarForGrid(idx);
-                buttons = document.querySelectorAll('button');
-                await updateScenarioId(51, buttons, ViewNames.SELECT);
-            }
 
             // WAIT for user to select Region and then CHECK if that region has got more than 36 elements
             // If so split the Region into 4
@@ -68,6 +58,11 @@ async function initSelectOverlay() {
     }
 
     createGrid(regions.length, rows, cols);
+
+    await renderButtonsInSidebarForGrid(regions.length);
+    buttons = document.querySelectorAll('button');
+    if (splitIntoSix) await updateScenarioId(51, buttons, ViewNames.SELECT);
+    else await updateScenarioId(49, buttons, ViewNames.SELECT);
 }
 
 function calculateRegionLayout(numRegions) {
@@ -174,7 +169,7 @@ async function renderButtonsInSidebar(elementsInTabView) {
 
             const start = groupIdx * 6 + 1;
             const end = start + group.length - 1;
-            const label = `${start}-${end}`;
+            const label = `${start} – ${end}`;
             button.textContent = label;
 
             sidebar.appendChild(button);
@@ -200,11 +195,21 @@ async function renderButtonsInSidebar(elementsInTabView) {
             sidebar.appendChild(button);
         });
 
-        const toggleNumbersButton = document.createElement('button');
-        toggleNumbersButton.setAttribute('id', 'toggleNumbersBtn');
-        toggleNumbersButton.innerHTML = createMaterialIcon('l', 'toggle_on');
+        const navbar = document.getElementById('navbar');
+        const toggleNumbersContainer = document.createElement('div');
+        toggleNumbersContainer.classList.add('toggle-numbers-container');
 
-        sidebar.appendChild(toggleNumbersButton);
+        const toggleNumbersButton = document.createElement('button');
+        toggleNumbersButton.classList.add('button', 'button--toggle');
+        toggleNumbersButton.setAttribute('id', 'toggleNumbersBtn');
+        toggleNumbersButton.innerHTML = createMaterialIcon('sm', 'toggle_on');
+
+        const toggleSpan = document.createElement('span');
+        toggleSpan.textContent = 'Toggle Numbers Visibility';
+
+        toggleNumbersButton.insertBefore(toggleSpan, toggleNumbersButton.firstChild);
+        toggleNumbersContainer.appendChild(toggleNumbersButton);
+        navbar.appendChild(toggleNumbersContainer);
 
         buttons = document.querySelectorAll('button');
         switch (buttons.length) {
@@ -218,11 +223,13 @@ async function renderButtonsInSidebar(elementsInTabView) {
     }
 }
 
-async function renderButtonsInSidebarForGrid(idx) {
-    const button = document.createElement('button');
-    button.setAttribute('id', `${idPrefix[idx]}GroupBtn`);
-    button.classList.add('button');
-    button.textContent = String.fromCharCode(65 + idx);
+async function renderButtonsInSidebarForGrid(numButtons) {
+    for (let idx = 0; idx < numButtons; idx++) {
+        const button = document.createElement('button');
+        button.setAttribute('id', `${idPrefix[idx]}GroupBtn`);
+        button.classList.add('button');
+        button.textContent = String.fromCharCode(65 + idx);
 
-    await sidebar.appendChild(button);
+        await sidebar.appendChild(button);
+    }
 };

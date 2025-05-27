@@ -11,6 +11,7 @@ let webpageBounds = null;
 let sidebar;
 let elementsInTabView = [];
 let currentElements = [];
+let previousElementsStack = [];
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
@@ -18,52 +19,47 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
         sidebar = document.getElementById('sidebar-buttons');
 
         await initSelectOverlay();
-        attachEventListeners();
     } catch (error) {
         console.error('Error in select-loaded handler:', error);
     }
 });
 
 async function initSelectOverlay() {
-    // let noOfElementsInTabView = await getNoOfInteractiveElementsInRegion(webpageBounds);
     elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
-    let rows = 1, cols = 1;
-    let splitIntoSix = false;
     console.log('elementsInTabView: ', elementsInTabView);
+    currentElements = elementsInTabView; // Set context to all elements
 
-    if (elementsInTabView.length <= 36) {
-        currentElements = elementsInTabView; // Set context to all elements
-        renderButtonsInSidebar(currentElements);
-    }
-    else {
-        
-        // Splits the tabView screen into 4 quadrants
-        ({ regions, rows, cols } = calculateRegionLayout(4));
+    if (elementsInTabView.length <= 36) await renderNumericalButtonsInSidebar(currentElements);
+    else await splitIntoRegions();
+}
 
-        for (let idx = 0; idx < regions.length; idx++) {
-            const region = regions[idx];
-            const elementsInQuadrant = await getInteractiveElementsInRegion(elementsInTabView, region);
-            let noOfElementsInQuadrant = elementsInQuadrant.length;
-            console.log(`No of elements in quadrant ${idx + 1}: ${noOfElementsInQuadrant}`);
+async function splitIntoRegions() {
+    let splitIntoSix = false;
+    let rows = 1, cols = 1;
 
-            if (noOfElementsInQuadrant > 36) {
-                splitIntoSix = true;
-                break; // Exit the loop early
-            }
-        }
+    // Splits the tabView screen into 4 quadrants
+    ({ regions, rows, cols } = calculateRegionLayout(4));
 
-        if (splitIntoSix) {
-            let splitRegionIntoFour = false;
+    for (let idx = 0; idx < regions.length; idx++) {
+        const region = regions[idx];
+        const elementsInQuadrant = await getInteractiveElementsInRegion(elementsInTabView, region);
+        let noOfElementsInQuadrant = elementsInQuadrant.length;
+        console.log(`No of elements in quadrant ${idx + 1}: ${noOfElementsInQuadrant}`);
+
+        if (noOfElementsInQuadrant > 36) {
+            // Updating the regions to split the quadrant into 6 regions
             ({ regions, rows, cols } = calculateRegionLayout(6));
 
-            // WAIT for user to select Region and then CHECK if that region has got more than 36 elements
-            // If so split the Region into 4
+            splitIntoSix = true;
+            break;
         }
     }
 
-    createGrid(regions.length, rows, cols);
+    // Displays the grid layout and sidebar buttons based on the number of regions
+    displayGrid(regions.length, rows, cols);
+    await renderLetterButtonsInSidebar(regions.length);
 
-    await renderButtonsInSidebarForGrid(regions.length);
+    // Update the scenario ID based on the number of buttons created
     buttons = document.querySelectorAll('button');
     if (splitIntoSix) await updateScenarioId(51, buttons, ViewNames.SELECT);
     else await updateScenarioId(49, buttons, ViewNames.SELECT);
@@ -112,7 +108,7 @@ async function getInteractiveElementsInRegion(elements, region) {
     return elementsInRegion;
 }
 
-function createGrid(noOfRegions, rows, cols) {
+function displayGrid(noOfRegions, rows, cols) {
     const gridContainer = document.getElementById('webpage');
     gridContainer.classList.add('grid__container');
     gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
@@ -132,65 +128,14 @@ function createGrid(noOfRegions, rows, cols) {
     });
 }
 
-function attachEventListeners() {
-    buttons.forEach((button, index) => {
-        button.addEventListener('click', async () => {
-            if (button.dataset.listenerAttached === "true") return;
-
-            addButtonSelectionAnimation(button);
-            const buttonId = button.getAttribute('id');
-            const buttonText = button.textContent.trim();
-
-            setTimeout(async () => {
-                await stopManager();
-
-                if (/^[A-Z]$/.test(buttonText)) {
-                    // Region button clicked
-                    const regionIdx = buttonText.charCodeAt(0) - 65;
-                    const region = regions[regionIdx];
-                    if (region) {
-                        const elementsInRegion = await getInteractiveElementsInRegion(elementsInTabView, region);
-                        currentElements = elementsInRegion; // Set context to region
-                        await renderButtonsInSidebar(elementsInRegion, 0, elementsInRegion.length);
-                    }
-                    return;
-                }
-
-                switch (buttonId) {
-                    case 'firstGroupBtn':
-                    case 'secondGroupBtn':
-                    case 'thirdGroupBtn':
-                    case 'fourthGroupBtn':
-                    case 'fifthGroupBtn':
-                    case 'sixthGroupBtn': {
-                        const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
-                        if (groupIdx !== -1) {
-                            const startIdx = groupIdx * 6;
-                            const endIdx = Math.min(startIdx + 6, currentElements.length);
-                            const groupElements = currentElements.slice(startIdx, endIdx);
-                            await renderButtonsInSidebar(groupElements, startIdx, endIdx);
-                        }
-                        break;
-                    }
-                    case "closeSelectBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
-                        break;
-                }
-            }, CssConstants.SELECTION_ANIMATION_DURATION);
-
-            button.dataset.listenerAttached = "true";
-
-        });
-    });
-}
-
 /** 
  * Renders sidebar buttons: one per element if ≤6, or grouped in ranges
  * of 6 (e.g., 1-6, 7-12, ...) if more than 6 elements, up to 36.
  */
-async function renderButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
-    const sidebar = document.getElementById('sidebar-buttons');
+async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
+    const navbar = document.getElementById('navbar');
     sidebar.innerHTML = ''; // Clear existing buttons
+    navbar.innerHTML = '';  // Clear existing navbar content
 
     if (elements.length > 6) {
         // Group into ranges of 6
@@ -232,7 +177,6 @@ async function renderButtonsInSidebar(elements, startIdx = 0, endIdx = elements.
             sidebar.appendChild(button);
         }
 
-        const navbar = document.getElementById('navbar');
         const toggleNumbersContainer = document.createElement('div');
         toggleNumbersContainer.classList.add('toggle-numbers-container');
 
@@ -258,11 +202,19 @@ async function renderButtonsInSidebar(elements, startIdx = 0, endIdx = elements.
             case 8: await updateScenarioId(45, buttons, ViewNames.SELECT); break;
         }
     }
+    
+    previousElementsStack.push(elements);
+    console.log('Populated previousElementsStack:', previousElementsStack);
+
+    const closeSelectBtnIcon = document.getElementById('closeSelectBtn').querySelector('i');
+    closeSelectBtnIcon.innerText = previousElementsStack.length > 1 ? 'arrow_back' : 'close';
 
     attachEventListeners();
 }
 
-async function renderButtonsInSidebarForGrid(numButtons) {
+async function renderLetterButtonsInSidebar(numButtons) {
+    sidebar.innerHTML = ''; // Clear existing buttons
+
     for (let idx = 0; idx < numButtons; idx++) {
         const button = document.createElement('button');
         button.setAttribute('id', `${idPrefix[idx]}GroupBtn`);
@@ -271,4 +223,84 @@ async function renderButtonsInSidebarForGrid(numButtons) {
 
         await sidebar.appendChild(button);
     }
+
+    previousElementsStack.push(currentElements);
+    console.log('Populated previousElementsStack:', previousElementsStack);
+
+    const closeSelectBtnIcon = document.getElementById('closeSelectBtn').querySelector('i');
+    closeSelectBtnIcon.innerText = previousElementsStack.length > 1 ? 'arrow_back' : 'close';
+
+    attachEventListeners();
 };
+
+function attachEventListeners() {
+    const sidebar = document.querySelector('#sidebar');
+    if (!sidebar) return;
+
+    // Ensures only one global listener is attached
+    if (sidebar.dataset.listenerAttached === 'true') return;
+    sidebar.dataset.listenerAttached = 'true';
+
+    sidebar.addEventListener('click', async (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+
+        addButtonSelectionAnimation(button);
+        const buttonId = button.getAttribute('id');
+        const buttonText = button.textContent.trim();
+
+        setTimeout(async () => {
+            await stopManager();
+
+            if (/^[A-Z]$/.test(buttonText)) {
+                // Region button clicked
+                const gridContainer = document.getElementById('webpage');
+                if (gridContainer) gridContainer.innerHTML = ''; // Removes the grid
+
+                const regionIdx = buttonText.charCodeAt(0) - 65;
+                const region = regions[regionIdx];
+                if (region) {
+                    const elementsInRegion = await getInteractiveElementsInRegion(elementsInTabView, region);
+                    currentElements = elementsInRegion; // Set context to region
+                    await renderNumericalButtonsInSidebar(elementsInRegion, 0, elementsInRegion.length);
+                }
+                return;
+            }
+
+            switch (buttonId) {
+                case 'firstGroupBtn':
+                case 'secondGroupBtn':
+                case 'thirdGroupBtn':
+                case 'fourthGroupBtn':
+                case 'fifthGroupBtn':
+                case 'sixthGroupBtn': {
+                    const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
+                    if (groupIdx !== -1) {
+                        const startIdx = groupIdx * 6;
+                        const endIdx = Math.min(startIdx + 6, currentElements.length);
+                        const groupElements = currentElements.slice(startIdx, endIdx);
+                        currentElements = groupElements;
+                        await renderNumericalButtonsInSidebar(groupElements, startIdx, endIdx);
+                    }
+                    break;
+                }
+                case "closeSelectBtn":
+                    console.log('CLOSE button clicked with previousElementsStack before popping:', previousElementsStack);
+                    if (previousElementsStack.length > 1) {
+                        previousElementsStack.pop();
+                        console.log('After popping previousElementsStack:', previousElementsStack);
+                        currentElements = previousElementsStack.pop();
+                        console.log('Current elements (last in the list):', currentElements);
+                        if (currentElements.length <= 36) await renderNumericalButtonsInSidebar(currentElements);
+                        else await splitIntoRegions();
+                    } else {
+                        // No previous elements, close the overlay
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                    }
+                    break;
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+
+        button.dataset.listenerAttached = "true";
+    });
+}

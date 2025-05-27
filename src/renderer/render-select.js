@@ -9,6 +9,8 @@ let buttons = [];
 let regions = [];
 let webpageBounds = null;
 let sidebar;
+let elementsInTabView = [];
+let currentElements = [];
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
@@ -24,22 +26,24 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
 
 async function initSelectOverlay() {
     // let noOfElementsInTabView = await getNoOfInteractiveElementsInRegion(webpageBounds);
-    let elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
+    elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
     let rows = 1, cols = 1;
     let splitIntoSix = false;
     console.log('elementsInTabView: ', elementsInTabView);
 
     if (elementsInTabView.length <= 36) {
-        renderButtonsInSidebar(elementsInTabView);
+        currentElements = elementsInTabView; // Set context to all elements
+        renderButtonsInSidebar(currentElements);
     }
     else {
-
+        
         // Splits the tabView screen into 4 quadrants
         ({ regions, rows, cols } = calculateRegionLayout(4));
 
         for (let idx = 0; idx < regions.length; idx++) {
             const region = regions[idx];
-            let noOfElementsInQuadrant = await getNoOfInteractiveElementsInRegion(elementsInTabView, region);
+            const elementsInQuadrant = await getInteractiveElementsInRegion(elementsInTabView, region);
+            let noOfElementsInQuadrant = elementsInQuadrant.length;
             console.log(`No of elements in quadrant ${idx + 1}: ${noOfElementsInQuadrant}`);
 
             if (noOfElementsInQuadrant > 36) {
@@ -95,7 +99,7 @@ function calculateRegionLayout(numRegions) {
     return { regions, rows, cols };
 }
 
-async function getNoOfInteractiveElementsInRegion(elements, region) {
+async function getInteractiveElementsInRegion(elements, region) {
     const elementsInRegion = elements.filter(element => {
         // This includes elements whose top-left corner (x, y) is within the region
         return (
@@ -105,7 +109,7 @@ async function getNoOfInteractiveElementsInRegion(elements, region) {
             element.y <= region.y + region.height
         );
     });
-    return elementsInRegion.length;
+    return elementsInRegion;
 }
 
 function createGrid(noOfRegions, rows, cols) {
@@ -131,18 +135,51 @@ function createGrid(noOfRegions, rows, cols) {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            if (button.dataset.listenerAttached === "true") return;
+
             addButtonSelectionAnimation(button);
             const buttonId = button.getAttribute('id');
+            const buttonText = button.textContent.trim();
 
             setTimeout(async () => {
                 await stopManager();
 
+                if (/^[A-Z]$/.test(buttonText)) {
+                    // Region button clicked
+                    const regionIdx = buttonText.charCodeAt(0) - 65;
+                    const region = regions[regionIdx];
+                    if (region) {
+                        const elementsInRegion = await getInteractiveElementsInRegion(elementsInTabView, region);
+                        currentElements = elementsInRegion; // Set context to region
+                        await renderButtonsInSidebar(elementsInRegion, 0, elementsInRegion.length);
+                    }
+                    return;
+                }
+
                 switch (buttonId) {
+                    case 'firstGroupBtn':
+                    case 'secondGroupBtn':
+                    case 'thirdGroupBtn':
+                    case 'fourthGroupBtn':
+                    case 'fifthGroupBtn':
+                    case 'sixthGroupBtn': {
+                        const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
+                        if (groupIdx !== -1) {
+                            const startIdx = groupIdx * 6;
+                            const endIdx = Math.min(startIdx + 6, currentElements.length);
+                            const groupElements = currentElements.slice(startIdx, endIdx);
+                            await renderButtonsInSidebar(groupElements, startIdx, endIdx);
+                        }
+                        break;
+                    }
                     case "closeSelectBtn":
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);
+
+            button.dataset.listenerAttached = "true";
+
         });
     });
 }
@@ -151,15 +188,15 @@ function attachEventListeners() {
  * Renders sidebar buttons: one per element if ≤6, or grouped in ranges
  * of 6 (e.g., 1-6, 7-12, ...) if more than 6 elements, up to 36.
  */
-async function renderButtonsInSidebar(elementsInTabView) {
+async function renderButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
     const sidebar = document.getElementById('sidebar-buttons');
     sidebar.innerHTML = ''; // Clear existing buttons
 
-    if (elementsInTabView.length > 6) {
+    if (elements.length > 6) {
         // Group into ranges of 6
         const groups = [];
-        for (let i = 0; i < elementsInTabView.length; i += 6) {
-            groups.push(elementsInTabView.slice(i, i + 6));
+        for (let i = 0; i < elements.length; i += 6) {
+            groups.push(elements.slice(i, i + 6));
         }
 
         groups.forEach((group, groupIdx) => {
@@ -186,14 +223,14 @@ async function renderButtonsInSidebar(elementsInTabView) {
         }
     } else {
         // Just create one button per element
-        elementsInTabView.forEach((element, idx) => {
+        for (let idx = startIdx; idx < endIdx; idx++) {
             const button = document.createElement('button');
-            button.setAttribute('id', `${idPrefix[idx]}ElementBtn`);
+            button.setAttribute('id', `${idPrefix[idx - startIdx]}ElementBtn`);
             button.classList.add('button');
             button.textContent = (idx + 1).toString();
-
+            console.log(`Button created for element ${idx + 1}:`, button);
             sidebar.appendChild(button);
-        });
+        }
 
         const navbar = document.getElementById('navbar');
         const toggleNumbersContainer = document.createElement('div');
@@ -221,6 +258,8 @@ async function renderButtonsInSidebar(elementsInTabView) {
             case 8: await updateScenarioId(45, buttons, ViewNames.SELECT); break;
         }
     }
+
+    attachEventListeners();
 }
 
 async function renderButtonsInSidebarForGrid(numButtons) {

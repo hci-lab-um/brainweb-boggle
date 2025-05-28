@@ -11,6 +11,7 @@ let buttons = [];
 let regions = [];
 let webpageBounds = null;
 let sidebar;
+let navbar;
 let webpage;
 let elementsInTabView = [];
 let currentElements = [];
@@ -20,6 +21,7 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
         ({ webpageBounds } = overlayData);
         sidebar = document.getElementById('sidebar-buttons');
+        navbar = document.getElementById('navbar');
         webpage = document.getElementById('webpage');
 
         await initSelectOverlay(); // Begin initialisation
@@ -98,8 +100,8 @@ async function splitIntoRegions() {
 
     // Updating the scenario according to whether the screen is split into 4 or 6 regions
     buttons = document.querySelectorAll('button');
-    if (splitIntoSix) await updateScenarioId(51, buttons, ViewNames.SELECT);
-    else await updateScenarioId(49, buttons, ViewNames.SELECT);
+    if (splitIntoSix) await updateScenarioId(47, buttons, ViewNames.SELECT);
+    else await updateScenarioId(46, buttons, ViewNames.SELECT);
 }
 
 // Computes region layout (grid dimensions and bounding boxes)
@@ -162,7 +164,6 @@ function displayGrid(rows, cols) {
 
 // Renders number buttons in sidebar; groups elements into sets of 6 if required
 async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
-    const navbar = document.getElementById('navbar');
     sidebar.innerHTML = '';
     navbar.innerHTML = '';
 
@@ -178,8 +179,9 @@ async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = 
 
         groups.forEach((group, groupIdx) => {
             const button = document.createElement('button');
-            button.setAttribute('id', `${idPrefix[groupIdx]}GroupBtn`);
+            button.setAttribute('id', `${idPrefix[groupIdx]}Btn`);
             button.classList.add('button');
+            button.classList.add('isGroupButton');
 
             const start = groupIdx * 6 + 1;
             const end = start + group.length - 1;
@@ -187,53 +189,43 @@ async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = 
 
             sidebar.appendChild(button);
         });
-
-        // Assign scenario ID depending on number of group buttons
-        buttons = document.querySelectorAll('button');
-        switch (buttons.length) {
-            case 2: await updateScenarioId(46, buttons, ViewNames.SELECT); break;
-            case 3: await updateScenarioId(47, buttons, ViewNames.SELECT); break;
-            case 4: await updateScenarioId(48, buttons, ViewNames.SELECT); break;
-            case 5: await updateScenarioId(49, buttons, ViewNames.SELECT); break;
-            case 6: await updateScenarioId(50, buttons, ViewNames.SELECT); break;
-            case 7: await updateScenarioId(51, buttons, ViewNames.SELECT); break;
-        }
     } else {
         // One button per element (1, 2, 3, ...)
         for (let idx = startIdx; idx < endIdx; idx++) {
             const button = document.createElement('button');
-            button.setAttribute('id', `${idPrefix[idx - startIdx]}ElementBtn`);
+            button.setAttribute('id', `${idPrefix[idx - startIdx]}Btn`);
             button.classList.add('button');
+            button.classList.add('isElementButton');
             button.textContent = (idx + 1).toString();
             sidebar.appendChild(button);
         }
+    }
 
-        // Add toggle to hide/show element numbers
-        const toggleNumbersContainer = document.createElement('div');
-        toggleNumbersContainer.classList.add('toggle-numbers-container');
+    // Add toggle to hide/show element numbers
+    const toggleNumbersContainer = document.createElement('div');
+    toggleNumbersContainer.classList.add('toggle-numbers-container');
 
-        const toggleNumbersButton = document.createElement('button');
-        toggleNumbersButton.classList.add('button', 'button--toggle');
-        toggleNumbersButton.setAttribute('id', 'toggleNumbersBtn');
-        toggleNumbersButton.innerHTML = createMaterialIcon('sm', 'toggle_on');
+    const toggleNumbersButton = document.createElement('button');
+    toggleNumbersButton.classList.add('button', 'button--toggle');
+    toggleNumbersButton.setAttribute('id', 'toggleNumbersBtn');
+    toggleNumbersButton.innerHTML = createMaterialIcon('sm', 'toggle_on');
 
-        const toggleSpan = document.createElement('span');
-        toggleSpan.textContent = 'Toggle Numbers Visibility';
+    const toggleSpan = document.createElement('span');
+    toggleSpan.textContent = 'Toggle Numbers Visibility';
 
-        toggleNumbersButton.insertBefore(toggleSpan, toggleNumbersButton.firstChild);
-        toggleNumbersContainer.appendChild(toggleNumbersButton);
-        navbar.appendChild(toggleNumbersContainer);
+    toggleNumbersButton.insertBefore(toggleSpan, toggleNumbersButton.firstChild);
+    toggleNumbersContainer.appendChild(toggleNumbersButton);
+    navbar.appendChild(toggleNumbersContainer);
 
-        // Assign scenario ID for this setup
-        buttons = document.querySelectorAll('button');
-        switch (buttons.length) {
-            case 3: await updateScenarioId(40, buttons, ViewNames.SELECT); break;
-            case 4: await updateScenarioId(41, buttons, ViewNames.SELECT); break;
-            case 5: await updateScenarioId(42, buttons, ViewNames.SELECT); break;
-            case 6: await updateScenarioId(43, buttons, ViewNames.SELECT); break;
-            case 7: await updateScenarioId(44, buttons, ViewNames.SELECT); break;
-            case 8: await updateScenarioId(45, buttons, ViewNames.SELECT); break;
-        }
+    // Assign scenario ID depending on number of group buttons
+    buttons = document.querySelectorAll('button');
+    switch (buttons.length) {
+        case 3: await updateScenarioId(40, buttons, ViewNames.SELECT); break;
+        case 4: await updateScenarioId(41, buttons, ViewNames.SELECT); break;
+        case 5: await updateScenarioId(42, buttons, ViewNames.SELECT); break;
+        case 6: await updateScenarioId(43, buttons, ViewNames.SELECT); break;
+        case 7: await updateScenarioId(44, buttons, ViewNames.SELECT); break;
+        case 8: await updateScenarioId(45, buttons, ViewNames.SELECT); break;
     }
 
     // Track current state for possible navigation back
@@ -249,8 +241,9 @@ async function renderLetterButtonsInSidebar(numButtons) {
     sidebar.innerHTML = '';
     for (let idx = 0; idx < numButtons; idx++) {
         const button = document.createElement('button');
-        button.setAttribute('id', `${idPrefix[idx]}GroupBtn`);
+        button.setAttribute('id', `${idPrefix[idx]}Btn`);
         button.classList.add('button');
+        button.classList.add('isRegionButton'); // Identifier for event listener
         button.textContent = String.fromCharCode(65 + idx); // A, B, C...
         await sidebar.appendChild(button);
     }
@@ -282,7 +275,7 @@ function attachEventListeners() {
             await stopManager();
 
             // Handle region button click (A, B, C...)
-            if (/^[A-Z]$/.test(buttonText)) {
+            if (button.classList.contains('isRegionButton')) {
                 const gridContainer = document.getElementById('webpage');
                 if (gridContainer) gridContainer.innerHTML = '';
 
@@ -295,38 +288,34 @@ function attachEventListeners() {
                 }
                 return;
             }
-
             // Handle grouped element buttons (1–6, 7–12, etc.)
-            switch (buttonId) {
-                case 'firstGroupBtn':
-                case 'secondGroupBtn':
-                case 'thirdGroupBtn':
-                case 'fourthGroupBtn':
-                case 'fifthGroupBtn':
-                case 'sixthGroupBtn': {
-                    const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
-                    if (groupIdx !== -1) {
-                        const startIdx = groupIdx * 6;
-                        const endIdx = Math.min(startIdx + 6, currentElements.length);
-                        const groupElements = currentElements.slice(startIdx, endIdx);
-                        currentElements = groupElements;
-                        await renderNumericalButtonsInSidebar(groupElements, startIdx, endIdx);
-                    }
-                    break;
+            else if (button.classList.contains('isGroupButton')) {
+                const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
+                if (groupIdx !== -1) {
+                    const startIdx = groupIdx * 6;
+                    const endIdx = Math.min(startIdx + 6, currentElements.length);
+                    const groupElements = currentElements.slice(startIdx, endIdx);
+                    currentElements = groupElements;
+                    await renderNumericalButtonsInSidebar(groupElements, startIdx, endIdx);
                 }
-                case "closeSelectBtn":
-                    // Handles back button clicks
-                    removeLabelsAndHighlightFromElements(currentElements);
-                    if (previousElementsStack.length > 1) {
-                        previousElementsStack.pop();
-                        currentElements = previousElementsStack.pop();
-                        if (currentElements.length <= 36) await renderNumericalButtonsInSidebar(currentElements);
-                        else await splitIntoRegions();
-                    } else {
-                        // No previous state, exit overlay
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                return;
+            }
+            // Handle the CLOSE/BACK button
+            else if (buttonId === 'closeSelectBtn') {
+                removeLabelsAndHighlightFromElements(currentElements);
+                if (previousElementsStack.length > 1) {
+                    previousElementsStack.pop();
+                    currentElements = previousElementsStack.pop();
+
+                    if (currentElements.length <= 36) await renderNumericalButtonsInSidebar(currentElements);
+                    else {
+                        navbar.innerHTML = '' // Removing the 'Toggle Numbers Visibility' button
+                        await splitIntoRegions();
                     }
-                    break;
+                } else {
+                    // No previous state, exit overlay
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                }
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
 

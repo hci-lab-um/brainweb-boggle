@@ -9,6 +9,7 @@ let buttons = [];
 let regions = [];
 let webpageBounds = null;
 let sidebar;
+let webpage;
 let elementsInTabView = [];
 let currentElements = [];
 let previousElementsStack = [];
@@ -17,6 +18,7 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
         ({ webpageBounds } = overlayData);
         sidebar = document.getElementById('sidebar-buttons');
+        webpage = document.getElementById('webpage');
 
         await initSelectOverlay();
     } catch (error) {
@@ -29,8 +31,40 @@ async function initSelectOverlay() {
     console.log('elementsInTabView: ', elementsInTabView);
     currentElements = elementsInTabView; // Set context to all elements
 
-    if (elementsInTabView.length <= 36) await renderNumericalButtonsInSidebar(currentElements);
-    else await splitIntoRegions();
+    if (elementsInTabView.length <= 36) {
+        await renderNumericalButtonsInSidebar(currentElements);
+    } else await splitIntoRegions();
+}
+
+function addLabelsAndHighlightToElements(elements, startIdx) {
+    try {
+        ipcRenderer.send('interactiveElements-addHighlight', elements);
+
+        elements.forEach((element, idx) => {
+            const label = document.createElement('span');
+            label.classList.add('element-number');
+            label.textContent = startIdx + idx + 1; // Start numbering from 1
+
+            webpageBounds = webpage.getBoundingClientRect();
+            label.style.left = `${element.x + webpageBounds.x}px`;
+            label.style.top = `${element.y + webpageBounds.y}px`;
+
+            webpage.appendChild(label);
+        });
+    } catch (error) {
+        console.error('Error in interactiveElements-displayNumbers handler:', error);
+    }
+}
+
+function removeLabelsAndHighlightFromElements(elements) {
+    try {
+        ipcRenderer.send('interactiveElements-removeHighlight', elements);
+
+        const labels = webpage.querySelectorAll('.element-number');
+        if (labels) labels.forEach(label => label.remove());
+    } catch (error) {
+        console.error('Error in interactiveElements-removeHighlight handler:', error);
+    }
 }
 
 async function splitIntoRegions() {
@@ -56,7 +90,7 @@ async function splitIntoRegions() {
     }
 
     // Displays the grid layout and sidebar buttons based on the number of regions
-    displayGrid(regions.length, rows, cols);
+    displayGrid(rows, cols);
     await renderLetterButtonsInSidebar(regions.length);
 
     // Update the scenario ID based on the number of buttons created
@@ -83,12 +117,14 @@ function calculateRegionLayout(numRegions) {
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
             if (count >= numRegions) break;
-            regions.push({
+            let region = {
                 x: col * regionWidth,
                 y: row * regionHeight,
                 width: regionWidth,
                 height: regionHeight
-            });
+            };
+            console.log(`Region ${count + 1}:`, region);
+            regions.push(region);
             count++;
         }
     }
@@ -108,7 +144,7 @@ async function getInteractiveElementsInRegion(elements, region) {
     return elementsInRegion;
 }
 
-function displayGrid(noOfRegions, rows, cols) {
+function displayGrid(rows, cols) {
     const gridContainer = document.getElementById('webpage');
     gridContainer.classList.add('grid__container');
     gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
@@ -136,6 +172,9 @@ async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = 
     const navbar = document.getElementById('navbar');
     sidebar.innerHTML = ''; // Clear existing buttons
     navbar.innerHTML = '';  // Clear existing navbar content
+
+    removeLabelsAndHighlightFromElements(elements);
+    addLabelsAndHighlightToElements(elements, startIdx);
 
     if (elements.length > 6) {
         // Group into ranges of 6
@@ -285,6 +324,8 @@ function attachEventListeners() {
                     break;
                 }
                 case "closeSelectBtn":
+                    removeLabelsAndHighlightFromElements(currentElements);
+
                     console.log('CLOSE button clicked with previousElementsStack before popping:', previousElementsStack);
                     if (previousElementsStack.length > 1) {
                         previousElementsStack.pop();

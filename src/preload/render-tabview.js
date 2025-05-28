@@ -10,7 +10,11 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
         ];
         const clickableElements = Array.from(document.querySelectorAll(clickableSelectors.join(', ')));
         const visibleElements = filterVisibleElements(clickableElements);
+        visibleElements.forEach((el, idx) => {
+            el.setAttribute('data-boggle-id', idx + 1);
+        });
         console.log('visibleElements: ', visibleElements);
+
         const serializedElements = visibleElements.map(serializeElement); //creating an element object for each element in the array
         ipcRenderer.send('interactiveElements-response', serializedElements);
     } catch (error) {
@@ -18,6 +22,44 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
     }
 });
 
+ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
+    try {
+        elements.forEach((element) => {
+            const elementInDom = document.querySelector(`[data-boggle-id="${element.boggleId}"]`);
+
+            // Store original styles in data attributes if not already stored
+            if (!elementInDom.hasAttribute('data-original-bg')) {
+                elementInDom.setAttribute('data-original-bg', elementInDom.style.backgroundColor || '');
+            }
+            if (!elementInDom.hasAttribute('data-original-shadow')) {
+                elementInDom.setAttribute('data-original-shadow', elementInDom.style.boxShadow || '');
+            }
+
+            elementInDom.style.backgroundColor = 'rgba(183, 255, 0, 0.50)';
+            elementInDom.style.boxShadow = 'rgba(0, 0, 0, 0.8) 0px 0px 0px 2px inset';
+        });
+    } catch (error) {
+        console.error('Error in interactiveElements-addHighlight handler:', error);
+    }
+});
+
+ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
+    try {
+        const elementsInDom = document.querySelectorAll('[data-boggle-id]');
+
+        elementsInDom.forEach((elementInDom) => {
+
+            // Restore original styles
+            elementInDom.style.backgroundColor = elementInDom.getAttribute('data-original-bg') || '';
+            elementInDom.style.boxShadow = elementInDom.getAttribute('data-original-shadow') || '';
+            // Clean up data attributes
+            elementInDom.removeAttribute('data-original-bg');
+            elementInDom.removeAttribute('data-original-shadow');
+        });
+    } catch (error) {
+        console.error('Error in interactiveElements-removeHighlight handler:', error);
+    }
+});
 
 function filterVisibleElements(elements) {
     try {
@@ -50,6 +92,7 @@ function serializeElement(element) {
     try {
         return {
             id: element.id,
+            boggleId: element.getAttribute('data-boggle-id'),
             title: element.title,
             tagName: element.tagName,
             x: element.getBoundingClientRect().x,

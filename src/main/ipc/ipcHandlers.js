@@ -187,6 +187,22 @@ function registerIpcHandlers(context) {
         });
     });
 
+    ipcMain.on('interactiveElements-addHighlight', (event, elements) => {
+        try {
+            tabView.webContents.send('interactiveElements-addHighlight', elements);
+        } catch (err) {
+            console.error('Error adding highlight to interactive elements:', err.message);
+        }
+    });
+
+    ipcMain.on('interactiveElements-removeHighlight', (event, elements) => {
+        try {
+            tabView.webContents.send('interactiveElements-removeHighlight', elements);
+        } catch (err) {
+            console.error('Error removing highlight from interactive elements:', err.message);
+        }
+    });
+
     ipcMain.on('app-exit', (event) => {
         try {
             app.quit();

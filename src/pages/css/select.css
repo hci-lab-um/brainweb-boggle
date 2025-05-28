@@ -139,19 +139,20 @@ body {
   justify-content: center;
   height: 100vh;
   background-color: transparent;
+  overflow: hidden;
 }
 
 .grid__container {
   display: grid;
 }
 .grid__region {
-  border: 2px solid rgba(183, 255, 0, 0.7019607843);
+  border: 2px solid rgba(183, 255, 0, 0.702);
 }
 .grid__label {
   padding: 5px 10px;
   color: #212529;
   font-size: 1.5rem;
-  background-color: rgba(183, 255, 0, 0.7019607843);
+  background-color: rgba(183, 255, 0, 0.702);
   width: min-content;
 }
 
@@ -190,6 +191,22 @@ body {
   flex: 0.59;
   background-color: #1f1f1f;
   border-radius: 6px;
+}
+
+.element-number {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 23px;
+  height: 23px;
+  background-color: rgba(183, 255, 0, 0.85);
+  color: black;
+  border-radius: 50%;
+  border: 2px solid black;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 /*# sourceMappingURL=select.css.map */

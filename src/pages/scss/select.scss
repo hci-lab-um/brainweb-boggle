@@ -14,6 +14,7 @@ body {
     justify-content: center;
     height: 100vh;
     background-color: transparent;
+    overflow: hidden;
 }
 
 .grid {
@@ -61,4 +62,20 @@ body {
     flex: 0.59;
     background-color: colors.$bg-dark;
     border-radius: 6px;
+}
+
+.element-number {
+    position: absolute;
+    transform: translate(-50%, -50%); // shifts to the top left corner
+    width: 23px;
+    height: 23px;
+    background-color: rgba(183, 255, 0, 0.85);
+    color: black;
+    border-radius: 50%;
+    border: 2px solid black;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
 }

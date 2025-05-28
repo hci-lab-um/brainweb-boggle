@@ -7,7 +7,7 @@ let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
-let viewsList = [];        // This contains all the views that are created. IMP: It excludes the tabs 
+let viewsList = [];        // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 
@@ -55,7 +55,7 @@ function createMainWindow() {
             show: false
         });
 
-        // ADDDDDDDD
+        // Pushing the main window view into the viewsList to keep track of the topmost view. 
         viewsList.push({
             webContentsView: mainWindowContent,
             name: ViewNames.MAIN_WINDOW,
@@ -73,11 +73,10 @@ function createMainWindow() {
 
         mainWindowContent.webContents.loadURL(path.join(__dirname, '../pages/html/index.html')).then(() => {
             try {
-
-                //ADDDDDDDDDDDDDDDDDDDDDDDDDDDdd 0
+                // 0 => the initial scenarioId when loading the mainWindow
                 mainWindowContent.webContents.send('mainWindow-loaded', 0);
 
-                // hard-coding 
+                // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
                 scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
                 
                 ipcMain.on('mainWindow-loaded-complete', (event) => {

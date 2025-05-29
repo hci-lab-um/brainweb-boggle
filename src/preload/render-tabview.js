@@ -95,6 +95,8 @@ function serializeElement(element) {
             boggleId: element.getAttribute('data-boggle-id'),
             title: element.title,
             tagName: element.tagName,
+            type: element.getAttribute('type'),
+            role: element.getAttribute('role'),
             x: element.getBoundingClientRect().x,
             y: element.getBoundingClientRect().y,
             width: element.getBoundingClientRect().width,

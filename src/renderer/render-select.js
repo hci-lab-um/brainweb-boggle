@@ -301,20 +301,64 @@ function attachEventListeners() {
                 return;
             }
             // Handle clicking of element
-            else if (button.classList.contains('isElementButton')) {                
+            else if (button.classList.contains('isElementButton')) {
                 removeLabelsAndHighlightFromElements(currentElements);
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
 
-                const elementToClick = elementsInTabView[button.innerHTML-1]
+                const elementToClick = elementsInTabView[button.innerHTML - 1];
+                const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
+                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : null;
+
                 console.log(elementToClick)
-                webpageBounds = webpage.getBoundingClientRect();
-                const coordinates = {
-                    x: webpageBounds.x + elementToClick.x + elementToClick.width/2,
-                    y: webpageBounds.y + elementToClick.y + elementToClick.height/2
+                console.log(elementTagName)
+                console.log(elementTypeAttribute)
+
+                let loadKeyboard = false;
+
+                switch (elementTagName) {
+                    case 'textarea':
+                        loadKeyboard = true;
+                        break;
+                    case 'input':
+                        switch (elementTypeAttribute) {
+                            case 'text':
+                            case 'password':
+                            case 'search':
+                            case 'number':
+                            case 'tel':
+                            case 'email':
+                            case 'url':
+                            case 'datetime-local':
+                            case 'date':
+                            case 'time':
+                            case 'month':
+                            case 'week':
+                                loadKeyboard = true;
+                                break;
+                        }
+                        break;
                 }
-                console.log('webpageBounds', webpageBounds)
-                console.log('coordinates: ', coordinates);
-                ipcRenderer.send('mouse-click', coordinates);
+
+                if (loadKeyboard) {
+                    try {
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
+                    } catch (error) {
+                        console.error('Error creating keyboard overlay:', error);
+                    }
+                } else {
+                    try {
+                        webpageBounds = webpage.getBoundingClientRect();
+                        const coordinates = {
+                            x: webpageBounds.x + elementToClick.x + elementToClick.width / 2,
+                            y: webpageBounds.y + elementToClick.y + elementToClick.height / 2
+                        }
+                        console.log('webpageBounds', webpageBounds)
+                        console.log('coordinates: ', coordinates);
+                        ipcRenderer.send('mouse-click', coordinates);
+                    } catch (error) {
+                        console.error('Error getting the coordinates of the element', error);
+                    }
+                }
             }
             // Handle the CLOSE/BACK button
             else if (buttonId === 'closeSelectBtn') {

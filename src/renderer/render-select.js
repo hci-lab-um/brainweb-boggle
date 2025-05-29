@@ -300,6 +300,22 @@ function attachEventListeners() {
                 }
                 return;
             }
+            // Handle clicking of element
+            else if (button.classList.contains('isElementButton')) {                
+                removeLabelsAndHighlightFromElements(currentElements);
+                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+
+                const elementToClick = elementsInTabView[button.innerHTML-1]
+                console.log(elementToClick)
+                webpageBounds = webpage.getBoundingClientRect();
+                const coordinates = {
+                    x: webpageBounds.x + elementToClick.x + elementToClick.width/2,
+                    y: webpageBounds.y + elementToClick.y + elementToClick.height/2
+                }
+                console.log('webpageBounds', webpageBounds)
+                console.log('coordinates: ', coordinates);
+                ipcRenderer.send('mouse-click', coordinates);
+            }
             // Handle the CLOSE/BACK button
             else if (buttonId === 'closeSelectBtn') {
                 removeLabelsAndHighlightFromElements(currentElements);

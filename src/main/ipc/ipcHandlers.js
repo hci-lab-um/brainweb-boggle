@@ -1,10 +1,11 @@
-const { app, WebContentsView, ipcMain } = require('electron')
+const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron')
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
+const { mouse, Point } = require('@nut-tree-fork/nut-js');
 
 function registerIpcHandlers(context) {
     let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
-    
+
     ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
 
@@ -201,6 +202,32 @@ function registerIpcHandlers(context) {
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
         }
+    });
+
+    ipcMain.on('mouse-click', async (event, coordinates) => {
+        const win = BaseWindow.getFocusedWindow();
+        const bounds = win.getBounds();
+        const contentBounds = win.getContentBounds();
+        const display = screen.getDisplayMatching(bounds);
+        const scaleFactor = display.scaleFactor;
+
+        // Correct for frame offset
+        const frameOffsetX = contentBounds.x - bounds.x;
+        const frameOffsetY = contentBounds.y - bounds.y;
+
+        // Get global screen coordinates of window
+        const windowScreenX = bounds.x + frameOffsetX;
+        const windowScreenY = bounds.y + frameOffsetY;
+
+        const elementX = windowScreenX + coordinates.x;
+        const elementY = windowScreenY + coordinates.y;
+
+        // Convert to physical pixels if needed
+        const finalX = elementX * scaleFactor;
+        const finalY = elementY * scaleFactor;
+
+        const targetPoint = new Point(finalX, finalY)
+        mouse.move(targetPoint).then(() => mouse.leftClick());
     });
 
     ipcMain.on('app-exit', (event) => {

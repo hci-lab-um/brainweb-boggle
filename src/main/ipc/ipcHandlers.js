@@ -135,6 +135,18 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('url-load', (event, url) => {
+        try {
+            if (tabView && tabView.webContents) {
+                tabView.webContents.loadURL(url);
+            } else {
+                console.error('tabView is not initialized.');
+            }
+        } catch (err) {
+            console.error('Error loading URL in tabView:', err.message);
+        }
+    });
+
     ipcMain.on('webpage-refresh', (event) => {
         try {
             // Eventually use a tabViewsList instead of a single tabView, to find the active tabView

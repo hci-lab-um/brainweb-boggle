@@ -2,6 +2,8 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const fs = require('original-fs')
+const path = require('path')
 
 let buttons = [];
 let textarea;
@@ -13,7 +15,7 @@ let wrapper;
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
         const { scenarioId } = overlayData;
-        
+
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
         wrapper = document.getElementById('textarea-autocomplete');
@@ -206,6 +208,107 @@ async function getScenarioNumber() {
     console.error("No matching scenario");
 }
 
+async function fetchValidTLDs() {
+    try {
+        const tldFilePath = path.join(__dirname, '../../resources/validTLDs.json');
+
+        // Checking if TLDs are already stored in a file
+        if (fs.existsSync(tldFilePath)) {
+            const storedTLDs = fs.readFileSync(tldFilePath, 'utf-8');
+            return new Set(JSON.parse(storedTLDs));
+        }
+        return new Set();
+    } catch (error) {
+        console.error("Failed to fetch TLD list:", error.message);
+        return new Set();
+    }
+}
+
+async function isValidTLD(domain, validTLDs) {
+    try {
+        const domainParts = domain.split(".");
+        const tld = domainParts[domainParts.length - 1].toLowerCase();
+        return validTLDs.has(tld);
+    } catch (error) {
+        return false;
+    }
+}
+
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function isLocalOrIP(hostname) {
+    try {
+        const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const ipv6Regex = /^\[[a-fA-F0-9:]+\]$/;
+        const LOCALHOST = "localhost";
+
+        return ipv4Regex.test(hostname) || ipv6Regex.test(hostname) || hostname.toLowerCase() === LOCALHOST;
+    } catch (error) {
+        logger.error("Error in isLocalOrIP:", error.message);
+        return false;
+    }
+}
+
+async function processUrlInput(input) {
+    try {
+        const VALID_TLDs = await fetchValidTLDs();
+        const URL_REGEX = /^(?:(?:https?:\/\/)?((?:[\w-]+\.)+[a-zA-Z]{2,})(?::\d+)?(?:[\w.,@?^=%&:/~+#-]*)?)$/
+        const FILE_PATH_REGEX = /^(?:[a-zA-Z]:\\(?:[^\\\/:*?"<>|\r\n]+\\)*[^\\\/:*?"<>|\r\n]*|\/(?:[^\\\/:*?"<>|\r\n]+\/)*[^\\\/:*?"<>|\r\n]*)$/;
+        let url = '';
+        let unprocessedInput = input;
+
+        // If input does NOT start with http/https but looks like a valid domain, prepend "https://"
+        if (!input.startsWith("http") && (URL_REGEX.test(input) || isLocalOrIP(input))) {
+            input = `https://${input}`;
+        }
+
+        if (isValidUrl(input)) {
+            let urlObject = new URL(input);
+            console.log(urlObject);
+            let pathname = urlObject.pathname;
+
+            if (urlObject.protocol === "http:") {
+                urlObject.protocol = "https:";
+            }
+
+            if (urlObject.protocol === "file:" && pathname.startsWith("/")) {
+                pathname = pathname.substring(1); // removing the first forward slash
+            }
+
+            // The new URL(input) does not validate the URL strictly, — it just attempts to parse it, hence regex is used to validate the URL more strictly
+            // Note: FILE_PATH_REGEX.test(input.replace(/\//g, '\\')) is used to recheck the input with forward slashes replaced with backslashes
+            if (URL_REGEX.test(urlObject.hostname) || FILE_PATH_REGEX.test(pathname) || FILE_PATH_REGEX.test(pathname.replace(/\//g, '\\')) || isLocalOrIP(urlObject.hostname)) {
+                url = urlObject.toString();
+            } else {
+                url = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+            }
+
+            // If the url has a TLD, check if it is found in the list of valid TLDs
+            if (!isLocalOrIP(urlObject.hostname)) {
+                // If TLD is invalid, treat it as a search query
+                if (!(await isValidTLD(urlObject.hostname, VALID_TLDs))) {
+                    console.warn(`Invalid TLD detected: ${urlObject.hostname}`);
+                    url = `https://www.google.com/search?q=${encodeURIComponent(unprocessedInput)}`;
+                }
+            }
+        } else {
+            // Otherwise, treat it as a search query
+            url = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+        }
+
+        return url;
+    } catch (error) {
+        console.error("Error in browseToUrl:", error.message);
+    }
+}
+
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
@@ -264,6 +367,14 @@ function attachEventListeners() {
                         updateTextareaAtCursor('.com');
                         break;
                     case 'keyboardSendBtn':
+                        const input = textarea.value.trim();
+                        if (!input) break;
+
+                        let processedInput = await processUrlInput(input)
+                        console.log(processedInput);
+
+                        ipcRenderer.send('url-load', processedInput);
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'arrowKeysBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');

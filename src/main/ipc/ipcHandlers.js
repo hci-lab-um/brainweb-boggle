@@ -1,7 +1,7 @@
 const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron')
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
-const { mouse, Point } = require('@nut-tree-fork/nut-js');
+const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 
 function registerIpcHandlers(context) {
     let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
@@ -228,6 +228,22 @@ function registerIpcHandlers(context) {
 
         const targetPoint = new Point(finalX, finalY)
         mouse.move(targetPoint).then(() => mouse.leftClick());
+    });
+
+    ipcMain.on('keyboard-arrow', async (event, direction) => {
+        const keyMap = {
+            up: Key.Up,
+            down: Key.Down,
+            left: Key.Left,
+            right: Key.Right,
+            home: Key.Home,
+            end: Key.End,
+        };
+        const key = keyMap[direction];
+        if (key) {
+            await keyboard.pressKey(key);
+            await keyboard.releaseKey(key);
+        }
     });
 
     ipcMain.on('app-exit', (event) => {

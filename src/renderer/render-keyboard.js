@@ -49,36 +49,23 @@ ipcRenderer.on('textarea-populate', (event, text) => {
 ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
         switch (iconName) {
-            // THESE NEED TO BE UPDATED USING NUT.JS !!!!!!!!!
             case 'first_page':
-                textarea.selectionStart = 0;
-                textarea.selectionEnd = 0;
+                ipcRenderer.send('keyboard-arrow', 'home');
                 break;
             case 'keyboard_arrow_up':
-                textarea.selectionStart = textarea.selectionStart - 1;
-                textarea.selectionEnd = textarea.selectionStart;
+                ipcRenderer.send('keyboard-arrow', 'up');
                 break;
             case 'last_page':
-                textarea.selectionStart = textarea.value.length;
-                textarea.selectionEnd = textarea.value.length;
+                ipcRenderer.send('keyboard-arrow', 'end');
                 break;
             case 'keyboard_arrow_left':
-                if (textarea.selectionStart > 0) {
-                    textarea.selectionStart -= 1;
-                    textarea.selectionEnd = textarea.selectionStart;
-                }
+                ipcRenderer.send('keyboard-arrow', 'left');
                 break;
             case 'keyboard_arrow_down':
-                if (textarea.selectionStart < textarea.value.length) {
-                    textarea.selectionStart += 1;
-                    textarea.selectionEnd = textarea.selectionStart;
-                }
+                ipcRenderer.send('keyboard-arrow', 'down');
                 break;
             case 'keyboard_arrow_right':
-                if (textarea.selectionStart < textarea.value.length) {
-                    textarea.selectionStart += 1;
-                    textarea.selectionEnd = textarea.selectionStart;
-                }
+                ipcRenderer.send('keyboard-arrow', 'right');
                 break;
         }
 
@@ -128,8 +115,8 @@ function updateTextareaAtCursor(insertText = null) {
 
     updateGhostText();
 
-    getScenarioNumber().then(scenarioNumber => async() => {
-        await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+    getScenarioNumber().then(scenarioNumber => {
+        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
     });
 
     textarea.focus();

@@ -9,12 +9,14 @@ let buttons = [];
 let textarea;
 let corpusWords = null;
 let isUpperCase = false;
+let elementProperties;
 let suggestion = '';
 let wrapper;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
         const { scenarioId } = overlayData;
+        ({ elementProperties } = overlayData)
 
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
@@ -52,22 +54,22 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
         switch (iconName) {
             case 'first_page':
-                ipcRenderer.send('keyboard-arrow', 'home');
+                ipcRenderer.send('keyboard-arrow-nutjs', 'home');
                 break;
             case 'keyboard_arrow_up':
-                ipcRenderer.send('keyboard-arrow', 'up');
+                ipcRenderer.send('keyboard-arrow-nutjs', 'up');
                 break;
             case 'last_page':
-                ipcRenderer.send('keyboard-arrow', 'end');
+                ipcRenderer.send('keyboard-arrow-nutjs', 'end');
                 break;
             case 'keyboard_arrow_left':
-                ipcRenderer.send('keyboard-arrow', 'left');
+                ipcRenderer.send('keyboard-arrow-nutjs', 'left');
                 break;
             case 'keyboard_arrow_down':
-                ipcRenderer.send('keyboard-arrow', 'down');
+                ipcRenderer.send('keyboard-arrow-nutjs', 'down');
                 break;
             case 'keyboard_arrow_right':
-                ipcRenderer.send('keyboard-arrow', 'right');
+                ipcRenderer.send('keyboard-arrow-nutjs', 'right');
                 break;
         }
 
@@ -370,10 +372,19 @@ function attachEventListeners() {
                         const input = textarea.value.trim();
                         if (!input) break;
 
-                        let processedInput = await processUrlInput(input)
-                        console.log(processedInput);
+                        if (elementProperties.id === 'omnibox') {
+                            let processedInput = await processUrlInput(input)
+                            ipcRenderer.send('url-load', processedInput);
+                        } else {
+                            const coordinates = {
+                                x: elementProperties.x + elementProperties.width / 2,
+                                y: elementProperties.y + elementProperties.height / 2
+                            }
 
-                        ipcRenderer.send('url-load', processedInput);
+                            ipcRenderer.send('mouse-click-nutjs', coordinates);
+                            ipcRenderer.send('keyboard-type-nutjs', input);
+                        }
+
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'arrowKeysBtn':

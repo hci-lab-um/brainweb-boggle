@@ -68,7 +68,13 @@ function attachEventListeners() {
                         break;
                     case "searchBtn":
                         try {
-                            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
+                            const omnibox = document.getElementById('omnibox');
+                            let elementProperties = {
+                                id: 'omnibox',
+                                value: omnibox.value,
+                                type: omnibox.type,
+                            }
+                            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
                         } catch (error) {
                             console.error('Error creating keyboard overlay:', error);
                         }

@@ -52,13 +52,13 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             const label = document.createElement('span');
             label.classList.add('element-number');
             label.textContent = startIdx + idx + 1;
-            
+
             // ADDING A LABEL NUMBER ATTRIBUTE TO THE OBJECT IN THE CURRENT ELEMENTS ARRAY
             // The label number differs from the id because:
             // - The id is given to all the elements in the tabView 
             // - The label is given only to the elements in the selected region
             // This label number matches the text content of the button in the sidebar
-            currentElements[idx].labelNumber = startIdx + idx + 1; 
+            currentElements[idx].labelNumber = startIdx + idx + 1;
 
             webpageBounds = webpage.getBoundingClientRect();
             label.style.left = `${element.x + webpageBounds.x}px`;
@@ -174,7 +174,7 @@ function displayGrid(rows, cols) {
 async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
     sidebar.innerHTML = '';
     navbar.innerHTML = '';
-    startIndex = startIdx; 
+    startIndex = startIdx;
 
     removeLabelsAndHighlightFromElements(elements);
     addLabelsAndHighlightToElements(elements, startIdx);
@@ -359,22 +359,20 @@ function attachEventListeners() {
 
                 if (loadKeyboard) {
                     try {
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementToClick);
                     } catch (error) {
                         console.error('Error creating keyboard overlay:', error);
                     }
                 } else {
                     try {
-                        webpageBounds = webpage.getBoundingClientRect();
                         const coordinates = {
-                            x: webpageBounds.x + elementToClick.x + elementToClick.width / 2,
-                            y: webpageBounds.y + elementToClick.y + elementToClick.height / 2
+                            x: elementToClick.x + elementToClick.width / 2,
+                            y: elementToClick.y + elementToClick.height / 2
                         }
-                        console.log('webpageBounds', webpageBounds)
-                        console.log('coordinates: ', coordinates);
-                        ipcRenderer.send('mouse-click', coordinates);
+                        
+                        ipcRenderer.send('mouse-click-nutjs', coordinates);
                     } catch (error) {
-                        console.error('Error getting the coordinates of the element', error);
+                        console.error('Error calculating the coordinates of the element', error);
                     }
                 }
                 return;

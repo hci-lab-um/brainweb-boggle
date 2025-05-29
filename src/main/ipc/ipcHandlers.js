@@ -6,7 +6,7 @@ const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 function registerIpcHandlers(context) {
     let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
 
-    ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
+    ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
 
         let overlayContent = new WebContentsView({
@@ -34,6 +34,7 @@ function registerIpcHandlers(context) {
             buttonId: buttonId,
             isUpperCase: isUpperCase,
             webpageBounds: webpageBounds,
+            elementProperties: elementProperties,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -216,7 +217,7 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('mouse-click', async (event, coordinates) => {
+    ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
         const win = BaseWindow.getFocusedWindow();
         const bounds = win.getBounds();
         const contentBounds = win.getContentBounds();
@@ -231,8 +232,11 @@ function registerIpcHandlers(context) {
         const windowScreenX = bounds.x + frameOffsetX;
         const windowScreenY = bounds.y + frameOffsetY;
 
-        const elementX = windowScreenX + coordinates.x;
-        const elementY = windowScreenY + coordinates.y;
+        const webpageX = windowScreenX + webpageBounds.x;
+        const webpageY = windowScreenY + webpageBounds.y;
+
+        const elementX = webpageX + coordinates.x;
+        const elementY = webpageY + coordinates.y;
 
         // Convert to physical pixels if needed
         const finalX = elementX * scaleFactor;
@@ -242,7 +246,7 @@ function registerIpcHandlers(context) {
         mouse.move(targetPoint).then(() => mouse.leftClick());
     });
 
-    ipcMain.on('keyboard-arrow', async (event, direction) => {
+    ipcMain.on('keyboard-arrow-nutjs', async (event, direction) => {
         const keyMap = {
             up: Key.Up,
             down: Key.Down,
@@ -256,6 +260,10 @@ function registerIpcHandlers(context) {
             await keyboard.pressKey(key);
             await keyboard.releaseKey(key);
         }
+    });
+
+    ipcMain.on('keyboard-type-nutjs', async (event, value) => {
+        await keyboard.type(value);
     });
 
     ipcMain.on('app-exit', (event) => {

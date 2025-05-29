@@ -13,9 +13,10 @@ let webpageBounds = null;
 let sidebar;
 let navbar;
 let webpage;
-let elementsInTabView = [];
-let currentElements = [];
-let previousElementsStack = [];
+let elementsInTabView = [];         // These are all the interactive elements visible in the current tab
+let currentElements = [];           // These are a subset of the interactive elements. They pertain to the selected region/group
+let previousElementsStack = [];     // This contains a history of current elements. It is used when pressing the BACK button
+let startIndex;                     // This is used when clicking the 'Toggle Numbers Visibility' button. It is updated in the renderNumericalButtonsInSidebar function
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
@@ -51,6 +52,13 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             const label = document.createElement('span');
             label.classList.add('element-number');
             label.textContent = startIdx + idx + 1;
+            
+            // ADDING A LABEL NUMBER ATTRIBUTE TO THE OBJECT IN THE CURRENT ELEMENTS ARRAY
+            // The label number differs from the id because:
+            // - The id is given to all the elements in the tabView 
+            // - The label is given only to the elements in the selected region
+            // This label number matches the text content of the button in the sidebar
+            currentElements[idx].labelNumber = startIdx + idx + 1; 
 
             webpageBounds = webpage.getBoundingClientRect();
             label.style.left = `${element.x + webpageBounds.x}px`;
@@ -166,6 +174,7 @@ function displayGrid(rows, cols) {
 async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
     sidebar.innerHTML = '';
     navbar.innerHTML = '';
+    startIndex = startIdx; 
 
     removeLabelsAndHighlightFromElements(elements);
     addLabelsAndHighlightToElements(elements, startIdx);
@@ -256,14 +265,14 @@ async function renderLetterButtonsInSidebar(numButtons) {
 };
 
 function attachEventListeners() {
-    const sidebar = document.querySelector('#sidebar');
-    if (!sidebar) return;
+    const overlay = document.getElementById('selectOverlay')
+    if (!overlay) return;
 
     // Avoids attaching multiple listeners
-    if (sidebar.dataset.listenerAttached === 'true') return;
-    sidebar.dataset.listenerAttached = 'true';
+    if (overlay.dataset.listenerAttached === 'true') return;
+    overlay.dataset.listenerAttached = 'true';
 
-    sidebar.addEventListener('click', async (event) => {
+    overlay.addEventListener('click', async (event) => {
         const button = event.target.closest('button');
         if (!button) return;
 
@@ -272,6 +281,19 @@ function attachEventListeners() {
         const buttonText = button.textContent.trim();
 
         setTimeout(async () => {
+            // Handle the 'Toggle Numbers Visibility' button
+            if (buttonId === 'toggleNumbersBtn') {
+                const buttonIcon = button.querySelector('i');
+                if (buttonIcon.innerHTML === 'toggle_on') {
+                    removeLabelsAndHighlightFromElements(currentElements);
+                    buttonIcon.innerHTML = 'toggle_off'
+                } else {
+                    addLabelsAndHighlightToElements(currentElements, startIndex); ''
+                    buttonIcon.innerHTML = 'toggle_on'
+                }
+                return;
+            }
+
             await stopManager();
 
             // Handle region button click (A, B, C...)
@@ -305,13 +327,9 @@ function attachEventListeners() {
                 removeLabelsAndHighlightFromElements(currentElements);
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
 
-                const elementToClick = elementsInTabView[button.innerHTML - 1];
+                const elementToClick = currentElements.find(element => element.labelNumber === Number(button.innerHTML));
                 const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
                 const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : null;
-
-                console.log(elementToClick)
-                console.log(elementTagName)
-                console.log(elementTypeAttribute)
 
                 let loadKeyboard = false;
 
@@ -359,6 +377,7 @@ function attachEventListeners() {
                         console.error('Error getting the coordinates of the element', error);
                     }
                 }
+                return;
             }
             // Handle the CLOSE/BACK button
             else if (buttonId === 'closeSelectBtn') {
@@ -376,6 +395,7 @@ function attachEventListeners() {
                     // No previous state, exit overlay
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                 }
+                return;
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
 

@@ -130,30 +130,19 @@
 
 body {
   height: 100%;
-  display: block;
   font-family: "Roboto", sans-serif;
   margin: 0;
+  background-color: transparent;
+}
+
+#selectOverlay {
+  overflow: hidden;
+  display: block;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background-color: transparent;
-  overflow: hidden;
-}
-
-.grid__container {
-  display: grid;
-}
-.grid__region {
-  border: 2px solid rgba(183, 255, 0, 0.702);
-}
-.grid__label {
-  padding: 5px 10px;
-  color: #212529;
-  font-size: 1.5rem;
-  background-color: rgba(183, 255, 0, 0.702);
-  width: min-content;
 }
 
 #sidebar {
@@ -177,6 +166,20 @@ body {
   gap: 6%;
   flex: 6;
   background-color: rgba(255, 255, 255, 0.07);
+}
+
+.grid__container {
+  display: grid;
+}
+.grid__region {
+  border: 2px solid rgba(183, 255, 0, 0.702);
+}
+.grid__label {
+  padding: 5px 10px;
+  color: #212529;
+  font-size: 1.5rem;
+  background-color: rgba(183, 255, 0, 0.702);
+  width: min-content;
 }
 
 .button {

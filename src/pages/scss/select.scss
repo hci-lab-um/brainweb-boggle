@@ -5,16 +5,33 @@
 
 body {
     height: 100%;
-    display: block;
     font-family: "Roboto", sans-serif;
     margin: 0;
+    background-color: transparent;
+}
+
+#selectOverlay {
+    overflow: hidden;
+    display: block;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: transparent;
-    overflow: hidden;
+}
+
+#sidebar {
+    background-color: colors.$bg-dark;
+    gap: 5%;
+}
+
+#sidebar-buttons {
+    @include components.sidebar;
+    border-radius: 10px;
+    padding: 15px;
+    gap: 6%;
+    flex: 6;
+    background-color: colors.$bg-white-transparent-7;
 }
 
 .grid {
@@ -35,19 +52,6 @@ body {
     }
 }
 
-#sidebar {
-    background-color: colors.$bg-dark;
-    gap: 5%;
-}
-
-#sidebar-buttons {
-    @include components.sidebar;
-    border-radius: 10px;
-    padding: 15px;
-    gap: 6%;
-    flex: 6;
-    background-color: colors.$bg-white-transparent-7;
-}
 
 .button {
     max-height: 20%;

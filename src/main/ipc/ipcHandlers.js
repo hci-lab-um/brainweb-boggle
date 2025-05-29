@@ -1,10 +1,11 @@
-const { app, WebContentsView, ipcMain } = require('electron')
+const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron')
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
+const { mouse, Point } = require('@nut-tree-fork/nut-js');
 
 function registerIpcHandlers(context) {
-    const { mainWindow, mainWindowContent, tabView, viewsList, scenarioIdDict } = context;
-    
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
+
     ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
 
@@ -27,9 +28,17 @@ function registerIpcHandlers(context) {
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
+        let overlayData = {
+            overlayName: overlayName,
+            scenarioId: scenarioId,
+            buttonId: buttonId,
+            isUpperCase: isUpperCase,
+            webpageBounds: webpageBounds,
+        }
+
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
             try {
-                overlayContent.webContents.send(`${overlayName}-loaded`, scenarioId, buttonId, isUpperCase);
+                overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
             } catch (err) {
                 console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
             }
@@ -160,6 +169,65 @@ function registerIpcHandlers(context) {
         } catch (err) {
             console.error('Error resetting webpage zoom:', err.message);
         }
+    });
+
+    ipcMain.handle('interactiveElements-get', (event) => {
+        return new Promise((resolve, reject) => {
+            try {
+                tabView.webContents.send('interactiveElements-get');
+                ipcMain.once('interactiveElements-response', (event, elements) => {
+                    if (elements) {
+                        resolve(elements);
+                    } else {
+                        reject(new Error('No interactive elements found'));
+                    }
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    });
+
+    ipcMain.on('interactiveElements-addHighlight', (event, elements) => {
+        try {
+            tabView.webContents.send('interactiveElements-addHighlight', elements);
+        } catch (err) {
+            console.error('Error adding highlight to interactive elements:', err.message);
+        }
+    });
+
+    ipcMain.on('interactiveElements-removeHighlight', (event, elements) => {
+        try {
+            tabView.webContents.send('interactiveElements-removeHighlight', elements);
+        } catch (err) {
+            console.error('Error removing highlight from interactive elements:', err.message);
+        }
+    });
+
+    ipcMain.on('mouse-click', async (event, coordinates) => {
+        const win = BaseWindow.getFocusedWindow();
+        const bounds = win.getBounds();
+        const contentBounds = win.getContentBounds();
+        const display = screen.getDisplayMatching(bounds);
+        const scaleFactor = display.scaleFactor;
+
+        // Correct for frame offset
+        const frameOffsetX = contentBounds.x - bounds.x;
+        const frameOffsetY = contentBounds.y - bounds.y;
+
+        // Get global screen coordinates of window
+        const windowScreenX = bounds.x + frameOffsetX;
+        const windowScreenY = bounds.y + frameOffsetY;
+
+        const elementX = windowScreenX + coordinates.x;
+        const elementY = windowScreenY + coordinates.y;
+
+        // Convert to physical pixels if needed
+        const finalX = elementX * scaleFactor;
+        const finalY = elementY * scaleFactor;
+
+        const targetPoint = new Point(finalX, finalY)
+        mouse.move(targetPoint).then(() => mouse.leftClick());
     });
 
     ipcMain.on('app-exit', (event) => {

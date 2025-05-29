@@ -9,17 +9,19 @@ $secondary: #ff7f50;
 $accent: #b7ff00;
 
 // Muted Brand colors
-$primary-muted: #29398f7d;
+$primary-muted: #29388e80;
 // $primary-muted: #2a4b4d; // or #2a4e51
 $secondary-muted: #913412;
-$accent-muted: #917e12;
+$accent-transparent: rgba(183, 255, 0, 0.702);
+$accent-transparent-85: rgb(183 255 0 / 85%);
 
 // Backgrounds
 $bg-light: #f8f9fa;
 $bg-dark: #1f1f1f;
 $bg-dark-blue: #061524;
 $bg-white-transparent: rgba(255, 255, 255, 0.11);
-$bg-white-transparent-5: rgba(255, 255, 255, 0.5);
+$bg-white-transparent-50: rgba(255, 255, 255, 0.5);
+$bg-white-transparent-7: rgba(255, 255, 255, 0.07);
 $bg-black-transparent: rgba(0, 0, 0, 0.329);
 
 // Text

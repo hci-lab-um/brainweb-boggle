@@ -1,0 +1,81 @@
+@use "colors";
+@use "icons";
+@use "animation";
+@use "components";
+
+body {
+    height: 100%;
+    display: block;
+    font-family: "Roboto", sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: transparent;
+    overflow: hidden;
+}
+
+.grid {
+    &__container {
+        display: grid;
+    }
+
+    &__region {
+        border: 2px solid colors.$accent-transparent;
+    }
+
+    &__label {
+        padding: 5px 10px;
+        color: colors.$text-primary;
+        font-size: 1.5rem;
+        background-color: colors.$accent-transparent;
+        width: min-content;
+    }
+}
+
+#sidebar {
+    background-color: colors.$bg-dark;
+    gap: 5%;
+}
+
+#sidebar-buttons {
+    @include components.sidebar;
+    border-radius: 10px;
+    padding: 15px;
+    gap: 6%;
+    flex: 6;
+    background-color: colors.$bg-white-transparent-7;
+}
+
+.button {
+    max-height: 20%;
+    font-size: 2rem;
+
+    &--toggle {
+        max-height: unset;
+    }
+}
+
+.toggle-numbers-container {
+    flex: 0.59;
+    background-color: colors.$bg-dark;
+    border-radius: 6px;
+}
+
+.element-number {
+    position: absolute;
+    transform: translate(-50%, -50%); // shifts to the top left corner
+    width: 23px;
+    height: 23px;
+    background-color: rgba(183, 255, 0, 0.85);
+    color: black;
+    border-radius: 50%;
+    border: 2px solid black;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}

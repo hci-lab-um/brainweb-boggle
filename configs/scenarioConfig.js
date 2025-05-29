@@ -26,6 +26,72 @@ const scenarioConfig = {
         phases: [0, 0.5, 1, 0, 1, 0, 1.5, 0, 0.5, 1],
     },
 
+    // SELECT
+    scenario_40: {
+        name: ViewNames.SELECT,
+        description: '1 button in sidebar, with CLOSE/BACK button & toggle',
+        buttonIds: ['firstBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 14.5, 10.5],
+        phases: [1, 0.5, 1.5],
+    },
+
+    scenario_41: {
+        name: ViewNames.SELECT,
+        description: '2 buttons in sidebar, with CLOSE/BACK button & toggle',
+        buttonIds: ['firstBtn', 'secondBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 14.5, 10.5], // Frequencies of the firstElementBtn, closeSelectBtn and toggleNumbersBtn remained the same
+        phases: [1, 1.5, 0.5, 1.5],
+    },
+
+    scenario_42: {
+        name: ViewNames.SELECT,
+        description: '3 buttons in sidebar, with CLOSE/BACK button & toggle',
+        buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 0.5, 1.5],
+    },
+
+    scenario_43: {
+        name: ViewNames.SELECT,
+        description: '4 buttons in sidebar, with CLOSE/BACK button & toggle',
+        buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 7.5, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 1.5, 0.5, 1.5],
+    },
+
+    scenario_44: {
+        name: ViewNames.SELECT,
+        description: '5 buttons in sidebar, with CLOSE/BACK button & toggle',
+        buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'fifthBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 1.5],
+    },
+
+    scenario_45: {
+        name: ViewNames.SELECT,
+        description: '6 buttons in sidebar, with CLOSE/BACK button & toggle',
+        buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'fifthBtn', 'sixthBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5, 10.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5, 1.5],
+    },
+
+    scenario_46: {
+        name: ViewNames.SELECT,
+        description: '4 sections with CLOSE/BACK button', // SECTIONS: A, B, C, D
+        buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 9, 7.5, 14.5], 
+        phases: [1, 1.5, 0.5, 1.5, 0.5],
+    },
+
+    scenario_47: {
+        name: ViewNames.SELECT,
+        description: '6 sections with CLOSE/BACK button', // SECTIONS: A, B, C, D, E, F
+        buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'fifthBtn', 'sixthBtn', 'closeSelectBtn'],
+        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5], 
+        phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5],
+    },
+
+    
     // KEYBOARD
     scenario_80: {
         name: ViewNames.KEYBOARD,

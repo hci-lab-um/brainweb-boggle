@@ -264,7 +264,16 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('keyboard-type-nutjs', async (event, value) => {
+        // Erases everything: Ctrl+A then Backspace
+        await keyboard.pressKey(Key.LeftControl, Key.A);
+        await keyboard.releaseKey(Key.A, Key.LeftControl);
+        await keyboard.pressKey(Key.Backspace);
+        await keyboard.releaseKey(Key.Backspace);
+
+        // Types the new value
+        if (value) {
         await keyboard.type(value);
+        }
     });
 
     ipcMain.on('app-exit', (event) => {

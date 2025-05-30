@@ -6,7 +6,7 @@ const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 function registerIpcHandlers(context) {
     let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
 
-    ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
+    ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
 
         let overlayContent = new WebContentsView({
@@ -35,6 +35,7 @@ function registerIpcHandlers(context) {
             isUpperCase: isUpperCase,
             webpageBounds: webpageBounds,
             elementProperties: elementProperties,
+            zoomFactor: await tabView.webContents.getZoomFactor(),
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -236,8 +237,11 @@ function registerIpcHandlers(context) {
         const webpageX = windowScreenX + webpageBounds.x;
         const webpageY = windowScreenY + webpageBounds.y;
 
-        const elementX = webpageX + coordinates.x;
-        const elementY = webpageY + coordinates.y;
+        const zoomFactor = await tabView.webContents.getZoomFactor();
+
+        // Get the element's position within the tab (taking the zoom level into consideration)
+        const elementX = webpageX + (coordinates.x * zoomFactor);
+        const elementY = webpageY + (coordinates.y * zoomFactor);
 
         // Convert to physical pixels if needed
         const finalX = elementX * scaleFactor;

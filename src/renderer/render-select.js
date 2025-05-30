@@ -10,6 +10,7 @@ const idPrefix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 let buttons = [];
 let regions = [];
 let webpageBounds = null;
+let zoomFactor;
 let sidebar;
 let navbar;
 let webpage;
@@ -20,7 +21,7 @@ let startIndex;                     // This is used when clicking the 'Toggle Nu
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
-        ({ webpageBounds } = overlayData);
+        ({ webpageBounds, zoomFactor } = overlayData);
         sidebar = document.getElementById('sidebar-buttons');
         navbar = document.getElementById('navbar');
         webpage = document.getElementById('webpage');
@@ -61,8 +62,8 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             currentElements[idx].labelNumber = startIdx + idx + 1;
 
             webpageBounds = webpage.getBoundingClientRect();
-            label.style.left = `${element.x + webpageBounds.x}px`;
-            label.style.top = `${element.y + webpageBounds.y}px`;
+            label.style.left = `${(element.x * zoomFactor) + webpageBounds.x}px`;
+            label.style.top = `${(element.y * zoomFactor) + webpageBounds.y}px`;
 
             webpage.appendChild(label);
         });

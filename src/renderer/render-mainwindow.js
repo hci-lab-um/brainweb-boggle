@@ -5,11 +5,12 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 
-ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
+ipcRenderer.on('mainWindow-loaded', async (event, url, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
         attachEventListeners();
+        updateOmniboxText(url);
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
         console.error('Error in mainWindow-loaded handler:', error);
@@ -21,6 +22,15 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
     } catch (error) {
         console.error('Error in scenarioId-update handler:', error);
+    }
+});
+
+ipcRenderer.on('omniboxText-update', (event, url) => {
+    try {
+        console.log('url in omniboxText-update', url)
+        updateOmniboxText(url);
+    } catch (error) {
+        console.error('Error in omniboxText-update handler:', error);
     }
 });
 
@@ -38,6 +48,11 @@ ipcRenderer.on('webpageBounds-get', () => {
         ipcRenderer.send('webpageBounds-response', null);
     }
 });
+
+function updateOmniboxText(url) {
+    const omniboxText = document.getElementById('omnibox');
+    omniboxText.value = url;
+}
 
 function attachEventListeners() {
     buttons.forEach((button, index) => {

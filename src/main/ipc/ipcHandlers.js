@@ -140,6 +140,7 @@ function registerIpcHandlers(context) {
         try {
             if (tabView && tabView.webContents) {
                 tabView.webContents.loadURL(url);
+                mainWindowContent.webContents.send('omniboxText-update', url)
             } else {
                 console.error('tabView is not initialized.');
             }

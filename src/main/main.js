@@ -10,6 +10,7 @@ let tabView;
 let viewsList = [];        // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
+let defaultUrl = "https://www.google.com"
 
 app.whenReady().then(() => {
     try {
@@ -73,8 +74,9 @@ function createMainWindow() {
 
         mainWindowContent.webContents.loadURL(path.join(__dirname, '../pages/html/index.html')).then(() => {
             try {
-                // 0 => the initial scenarioId when loading the mainWindow
-                mainWindowContent.webContents.send('mainWindow-loaded', 0);
+                // 0          => the initial scenarioId when loading the mainWindow
+                // defaultUrl => allows us to update the omniboxText
+                mainWindowContent.webContents.send('mainWindow-loaded', defaultUrl, 0);
 
                 // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
                 scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
@@ -151,7 +153,7 @@ async function createTabView() {
 
         await mainWindow.contentView.addChildView(tabView);
         tabView.setBounds(webpageBounds);
-        tabView.webContents.loadURL("https://www.google.com"); // default URL to be inserted in to browserConfig.js
+        tabView.webContents.loadURL(defaultUrl); // default URL to be inserted in to browserConfig.js
         tabView.webContents.openDevTools();
 
     } catch (err) {

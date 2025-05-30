@@ -5,12 +5,11 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 
-ipcRenderer.on('mainWindow-loaded', async (event, url, scenarioId) => {
+ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
         attachEventListeners();
-        updateOmniboxText(url);
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
         console.error('Error in mainWindow-loaded handler:', error);

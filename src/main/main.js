@@ -74,13 +74,12 @@ function createMainWindow() {
 
         mainWindowContent.webContents.loadURL(path.join(__dirname, '../pages/html/index.html')).then(() => {
             try {
-                // 0          => the initial scenarioId when loading the mainWindow
-                // defaultUrl => allows us to update the omniboxText
-                mainWindowContent.webContents.send('mainWindow-loaded', defaultUrl, 0);
+                // 0 => the initial scenarioId when loading the mainWindow
+                mainWindowContent.webContents.send('mainWindow-loaded', 0);
 
                 // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
                 scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
-                
+
                 ipcMain.on('mainWindow-loaded-complete', (event) => {
                     updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
                         try {
@@ -155,6 +154,16 @@ async function createTabView() {
         tabView.setBounds(webpageBounds);
         tabView.webContents.loadURL(defaultUrl); // default URL to be inserted in to browserConfig.js
         tabView.webContents.openDevTools();
+
+        tabView.webContents.on('did-stop-loading', () => {
+            try {
+                let url = tabView.webContents.getURL();
+                mainWindowContent.webContents.send('omniboxText-update', url)
+            } catch (err) {
+                logger.error('Error during tabview stop loading:', err.message);
+            }
+        });
+
 
     } catch (err) {
         console.error('Error creating tab view:', err.message);

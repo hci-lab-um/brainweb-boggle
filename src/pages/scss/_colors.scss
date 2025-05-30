@@ -2,6 +2,7 @@
 $white: #ffffff;
 $black: #000000;
 $bright-green: #08FF00;
+$muted-green: #06b300;
 
 // Brand colors
 $primary: #1e90ff;
@@ -19,14 +20,16 @@ $accent-transparent-85: rgb(183 255 0 / 85%);
 $bg-light: #f8f9fa;
 $bg-dark: #1f1f1f;
 $bg-dark-blue: #061524;
-$bg-white-transparent: rgba(255, 255, 255, 0.11);
-$bg-white-transparent-50: rgba(255, 255, 255, 0.5);
 $bg-white-transparent-7: rgba(255, 255, 255, 0.07);
+$bg-white-transparent-11: rgba(255, 255, 255, 0.11);
+$bg-white-transparent-30: rgba(255, 255, 255, 0.3);
+$bg-white-transparent-50: rgba(255, 255, 255, 0.5);
 $bg-black-transparent: rgba(0, 0, 0, 0.329);
 
 // Text
 $text-primary: #212529;
-$text-muted: #6c757d;
+$text-muted: #b5c2cd; //a blue-ish white
+$transparent-text-muted: #b6c3cd38;
 
 // Semantic button colors
 $button-primary-bg: $primary;

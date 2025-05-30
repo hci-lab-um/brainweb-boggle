@@ -160,13 +160,13 @@ body {
 #urlHolder {
   flex: 3;
   display: flex;
-  background: rgba(255, 255, 255, 0.11);
   padding: 23px;
   justify-content: flex-start;
   border-radius: 6px;
   height: 100%;
   box-sizing: border-box;
   align-items: center;
+  border: 2px solid rgba(182, 195, 205, 0.2196078431);
 }
 
 #omnibox {
@@ -174,10 +174,21 @@ body {
   font-size: x-large;
   background: transparent;
   border: none;
+  width: 100%;
+  color: #b5c2cd;
+}
+
+#sidebar .button {
+  color: #ffffff;
 }
 
 .button {
   font-size: 25px;
+  color: #b5c2cd;
+}
+
+#favicon {
+  color: #06b300;
 }
 
 /*# sourceMappingURL=main.css.map */

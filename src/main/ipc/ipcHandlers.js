@@ -272,7 +272,7 @@ function registerIpcHandlers(context) {
 
         // Types the new value
         if (value) {
-        await keyboard.type(value);
+            await keyboard.type(value);
         }
     });
 

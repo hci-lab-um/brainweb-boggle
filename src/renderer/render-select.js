@@ -359,7 +359,8 @@ function attachEventListeners() {
 
                 if (loadKeyboard) {
                     try {
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementToClick);
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, elementToClick);
                     } catch (error) {
                         console.error('Error creating keyboard overlay:', error);
                     }

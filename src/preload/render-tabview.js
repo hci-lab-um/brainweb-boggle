@@ -93,6 +93,7 @@ function serializeElement(element) {
         return {
             id: element.id,
             boggleId: element.getAttribute('data-boggle-id'),
+            value: element.value,
             title: element.title,
             tagName: element.tagName,
             type: element.getAttribute('type'),

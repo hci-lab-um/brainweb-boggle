@@ -15,20 +15,25 @@ let wrapper;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
-        const { scenarioId } = overlayData;
         ({ elementProperties } = overlayData)
 
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
         wrapper = document.getElementById('textarea-autocomplete');
 
+        textarea.value = elementProperties.value;
+
         // Ensuring textarea stays focused by refocusing it if focus is lost
         textarea.addEventListener("focusout", (event) => {
             setTimeout(() => textarea.focus(), 0);
         });
 
-        await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
-        attachEventListeners();
+        updateGhostText();
+
+        getScenarioNumber().then(async scenarioNumber => {
+            await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+            attachEventListeners();
+        });
     } catch (error) {
         console.error('Error in keyboard-loaded handler:', error);
     }
@@ -170,7 +175,7 @@ async function updateGhostText() {
         const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
         // Replace each character in the textarea with a space (except newlines)
         let ghost = '';
-        let textIdx = 0;
+
         for (let i = 0; i < text.length; i++) {
             if (text[i] === '\n') {
                 ghost += '\n';

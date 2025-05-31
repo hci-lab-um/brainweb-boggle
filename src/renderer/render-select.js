@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, View } = require('electron');
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
@@ -32,6 +32,22 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('select-rerenderElements', async (event) => {
+    try {
+        await new Promise(requestAnimationFrame);
+        webpageBounds = await webpage.getBoundingClientRect();
+        console.log(webpageBounds)
+
+        elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
+        currentElements = elementsInTabView;
+
+        removeLabelsAndHighlightFromElements(currentElements)
+        addLabelsAndHighlightToElements(currentElements, startIndex)
+    } catch (error) {
+        console.error('Error in select-rerender handler:', error);
+    }
+});
+
 async function initSelectOverlay() {
     elementsInTabView = await ipcRenderer.invoke('interactiveElements-get'); // Fetching interactive elements from the tabView
     currentElements = elementsInTabView;
@@ -49,7 +65,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
     try {
         ipcRenderer.send('interactiveElements-addHighlight', elements);
 
-        elements.forEach((element, idx) => {
+        elements.forEach(async (element, idx) => {
             const label = document.createElement('span');
             label.classList.add('element-number');
             label.textContent = startIdx + idx + 1;
@@ -61,7 +77,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             // This label number matches the text content of the button in the sidebar
             currentElements[idx].labelNumber = startIdx + idx + 1;
 
-            webpageBounds = webpage.getBoundingClientRect();
+            webpageBounds = await webpage.getBoundingClientRect();
             label.style.left = `${(element.x * zoomFactor) + webpageBounds.x}px`;
             label.style.top = `${(element.y * zoomFactor) + webpageBounds.y}px`;
 
@@ -78,7 +94,7 @@ function removeLabelsAndHighlightFromElements(elements) {
         ipcRenderer.send('interactiveElements-removeHighlight', elements);
 
         const labels = webpage.querySelectorAll('.element-number');
-        if (labels) labels.forEach(label => label.remove());
+        if (labels) labels.forEach(async label => await label.remove());
     } catch (error) {
         console.error('Error in interactiveElements-removeHighlight handler:', error);
     }
@@ -371,7 +387,7 @@ function attachEventListeners() {
                             x: elementToClick.x + elementToClick.width / 2,
                             y: elementToClick.y + elementToClick.height / 2
                         }
-                        
+
                         ipcRenderer.send('mouse-click-nutjs', coordinates);
                     } catch (error) {
                         console.error('Error calculating the coordinates of the element', error);

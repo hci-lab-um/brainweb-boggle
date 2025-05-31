@@ -4,7 +4,7 @@ const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, updateWebpageBounds } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -220,6 +220,9 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
+        // Always update webpageBounds before clicking
+        webpageBounds = await updateWebpageBounds(mainWindowContent.webContents);
+
         const win = BaseWindow.getFocusedWindow();
         const bounds = win.getBounds();
         const contentBounds = win.getContentBounds();

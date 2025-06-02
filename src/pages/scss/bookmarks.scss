@@ -4,7 +4,8 @@
 @use "components";
 
 body {
-    background-color: colors.$bg-dark-blue;
+    background-color: colors.$bg-dark-blue;    
+    font-family: "Roboto", sans-serif;
     color: white;
 }
 
@@ -19,7 +20,7 @@ body {
     &__header {
         align-self: center;
         margin: 0;
-        padding-bottom: 40px;
+        padding-bottom: 20px;
     }
 
     &__footer {
@@ -28,6 +29,7 @@ body {
     }
 
     &__container {
+        min-width: 0;
         @include components.pagination-grid(2); // 2 columns
 
         & > * {
@@ -40,5 +42,35 @@ body {
         height: 100%;
         flex-direction: row;
         align-items: center;
+    }
+
+    & .button {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+
+        &__title {
+            width: 100%;
+            font-size: 1.75rem;
+            height: 45%;
+            background-color: colors.$bg-white-transparent-11;
+            align-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0 30px 0;
+        }
+
+        &__url {
+            width: 100%;
+            font-size: 1.25rem;
+            align-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0 30px 0;
+        }
     }
 }

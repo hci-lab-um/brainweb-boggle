@@ -21,7 +21,7 @@
 
 .pagination {
     &__container {
-        padding: 0 0 2.5vw;
+        padding: 2.5vw 0 2.5vw;
         display: flex;
         gap: 18px;
         align-items: center;
@@ -120,7 +120,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 3vw;
-    padding-bottom: 3vw;
     width: 100%;
     height: 100%;
     justify-content: space-around;
@@ -154,5 +153,33 @@
     & > * {
         box-sizing: border-box;
         height: 60%;
+    }
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: colors.$bg-black-transparent-70;
+    z-index: 999;
+}
+
+.popup {
+    display: flex;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: colors.$primary; // #151d49
+    padding: 40px 50px;
+    z-index: 1000;
+    gap: 20px;
+    align-items: center;
+
+    &__message {
+        font-size: 2rem;
+        color: colors.$white;
     }
 }

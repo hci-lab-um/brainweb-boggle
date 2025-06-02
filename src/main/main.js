@@ -2,6 +2,7 @@ const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
 const { ViewNames } = require('../utils/constants/enums')
 const path = require('path')
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
+const db = require('./modules/database');
 
 let splashWindow;
 let mainWindow;
@@ -11,17 +12,34 @@ let viewsList = [];        // This contains all the instantces of WebContentsVie
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
+let bookmarks = [];        // This will hold the bookmarks fetched from the database
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+    try {
+        await db.connect();
+        await db.createTables();
+        await initialiseVariables();
+    } catch (err) {
+        logger.error('Error initialising database:', err.message);
+    }
+
     try {
         createSplashWindow()
         setTimeout(() => {
             createMainWindow();
         }, 4000);
     } catch (err) {
-        console.error('Error during app initialisation:', err)
+        console.error('Error during app initialisation:', err);
     }
 })
+
+async function initialiseVariables() {
+    try {
+        bookmarks = await db.getBookmarks();
+    } catch (err) {
+        logger.error("Error initialising variables: ", err);
+    }
+}
 
 function createSplashWindow() {
     try {
@@ -92,6 +110,7 @@ function createMainWindow() {
                                     webpageBounds,
                                     viewsList,
                                     scenarioIdDict,
+                                    bookmarks,
                                     updateWebpageBounds
                                 });
                             });
@@ -109,7 +128,6 @@ function createMainWindow() {
 
         mainWindow.on('resized', () => {
             try {
-                console.log('resized')
                 resizeMainWindow();
             } catch (err) {
                 console.error('Error resizing main window:', err.message);

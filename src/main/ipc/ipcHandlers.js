@@ -4,7 +4,7 @@ const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, updateWebpageBounds } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarks, updateWebpageBounds } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -36,6 +36,7 @@ function registerIpcHandlers(context) {
             webpageBounds: webpageBounds,
             elementProperties: elementProperties,
             zoomFactor: await tabView.webContents.getZoomFactor(),
+            bookmarks: bookmarks,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {

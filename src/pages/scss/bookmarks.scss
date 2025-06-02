@@ -1,0 +1,41 @@
+@use "colors";
+@use "icons";
+@use "animation";
+@use "components";
+
+body {
+    background-color: colors.$bg-dark-blue;
+    color: white;
+}
+
+.bookmarks {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+
+    &__header {
+        align-self: center;
+        margin-top: 0;
+    }
+
+    &__footer {
+        display: flex;
+        gap: 2vw;
+    }
+
+    &__container {
+        display: auto; // TBI
+    }
+
+    &__bookmarksAndArrowsContainer {
+        @include components.pagination-grid(2);
+
+        // The children of the bookmarks container will always have a height of 40% of the container
+        & > * {
+            height: 40%;
+        }
+    }
+}

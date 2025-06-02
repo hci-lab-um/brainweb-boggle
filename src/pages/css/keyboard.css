@@ -114,7 +114,7 @@
 }
 
 .button {
-  color: #212529;
+  color: #ffffff;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;
@@ -127,9 +127,21 @@
   justify-content: center;
   gap: 10%;
 }
+.button__close {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+.button__close--flex2 {
+  flex: 2;
+}
+.button__close--wide {
+  width: 100%;
+}
 
 body {
   background-color: #061524;
+  columns: #b5c2cd;
 }
 
 .keyboard {
@@ -233,25 +245,50 @@ body {
 .keyboard__keysContainer > * {
   flex: 1 1 calc(20% - 10px);
   max-width: calc(20% - 40px);
+}
+.keyboard__keysContainer > * {
   box-sizing: border-box;
   height: 60%;
 }
-.keyboard__keysContainer--doubleRow > * {
-  height: 40%;
-}
 .keyboard__keysContainer--fourColumns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3vw;
+  padding-bottom: 3vw;
+  width: 100%;
+  height: 100%;
+  justify-content: space-around;
+  align-items: center;
   flex: 7;
 }
 .keyboard__keysContainer--fourColumns > * {
   flex: 1 1 calc(25% - 10px);
   max-width: calc(25% - 40px);
 }
+.keyboard__keysContainer--fourColumns > * {
+  box-sizing: border-box;
+  height: 60%;
+}
 .keyboard__keysContainer--threeColumns {
-  flex: 7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3vw;
+  padding-bottom: 3vw;
+  width: 100%;
+  height: 100%;
+  justify-content: space-around;
+  align-items: center;
 }
 .keyboard__keysContainer--threeColumns > * {
   flex: 1 1 calc(33.333% - 10px);
   max-width: calc(33.333% - 40px);
+}
+.keyboard__keysContainer--threeColumns > * {
+  box-sizing: border-box;
+  height: 60%;
+}
+.keyboard__keysContainer--doubleRow > * {
+  height: 40%;
 }
 
 .keyboard__keysAndArrowsContainer {
@@ -289,14 +326,6 @@ button {
 }
 .button__triangle--right {
   clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
-}
-.button__close {
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-}
-.button__close--wide {
-  width: 100%;
 }
 .button__numbers {
   flex-grow: 2.65;

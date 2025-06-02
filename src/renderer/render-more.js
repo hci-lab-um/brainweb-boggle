@@ -31,7 +31,8 @@ function attachEventListeners() {
                         // tbi
                         break;
                     case "bookmarksBtn":
-                        // tbi
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.BOOKMARKS, -1);
                         break;
                     case "refreshBtn":
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);

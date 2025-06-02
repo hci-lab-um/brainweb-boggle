@@ -114,7 +114,7 @@
 }
 
 .button {
-  color: #212529;
+  color: #ffffff;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;
@@ -126,6 +126,17 @@
   align-items: center;
   justify-content: center;
   gap: 10%;
+}
+.button__close {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+.button__close--flex2 {
+  flex: 2;
+}
+.button__close--wide {
+  width: 100%;
 }
 
 body {

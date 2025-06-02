@@ -6,15 +6,16 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 let buttons = [];
 let bookmarks = [];
 
-ipcRenderer.on('mainWindow-loaded', async (event, overlayData) => {
+ipcRenderer.on('bookmarks-loaded', async (event, overlayData) => {
     try {
         ({ bookmarks } = overlayData);
+        console.log('Bookmarks loaded:', bookmarks);
 
         buttons = document.querySelectorAll('button');
 
         initialiseBookmarksOverlay();
     } catch (error) {
-        console.error('Error in mainWindow-loaded handler:', error);
+        console.error('Error in bookmarks-loaded handler:', error);
     }
 });
 
@@ -152,5 +153,5 @@ function initialiseBookmarksOverlay() {
 // });
 
 function attachEventListeners() {
-    
+
 }

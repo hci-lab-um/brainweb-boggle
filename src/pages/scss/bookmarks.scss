@@ -27,15 +27,18 @@ body {
     }
 
     &__container {
-        display: auto; // TBI
-    }
+        @include components.pagination-grid(2); // 2 columns
 
-    &__bookmarksAndArrowsContainer {
-        @include components.pagination-grid(2);
-
-        // The children of the bookmarks container will always have a height of 40% of the container
         & > * {
             height: 40%;
         }
+    }
+
+    &__bookmarksAndArrowsContainer {
+        display: flex;
+        height: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 3vw;
     }
 }

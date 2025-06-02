@@ -161,9 +161,6 @@ body {
   gap: 2vw;
 }
 .bookmarks__container {
-  display: auto;
-}
-.bookmarks__bookmarksAndArrowsContainer {
   display: flex;
   flex-wrap: wrap;
   gap: 3vw;
@@ -173,16 +170,23 @@ body {
   justify-content: space-around;
   align-items: center;
 }
-.bookmarks__bookmarksAndArrowsContainer > * {
+.bookmarks__container > * {
   flex: 1 1 calc(50% - 10px);
   max-width: calc(50% - 40px);
 }
-.bookmarks__bookmarksAndArrowsContainer > * {
+.bookmarks__container > * {
   box-sizing: border-box;
   height: 60%;
 }
-.bookmarks__bookmarksAndArrowsContainer > * {
+.bookmarks__container > * {
   height: 40%;
+}
+.bookmarks__bookmarksAndArrowsContainer {
+  display: flex;
+  height: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 3vw;
 }
 
 /*# sourceMappingURL=bookmarks.css.map */

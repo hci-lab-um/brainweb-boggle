@@ -204,7 +204,7 @@ function attachEventListeners() {
 
                         // Create and display the settings popup
                         const popup = document.createElement("div");
-                        popup.classList.add("popup", "border");
+                        popup.classList.add("popup", "border", "fadeInUp");
 
                         const popupMessage = document.createElement("span");
                         popupMessage.classList.add("popup__message");
@@ -220,6 +220,7 @@ function attachEventListeners() {
                             overlay.remove();
                             popup.remove();
                             ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
+                            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         }, 2000);
                     } catch (error) {
                         console.error('Error opening settings overlay:', error.message);

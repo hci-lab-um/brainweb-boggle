@@ -8,10 +8,10 @@ body {
     font-family: "Roboto", sans-serif;
     margin: 0;
     background-color: transparent;
+    overflow: hidden;
 }
 
 #selectOverlay {
-    overflow: hidden;
     display: block;
     display: flex;
     flex-direction: row;

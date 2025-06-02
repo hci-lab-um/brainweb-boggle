@@ -10,6 +10,7 @@ let tabView;
 let viewsList = [];        // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
+let defaultUrl = "https://www.google.com"
 
 app.whenReady().then(() => {
     try {
@@ -78,7 +79,7 @@ function createMainWindow() {
 
                 // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
                 scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
-                
+
                 ipcMain.on('mainWindow-loaded-complete', (event) => {
                     updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
                         try {
@@ -90,7 +91,8 @@ function createMainWindow() {
                                     tabView,
                                     webpageBounds,
                                     viewsList,
-                                    scenarioIdDict
+                                    scenarioIdDict,
+                                    updateWebpageBounds
                                 });
                             });
                         } catch (err) {
@@ -107,6 +109,7 @@ function createMainWindow() {
 
         mainWindow.on('resized', () => {
             try {
+                console.log('resized')
                 resizeMainWindow();
             } catch (err) {
                 console.error('Error resizing main window:', err.message);
@@ -151,8 +154,18 @@ async function createTabView() {
 
         await mainWindow.contentView.addChildView(tabView);
         tabView.setBounds(webpageBounds);
-        tabView.webContents.loadURL("https://www.google.com"); // default URL to be inserted in to browserConfig.js
+        tabView.webContents.loadURL(defaultUrl); // default URL to be inserted in to browserConfig.js
         tabView.webContents.openDevTools();
+
+        tabView.webContents.on('did-stop-loading', () => {
+            try {
+                let url = tabView.webContents.getURL();
+                mainWindowContent.webContents.send('omniboxText-update', url)
+            } catch (err) {
+                logger.error('Error during tabview stop loading:', err.message);
+            }
+        });
+
 
     } catch (err) {
         console.error('Error creating tab view:', err.message);
@@ -163,6 +176,10 @@ function resizeMainWindow() {
     try {
         if (viewsList.length > 0) {
             viewsList.forEach(view => {
+                if (view.name === ViewNames.SELECT) {
+                    view.webContentsView.webContents.send(`${ViewNames.SELECT}-rerenderElements`)
+                }
+
                 view.webContentsView.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
             });
         }

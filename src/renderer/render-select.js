@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, View } = require('electron');
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
@@ -10,6 +10,7 @@ const idPrefix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 let buttons = [];
 let regions = [];
 let webpageBounds = null;
+let zoomFactor;
 let sidebar;
 let navbar;
 let webpage;
@@ -20,7 +21,7 @@ let startIndex;                     // This is used when clicking the 'Toggle Nu
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
-        ({ webpageBounds } = overlayData);
+        ({ webpageBounds, zoomFactor } = overlayData);
         sidebar = document.getElementById('sidebar-buttons');
         navbar = document.getElementById('navbar');
         webpage = document.getElementById('webpage');
@@ -28,6 +29,22 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
         await initSelectOverlay(); // Begin initialisation
     } catch (error) {
         console.error('Error in select-loaded handler:', error);
+    }
+});
+
+ipcRenderer.on('select-rerenderElements', async (event) => {
+    try {
+        await new Promise(requestAnimationFrame);
+        webpageBounds = await webpage.getBoundingClientRect();
+        console.log(webpageBounds)
+
+        elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
+        currentElements = elementsInTabView;
+
+        removeLabelsAndHighlightFromElements(currentElements)
+        addLabelsAndHighlightToElements(currentElements, startIndex)
+    } catch (error) {
+        console.error('Error in select-rerender handler:', error);
     }
 });
 
@@ -48,21 +65,21 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
     try {
         ipcRenderer.send('interactiveElements-addHighlight', elements);
 
-        elements.forEach((element, idx) => {
+        elements.forEach(async (element, idx) => {
             const label = document.createElement('span');
             label.classList.add('element-number');
             label.textContent = startIdx + idx + 1;
-            
+
             // ADDING A LABEL NUMBER ATTRIBUTE TO THE OBJECT IN THE CURRENT ELEMENTS ARRAY
             // The label number differs from the id because:
             // - The id is given to all the elements in the tabView 
             // - The label is given only to the elements in the selected region
             // This label number matches the text content of the button in the sidebar
-            currentElements[idx].labelNumber = startIdx + idx + 1; 
+            currentElements[idx].labelNumber = startIdx + idx + 1;
 
-            webpageBounds = webpage.getBoundingClientRect();
-            label.style.left = `${element.x + webpageBounds.x}px`;
-            label.style.top = `${element.y + webpageBounds.y}px`;
+            webpageBounds = await webpage.getBoundingClientRect();
+            label.style.left = `${(element.x * zoomFactor) + webpageBounds.x}px`;
+            label.style.top = `${(element.y * zoomFactor) + webpageBounds.y}px`;
 
             webpage.appendChild(label);
         });
@@ -77,7 +94,7 @@ function removeLabelsAndHighlightFromElements(elements) {
         ipcRenderer.send('interactiveElements-removeHighlight', elements);
 
         const labels = webpage.querySelectorAll('.element-number');
-        if (labels) labels.forEach(label => label.remove());
+        if (labels) labels.forEach(async label => await label.remove());
     } catch (error) {
         console.error('Error in interactiveElements-removeHighlight handler:', error);
     }
@@ -174,7 +191,7 @@ function displayGrid(rows, cols) {
 async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = elements.length) {
     sidebar.innerHTML = '';
     navbar.innerHTML = '';
-    startIndex = startIdx; 
+    startIndex = startIdx;
 
     removeLabelsAndHighlightFromElements(elements);
     addLabelsAndHighlightToElements(elements, startIdx);
@@ -359,22 +376,21 @@ function attachEventListeners() {
 
                 if (loadKeyboard) {
                     try {
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, elementToClick);
                     } catch (error) {
                         console.error('Error creating keyboard overlay:', error);
                     }
                 } else {
                     try {
-                        webpageBounds = webpage.getBoundingClientRect();
                         const coordinates = {
-                            x: webpageBounds.x + elementToClick.x + elementToClick.width / 2,
-                            y: webpageBounds.y + elementToClick.y + elementToClick.height / 2
+                            x: elementToClick.x + elementToClick.width / 2,
+                            y: elementToClick.y + elementToClick.height / 2
                         }
-                        console.log('webpageBounds', webpageBounds)
-                        console.log('coordinates: ', coordinates);
-                        ipcRenderer.send('mouse-click', coordinates);
+
+                        ipcRenderer.send('mouse-click-nutjs', coordinates);
                     } catch (error) {
-                        console.error('Error getting the coordinates of the element', error);
+                        console.error('Error calculating the coordinates of the element', error);
                     }
                 }
                 return;

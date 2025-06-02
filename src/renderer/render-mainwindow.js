@@ -24,6 +24,15 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     }
 });
 
+ipcRenderer.on('omniboxText-update', (event, url) => {
+    try {
+        console.log('url in omniboxText-update', url)
+        updateOmniboxText(url);
+    } catch (error) {
+        console.error('Error in omniboxText-update handler:', error);
+    }
+});
+
 ipcRenderer.on('webpageBounds-get', () => {
     const element = document.querySelector('#webpage');
     if (element) {
@@ -39,6 +48,11 @@ ipcRenderer.on('webpageBounds-get', () => {
     }
 });
 
+function updateOmniboxText(url) {
+    const omniboxText = document.getElementById('omnibox');
+    omniboxText.value = url;
+}
+
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
@@ -50,6 +64,7 @@ function attachEventListeners() {
 
                 switch (buttonId) {
                     case "selectBtn":
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
                         ipcRenderer.send('overlay-create', ViewNames.SELECT, -1);
                         break;
                     case "readBtn":
@@ -68,7 +83,13 @@ function attachEventListeners() {
                         break;
                     case "searchBtn":
                         try {
-                            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80);
+                            const omnibox = document.getElementById('omnibox');
+                            let elementProperties = {
+                                id: 'omnibox',
+                                value: omnibox.value,
+                                type: omnibox.type,
+                            }
+                            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
                         } catch (error) {
                             console.error('Error creating keyboard overlay:', error);
                         }

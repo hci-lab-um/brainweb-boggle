@@ -2,29 +2,38 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const fs = require('original-fs')
+const path = require('path')
 
 let buttons = [];
 let textarea;
 let corpusWords = null;
 let isUpperCase = false;
+let elementProperties;
 let suggestion = '';
 let wrapper;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
-        const { scenarioId } = overlayData;
-        
+        ({ elementProperties } = overlayData)
+
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
         wrapper = document.getElementById('textarea-autocomplete');
+
+        textarea.value = elementProperties.value;
 
         // Ensuring textarea stays focused by refocusing it if focus is lost
         textarea.addEventListener("focusout", (event) => {
             setTimeout(() => textarea.focus(), 0);
         });
 
-        await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
-        attachEventListeners();
+        updateGhostText();
+
+        getScenarioNumber().then(async scenarioNumber => {
+            await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+            attachEventListeners();
+        });
     } catch (error) {
         console.error('Error in keyboard-loaded handler:', error);
     }
@@ -49,36 +58,23 @@ ipcRenderer.on('textarea-populate', (event, text) => {
 ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
         switch (iconName) {
-            // THESE NEED TO BE UPDATED USING NUT.JS !!!!!!!!!
             case 'first_page':
-                textarea.selectionStart = 0;
-                textarea.selectionEnd = 0;
+                ipcRenderer.send('keyboard-arrow-nutjs', 'home');
                 break;
             case 'keyboard_arrow_up':
-                textarea.selectionStart = textarea.selectionStart - 1;
-                textarea.selectionEnd = textarea.selectionStart;
+                ipcRenderer.send('keyboard-arrow-nutjs', 'up');
                 break;
             case 'last_page':
-                textarea.selectionStart = textarea.value.length;
-                textarea.selectionEnd = textarea.value.length;
+                ipcRenderer.send('keyboard-arrow-nutjs', 'end');
                 break;
             case 'keyboard_arrow_left':
-                if (textarea.selectionStart > 0) {
-                    textarea.selectionStart -= 1;
-                    textarea.selectionEnd = textarea.selectionStart;
-                }
+                ipcRenderer.send('keyboard-arrow-nutjs', 'left');
                 break;
             case 'keyboard_arrow_down':
-                if (textarea.selectionStart < textarea.value.length) {
-                    textarea.selectionStart += 1;
-                    textarea.selectionEnd = textarea.selectionStart;
-                }
+                ipcRenderer.send('keyboard-arrow-nutjs', 'down');
                 break;
             case 'keyboard_arrow_right':
-                if (textarea.selectionStart < textarea.value.length) {
-                    textarea.selectionStart += 1;
-                    textarea.selectionEnd = textarea.selectionStart;
-                }
+                ipcRenderer.send('keyboard-arrow-nutjs', 'right');
                 break;
         }
 
@@ -128,8 +124,8 @@ function updateTextareaAtCursor(insertText = null) {
 
     updateGhostText();
 
-    getScenarioNumber().then(scenarioNumber => async() => {
-        await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+    getScenarioNumber().then(scenarioNumber => {
+        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
     });
 
     textarea.focus();
@@ -179,7 +175,7 @@ async function updateGhostText() {
         const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
         // Replace each character in the textarea with a space (except newlines)
         let ghost = '';
-        let textIdx = 0;
+
         for (let i = 0; i < text.length; i++) {
             if (text[i] === '\n') {
                 ghost += '\n';
@@ -217,6 +213,107 @@ async function getScenarioNumber() {
     }
 
     console.error("No matching scenario");
+}
+
+async function fetchValidTLDs() {
+    try {
+        const tldFilePath = path.join(__dirname, '../../resources/validTLDs.json');
+
+        // Checking if TLDs are already stored in a file
+        if (fs.existsSync(tldFilePath)) {
+            const storedTLDs = fs.readFileSync(tldFilePath, 'utf-8');
+            return new Set(JSON.parse(storedTLDs));
+        }
+        return new Set();
+    } catch (error) {
+        console.error("Failed to fetch TLD list:", error.message);
+        return new Set();
+    }
+}
+
+async function isValidTLD(domain, validTLDs) {
+    try {
+        const domainParts = domain.split(".");
+        const tld = domainParts[domainParts.length - 1].toLowerCase();
+        return validTLDs.has(tld);
+    } catch (error) {
+        return false;
+    }
+}
+
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function isLocalOrIP(hostname) {
+    try {
+        const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const ipv6Regex = /^\[[a-fA-F0-9:]+\]$/;
+        const LOCALHOST = "localhost";
+
+        return ipv4Regex.test(hostname) || ipv6Regex.test(hostname) || hostname.toLowerCase() === LOCALHOST;
+    } catch (error) {
+        logger.error("Error in isLocalOrIP:", error.message);
+        return false;
+    }
+}
+
+async function processUrlInput(input) {
+    try {
+        const VALID_TLDs = await fetchValidTLDs();
+        const URL_REGEX = /^(?:(?:https?:\/\/)?((?:[\w-]+\.)+[a-zA-Z]{2,})(?::\d+)?(?:[\w.,@?^=%&:/~+#-]*)?)$/
+        const FILE_PATH_REGEX = /^(?:[a-zA-Z]:\\(?:[^\\\/:*?"<>|\r\n]+\\)*[^\\\/:*?"<>|\r\n]*|\/(?:[^\\\/:*?"<>|\r\n]+\/)*[^\\\/:*?"<>|\r\n]*)$/;
+        let url = '';
+        let unprocessedInput = input;
+
+        // If input does NOT start with http/https but looks like a valid domain, prepend "https://"
+        if (!input.startsWith("http") && (URL_REGEX.test(input) || isLocalOrIP(input))) {
+            input = `https://${input}`;
+        }
+
+        if (isValidUrl(input)) {
+            let urlObject = new URL(input);
+            console.log(urlObject);
+            let pathname = urlObject.pathname;
+
+            if (urlObject.protocol === "http:") {
+                urlObject.protocol = "https:";
+            }
+
+            if (urlObject.protocol === "file:" && pathname.startsWith("/")) {
+                pathname = pathname.substring(1); // removing the first forward slash
+            }
+
+            // The new URL(input) does not validate the URL strictly, — it just attempts to parse it, hence regex is used to validate the URL more strictly
+            // Note: FILE_PATH_REGEX.test(input.replace(/\//g, '\\')) is used to recheck the input with forward slashes replaced with backslashes
+            if (URL_REGEX.test(urlObject.hostname) || FILE_PATH_REGEX.test(pathname) || FILE_PATH_REGEX.test(pathname.replace(/\//g, '\\')) || isLocalOrIP(urlObject.hostname)) {
+                url = urlObject.toString();
+            } else {
+                url = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+            }
+
+            // If the url has a TLD, check if it is found in the list of valid TLDs
+            if (!isLocalOrIP(urlObject.hostname)) {
+                // If TLD is invalid, treat it as a search query
+                if (!(await isValidTLD(urlObject.hostname, VALID_TLDs))) {
+                    console.warn(`Invalid TLD detected: ${urlObject.hostname}`);
+                    url = `https://www.google.com/search?q=${encodeURIComponent(unprocessedInput)}`;
+                }
+            }
+        } else {
+            // Otherwise, treat it as a search query
+            url = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+        }
+
+        return url;
+    } catch (error) {
+        console.error("Error in browseToUrl:", error.message);
+    }
 }
 
 function attachEventListeners() {
@@ -277,6 +374,23 @@ function attachEventListeners() {
                         updateTextareaAtCursor('.com');
                         break;
                     case 'keyboardSendBtn':
+                        const input = textarea.value.trim();
+                        if (!input) break;
+
+                        if (elementProperties.id === 'omnibox') {
+                            let processedInput = await processUrlInput(input)
+                            ipcRenderer.send('url-load', processedInput);
+                        } else {
+                            const coordinates = {
+                                x: elementProperties.x + elementProperties.width / 2,
+                                y: elementProperties.y + elementProperties.height / 2
+                            }
+
+                            ipcRenderer.send('mouse-click-nutjs', coordinates);
+                            ipcRenderer.send('keyboard-type-nutjs', input);
+                        }
+
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'arrowKeysBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');

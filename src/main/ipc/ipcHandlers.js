@@ -1,12 +1,12 @@
 const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron')
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
-const { mouse, Point } = require('@nut-tree-fork/nut-js');
+const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, updateWebpageBounds } = context;
 
-    ipcMain.on('overlay-create', (event, overlayName, scenarioId, buttonId = null, isUpperCase = false) => {
+    ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
 
         let overlayContent = new WebContentsView({
@@ -34,6 +34,8 @@ function registerIpcHandlers(context) {
             buttonId: buttonId,
             isUpperCase: isUpperCase,
             webpageBounds: webpageBounds,
+            elementProperties: elementProperties,
+            zoomFactor: await tabView.webContents.getZoomFactor(),
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -135,6 +137,19 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('url-load', (event, url) => {
+        try {
+            if (tabView && tabView.webContents) {
+                tabView.webContents.loadURL(url);
+                mainWindowContent.webContents.send('omniboxText-update', url)
+            } else {
+                console.error('tabView is not initialized.');
+            }
+        } catch (err) {
+            console.error('Error loading URL in tabView:', err.message);
+        }
+    });
+
     ipcMain.on('webpage-refresh', (event) => {
         try {
             // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
@@ -204,7 +219,10 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('mouse-click', async (event, coordinates) => {
+    ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
+        // Always update webpageBounds before clicking
+        webpageBounds = await updateWebpageBounds(mainWindowContent.webContents);
+
         const win = BaseWindow.getFocusedWindow();
         const bounds = win.getBounds();
         const contentBounds = win.getContentBounds();
@@ -219,8 +237,14 @@ function registerIpcHandlers(context) {
         const windowScreenX = bounds.x + frameOffsetX;
         const windowScreenY = bounds.y + frameOffsetY;
 
-        const elementX = windowScreenX + coordinates.x;
-        const elementY = windowScreenY + coordinates.y;
+        const webpageX = windowScreenX + webpageBounds.x;
+        const webpageY = windowScreenY + webpageBounds.y;
+
+        const zoomFactor = await tabView.webContents.getZoomFactor();
+
+        // Get the element's position within the tab (taking the zoom level into consideration)
+        const elementX = webpageX + (coordinates.x * zoomFactor);
+        const elementY = webpageY + (coordinates.y * zoomFactor);
 
         // Convert to physical pixels if needed
         const finalX = elementX * scaleFactor;
@@ -228,6 +252,35 @@ function registerIpcHandlers(context) {
 
         const targetPoint = new Point(finalX, finalY)
         mouse.move(targetPoint).then(() => mouse.leftClick());
+    });
+
+    ipcMain.on('keyboard-arrow-nutjs', async (event, direction) => {
+        const keyMap = {
+            up: Key.Up,
+            down: Key.Down,
+            left: Key.Left,
+            right: Key.Right,
+            home: Key.Home,
+            end: Key.End,
+        };
+        const key = keyMap[direction];
+        if (key) {
+            await keyboard.pressKey(key);
+            await keyboard.releaseKey(key);
+        }
+    });
+
+    ipcMain.on('keyboard-type-nutjs', async (event, value) => {
+        // Erases everything: Ctrl+A then Backspace
+        await keyboard.pressKey(Key.LeftControl, Key.A);
+        await keyboard.releaseKey(Key.A, Key.LeftControl);
+        await keyboard.pressKey(Key.Backspace);
+        await keyboard.releaseKey(Key.Backspace);
+
+        // Types the new value
+        if (value) {
+            await keyboard.type(value);
+        }
     });
 
     ipcMain.on('app-exit', (event) => {

@@ -42,7 +42,7 @@ function initialiseBookmarksOverlay() {
 
                     const bookmarkButton = document.createElement('button');
                     bookmarkButton.setAttribute('id', `${idSuffix}BookmarkBtn`);
-                    bookmarkButton.className = 'bookmark-button';
+                    bookmarkButton.classList.add('button');
                     bookmarkButton.textContent = bookmark.title;
 
                     return bookmarkButton;

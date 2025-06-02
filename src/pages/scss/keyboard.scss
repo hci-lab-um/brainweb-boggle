@@ -151,20 +151,6 @@ button {
 }
 
 .button {
-    &__triangle {
-        width: 100%;
-        height: 40%;
-        padding: 0;
-
-        &--left {
-            clip-path: polygon(75% 0%, 0% 50%, 75% 100%);
-        }
-
-        &--right {
-            clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
-        }
-    }
-
     &__numbers {
         flex-grow: 2.65;
     }

@@ -138,6 +138,17 @@
 .button__close--wide {
   width: 100%;
 }
+.button__triangle {
+  width: 100%;
+  height: 40%;
+  padding: 0;
+}
+.button__triangle--left {
+  clip-path: polygon(75% 0%, 0% 50%, 75% 100%);
+}
+.button__triangle--right {
+  clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
+}
 
 body {
   background-color: #061524;
@@ -154,7 +165,8 @@ body {
 }
 .bookmarks__header {
   align-self: center;
-  margin-top: 0;
+  margin: 0;
+  padding-bottom: 30px;
 }
 .bookmarks__footer {
   display: flex;
@@ -169,6 +181,7 @@ body {
   height: 100%;
   justify-content: space-around;
   align-items: center;
+  flex: 7;
 }
 .bookmarks__container > * {
   flex: 1 1 calc(50% - 10px);
@@ -186,7 +199,6 @@ body {
   height: 100%;
   flex-direction: row;
   align-items: center;
-  gap: 3vw;
 }
 
 /*# sourceMappingURL=bookmarks.css.map */

@@ -17,6 +17,14 @@ ipcRenderer.on('more-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+    try {
+        await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
+    } catch (error) {
+        console.error('Error in scenarioId-update handler:', error);
+    }
+});
+
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {

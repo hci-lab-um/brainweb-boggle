@@ -6,15 +6,25 @@ const { createMaterialIcon } = require('../utils/utilityFunctions');
 
 let buttons = [];
 let bookmarks = [];
+const pageSize = 4;     // The number of bookmarks to display per page
+let currentPage = 0;    // Current page index
 
+// POSSIBLE CODE DUPLICATION WITH KEYBOARD KEYS!!!!!!!
 ipcRenderer.on('bookmarks-loaded', async (event, overlayData) => {
     try {
         ({ bookmarks } = overlayData);
-
         buttons = document.querySelectorAll('button');
 
         initialiseBookmarksOverlay();
-        // attachEventListeners();
+
+        // Obtaining the scenarioId based on the number of bookmarks and pagination state
+        const scenarioId = getBookmarksScenarioId(
+            bookmarks.length,
+            false,
+            bookmarks.length > pageSize
+        );
+        // Updating the scenarioId for the bookmarks overlay
+        await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
     } catch (error) {
         console.error('Error in bookmarks-loaded handler:', error);
     }
@@ -26,9 +36,6 @@ function initialiseBookmarksOverlay() {
         const bookmarksContainer = document.getElementById('bookmarksOnlyContainer');
 
         if (bookmarksAndArrowsContainer && bookmarksContainer) {
-            const pageSize = 4;     // The number of bookmarks to display per page
-            let currentPage = 0;    // Current page index
-
             const displayNoBookmarksMessage = () => {
                 const noBookmarksMessage = document.createElement('div');
                 noBookmarksMessage.classList.add('noBookmarksMessage');
@@ -81,13 +88,13 @@ function initialiseBookmarksOverlay() {
                     // Waiting for the page to render all the buttons before updating the scenarioId 
                     // (IMP requestAnimationFrame remains in the event loop)
                     requestAnimationFrame(async () => {
-                        // if (currentPage === 0) {
-                        //     await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
-                        // } else if (currentPage === 1) {
-                        //     await updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
-                        // } else if (currentPage === 2) {
-                        //     await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
-                        // }
+                        const scenarioId = getBookmarksScenarioId(
+                            bookmarks.length,
+                            currentPage > 0, // hasLeftArrow
+                            (currentPage + 1) * pageSize < bookmarks.length // hasRightArrow
+                        );
+                        // Now you can use scenarioId to update scenario, e.g.:
+                        await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
                     });
                 });
                 console.log(`Created ${direction} navigation button with ID: ${button.id}`);
@@ -125,18 +132,20 @@ function initialiseBookmarksOverlay() {
                 }
 
                 // Add pagination indicators
-                const paginationContainer = document.querySelector('.pagination__container');
-                paginationContainer.innerHTML = '';
+                if (bookmarks.length > pageSize) {
+                    const paginationContainer = document.querySelector('.pagination__container');
+                    paginationContainer.innerHTML = '';
 
-                for (let i = 0; i < totalPages; i++) {
-                    const pageIndicator = document.createElement('div');
-                    pageIndicator.classList.add('pagination__indicator');
+                    for (let i = 0; i < totalPages; i++) {
+                        const pageIndicator = document.createElement('div');
+                        pageIndicator.classList.add('pagination__indicator');
 
-                    if (i === currentPage) {
-                        pageIndicator.classList.add('pagination__indicator--active');
+                        if (i === currentPage) {
+                            pageIndicator.classList.add('pagination__indicator--active');
+                        }
+
+                        paginationContainer.appendChild(pageIndicator);
                     }
-
-                    paginationContainer.appendChild(pageIndicator);
                 }
             };
 
@@ -152,6 +161,74 @@ function initialiseBookmarksOverlay() {
         }
     } catch (error) {
         console.error('Error initialising bookmarks overlay:', error);
+    }
+}
+
+function getBookmarksScenarioId(bookmarksCount, hasLeftArrow, hasRightArrow) {
+    // If there are no bookmarks, return the scenario ID for the empty state
+    if (bookmarksCount === 0) return 21;
+
+    const totalPages = Math.ceil(bookmarksCount / pageSize);
+    const isFirstPage = currentPage === 0;
+    const isLastPage = currentPage === totalPages - 1;
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, bookmarksCount);
+    const bookmarksOnPage = end - start;
+
+    const getScenarioId = (bookmarksOnPage, left, right) => {
+        // Determine the scenario ID based on the number of bookmarks and arrow visibility
+        if (bookmarksOnPage >= 1 && bookmarksOnPage <= 3) {
+            // 21–24 (no arrow), 25–28 (left arrow), 29–30 (right arrow)
+            return 21 + bookmarksOnPage + (left ? 4 : 0);
+        }
+        if (bookmarksOnPage === 4) {
+            if (left && right) return 30;
+            if (left || right) return 29;
+            return 25;
+        }
+        return 21;
+    };
+
+    if (bookmarksCount <= pageSize || isLastPage) {
+        return getScenarioId(bookmarksOnPage, hasLeftArrow, hasRightArrow);
+    }
+
+    // If there are more than 4 bookmarks, we need to consider pagination
+    if (!isFirstPage && !isLastPage) return 30; // both arrows
+    if (isFirstPage && hasRightArrow) return 29;
+    if (isLastPage && hasLeftArrow) return 29;
+
+    return 25;
+}
+
+function showBookmarkAddedPopup() {
+    try {
+        // Create and display the overlay
+        const overlay = document.createElement("div");
+        overlay.classList.add("overlay");
+
+        // Create and display the settings popup
+        const popup = document.createElement("div");
+        popup.classList.add("popup", "border", "fadeInUp");
+
+        const popupMessage = document.createElement("span");
+        popupMessage.classList.add("popup__message");
+        popupMessage.textContent = "Bookmark added successfully";
+        popup.appendChild(popupMessage);
+
+        popup.innerHTML += createMaterialIcon('m', 'bookmark_added');
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            overlay.remove();
+            popup.remove();
+            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
+            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+        }, 2000);
+    } catch (error) {
+        console.error('Error opening settings overlay:', error.message);
     }
 }
 
@@ -193,38 +270,11 @@ function attachEventListeners() {
                 if (buttonId === 'cancelBtn') {
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
                 }
-                else if (buttonId === 'addBtn') {
+                else if (buttonId === 'addBookmarkBtn') {
                     ipcRenderer.send('bookmark-add');
 
                     // Creates a short pop-up message to indicate that the bookmark has been added then closes the overlay
-                    try {
-                        // Create and display the overlay
-                        const overlay = document.createElement("div");
-                        overlay.classList.add("overlay");
-
-                        // Create and display the settings popup
-                        const popup = document.createElement("div");
-                        popup.classList.add("popup", "border", "fadeInUp");
-
-                        const popupMessage = document.createElement("span");
-                        popupMessage.classList.add("popup__message");
-                        popupMessage.textContent = "Bookmark added successfully";
-                        popup.appendChild(popupMessage);
-
-                        popup.innerHTML += createMaterialIcon('m', 'bookmark_added');
-
-                        document.body.appendChild(overlay);
-                        document.body.appendChild(popup);
-
-                        setTimeout(() => {
-                            overlay.remove();
-                            popup.remove();
-                            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
-                            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
-                        }, 2000);
-                    } catch (error) {
-                        console.error('Error opening settings overlay:', error.message);
-                    }
+                    showBookmarkAddedPopup();
                 }
 
             }, CssConstants.SELECTION_ANIMATION_DURATION);

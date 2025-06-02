@@ -166,7 +166,7 @@ body {
 .bookmarks__header {
   align-self: center;
   margin: 0;
-  padding-bottom: 30px;
+  padding-bottom: 40px;
 }
 .bookmarks__footer {
   display: flex;
@@ -185,7 +185,7 @@ body {
 }
 .bookmarks__container > * {
   flex: 1 1 calc(50% - 10px);
-  max-width: calc(50% - 40px);
+  max-width: calc(50% - 65px);
 }
 .bookmarks__container > * {
   box-sizing: border-box;

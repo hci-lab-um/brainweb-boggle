@@ -12,13 +12,13 @@ let viewsList = [];        // This contains all the instantces of WebContentsVie
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
-let bookmarks = [{ title: "Google", url: defaultUrl }, { title: "Example", url: "https://www.example.com" }, { title: "OpenAI", url: "https://www.openai.com" }];        // This will hold the bookmarks fetched from the database
+let bookmarks = [];        // This will hold the bookmarks fetched from the database
 
 app.whenReady().then(async () => {
     try {
         await db.connect();
         await db.createTables();
-        // await initialiseVariables();
+        await initialiseVariables();
     } catch (err) {
         logger.error('Error initialising database:', err.message);
     }
@@ -111,6 +111,7 @@ function createMainWindow() {
                                     viewsList,
                                     scenarioIdDict,
                                     bookmarks,
+                                    db,
                                     updateWebpageBounds
                                 });
                             });

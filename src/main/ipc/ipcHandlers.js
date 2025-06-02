@@ -2,9 +2,10 @@ const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron'
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
+const { captureSnapshot } = require('../../utils/utilityFunctions');
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarks, updateWebpageBounds } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarks, db, updateWebpageBounds } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -217,6 +218,29 @@ function registerIpcHandlers(context) {
             tabView.webContents.send('interactiveElements-removeHighlight', elements);
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
+        }
+    });
+
+    ipcMain.on('bookmark-add', async (event) => {
+        try {
+            try {
+                await captureSnapshot(tabView);
+            } catch (err) {
+                console.error(err);
+            }
+
+            let url = tabView.webContents.getURL();
+            let title = tabView.webContents.getTitle();
+            let snapshot = tabView.snapshot;
+
+            var bookmark = { url: url, title: title, snapshot: snapshot };
+
+            bookmarks.push(bookmark);
+
+            await db.addBookmark(bookmark);
+            mainWindowContent.webContents.send('bookmarks-update', bookmarks);
+        } catch (err) {
+            console.error('Error adding bookmark:', err.message);
         }
     });
 

@@ -5,20 +5,20 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 
 let buttons = [];
 let bookmarks = [];
+let tabView;
 
 ipcRenderer.on('bookmarks-loaded', async (event, overlayData) => {
     try {
-        ({ bookmarks } = overlayData);
-        console.log('Bookmarks loaded:', bookmarks);
+        ({ bookmarks, tabView } = overlayData);
 
         buttons = document.querySelectorAll('button');
 
         initialiseBookmarksOverlay();
+        // attachEventListeners();
     } catch (error) {
         console.error('Error in bookmarks-loaded handler:', error);
     }
 });
-
 function initialiseBookmarksOverlay() {
     try {
         const bookmarksAndArrowsContainer = document.getElementById('bookmarksAndArrowsContainer');
@@ -108,50 +108,72 @@ function initialiseBookmarksOverlay() {
 
                     paginationContainer.appendChild(pageIndicator);
                 }
-
-                buttons = document.querySelectorAll('button');
-                attachEventListeners();
             };
 
             if (bookmarks.length === 0) {
                 displayNoBookmarksMessage();
-                return;
+            }
+            else {
+                renderPage();
             }
 
-            renderPage();
+            buttons = document.querySelectorAll('button');
+            attachEventListeners();
         }
     } catch (error) {
         console.error('Error initialising bookmarks overlay:', error);
     }
 }
 
-// bookmarkButton.addEventListener('click', () => {
-//     ipcRenderer.send('open-bookmark', bookmark.url);
-//     stopManager();
-// });
-
-// -------------------------------------------
-
-// button.addEventListener('click', async () => {
-//     // Update current page based on the direction
-//     currentPage += direction === 'left' ? -1 : 1;
-
-//     await stopManager();
-//     renderPage();
-
-//     // Waiting for the page to render all the buttons before updating the scenarioId 
-//     // (IMP requestAnimationFrame remains in the event loop)
-//     requestAnimationFrame(async () => {
-//         if (currentPage === 0) {
-//             await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
-//         } else if (currentPage === 1) {
-//             await updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
-//         } else if (currentPage === 2) {
-//             await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
-//         }
-//     });
-// });
-
 function attachEventListeners() {
+    buttons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            try {
+                const buttonId = event.target.id;
 
+                addButtonSelectionAnimation(button);
+
+                setTimeout(async () => {
+                    await stopManager();
+
+                    // if (buttonId.includes('BookmarkBtn')) {
+                    //     const bookmarkIndex = parseInt(buttonId.charAt(0), 10) - 1; // Extract index from button ID
+                    //     const bookmark = bookmarks[bookmarkIndex];
+
+                    //     if (bookmark) {
+                    //         await ipcRenderer.invoke('open-bookmark', bookmark.url);
+                    //     }
+                    // } else if (buttonId.includes('ArrowKeyBtn')) {
+                    //     const direction = buttonId.includes('left') ? 'left' : 'right';
+                    //     currentPage += direction === 'left' ? -1 : 1;
+
+                    //     renderPage();
+
+                    //     requestAnimationFrame(async () => {
+                    //         if (currentPage === 0) {
+                    //             await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
+                    //         } else if (currentPage === 1) {
+                    //             await updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
+                    //         } else if (currentPage === 2) {
+                    //             await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
+                    //         }
+                    //     });
+                    // }
+                    // else
+                    if (buttonId === 'cancelBtn') {
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
+                    }
+                    else if (buttonId === 'addBtn') {
+                        ipcRenderer.send('bookmark-add');
+                    }
+
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+
+            } catch (error) {
+                console.error('Error in button click handler:', error);
+            }
+        });
+    });
 }
+
+

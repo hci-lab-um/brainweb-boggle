@@ -178,20 +178,64 @@
     gap: 20px;
     align-items: center;
 
-    &--verticalLarge {
+    &--deleteAllConfirmation {
         flex-direction: column;
         gap: 50px;
         padding: 50px 70px;
     }
 
+    &--bookmarkAction {
+        align-items: stretch;
+        gap: 50px;
+        padding: 50px 60px;
+    }
+
     &__message {
         font-size: 2rem;
         color: colors.$white;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    &__url {
+        font-size: 1.25rem;
+        padding-bottom: 20px;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    &__message,
+    &__url {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    &__snapshot {
+        width: 500px;
+        border-radius: 6px;
+    }
+
+    &__snapshotContainer {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        background: colors.$bg-black-transparent;
+        padding: 40px 50px;
+        border-radius: 15px;
     }
 
     &__btnsContainer {
         display: flex;
         gap: 20%;
+
+        &--vertical {
+            flex-direction: column;
+            gap: 14%;
+        }
     }
 
     &__btn {

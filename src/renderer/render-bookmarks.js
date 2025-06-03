@@ -242,7 +242,7 @@ async function showDeleteAllConfirmationPopup() {
 
         // Create and display the confirmation popup
         const popup = document.createElement("div");
-        popup.classList.add("popup", "popup--verticalLarge", "border", "fadeInUp");
+        popup.classList.add("popup", "popup--deleteAllConfirmation", "border", "fadeInUp");
 
         const popupMessage = document.createElement("span");
         popupMessage.classList.add("popup__message");
@@ -340,37 +340,40 @@ async function showBookmarkActionPopup(bookmark) {
 
         // Create and display the popup
         const popup = document.createElement("div");
-        popup.classList.add("popup", "border", "fadeInUp");
+        popup.classList.add("popup", "popup--bookmarkAction", "border", "fadeInUp");
+
+        const snapshotContainer = document.createElement("div");
+        snapshotContainer.classList.add("popup__snapshotContainer");
 
         // Title
         const popupTitle = document.createElement("span");
         popupTitle.classList.add("popup__message");
         popupTitle.textContent = bookmark.title;
-        popup.appendChild(popupTitle);
-
-        // Snapshot image
-        // if (bookmark.snapshot) {
-        //     const img = document.createElement("img");
-        //     img.src = bookmark.snapshot;
-        //     img.alt = "Bookmark snapshot";
-        //     img.classList.add("popup__snapshot");
-        //     popup.appendChild(img);
-        // }
+        snapshotContainer.appendChild(popupTitle);
 
         // URL
         const urlSpan = document.createElement("span");
         urlSpan.classList.add("popup__url");
         urlSpan.textContent = bookmark.url;
-        popup.appendChild(urlSpan);
+        snapshotContainer.appendChild(urlSpan);
+
+        // Snapshot image
+        if (bookmark.snapshot) {
+            const img = document.createElement("img");
+            img.src = bookmark.snapshot;
+            img.alt = "Bookmark snapshot";
+            img.classList.add("popup__snapshot");
+            snapshotContainer.appendChild(img);
+        }
 
         // Create buttons container
         const buttonsContainer = document.createElement("div");
-        buttonsContainer.classList.add("popup__buttons");
+        buttonsContainer.classList.add("popup__btnsContainer", "popup__btnsContainer--vertical");
 
         // Visit button
         const visitBtn = document.createElement("button");
         visitBtn.setAttribute('id', 'visitBookmarkBtn');
-        visitBtn.classList.add("popup__btn", "popup__btn--accept");
+        visitBtn.classList.add("button", "popup__btn");
         visitBtn.textContent = "Visit";
         visitBtn.onclick = () => {
             overlay.remove();
@@ -384,7 +387,7 @@ async function showBookmarkActionPopup(bookmark) {
         // Delete button
         const deleteBtn = document.createElement("button");
         deleteBtn.setAttribute('id', 'deleteBookmarkBtn');
-        deleteBtn.classList.add("popup__btn", "popup__btn--delete");
+        deleteBtn.classList.add("button", "popup__btn");
         deleteBtn.textContent = "Delete";
         deleteBtn.onclick = () => {
             overlay.remove();
@@ -396,7 +399,7 @@ async function showBookmarkActionPopup(bookmark) {
         // Cancel button
         const cancelBtn = document.createElement("button");
         cancelBtn.setAttribute('id', 'cancelBookmarkBtn');
-        cancelBtn.classList.add("popup__btn", "popup__btn--cancel");
+        cancelBtn.classList.add("button", "popup__btn", "accent");
         cancelBtn.textContent = "Cancel";
         cancelBtn.onclick = () => {
             overlay.remove();
@@ -414,6 +417,7 @@ async function showBookmarkActionPopup(bookmark) {
         };
         buttonsContainer.appendChild(cancelBtn);
 
+        popup.appendChild(snapshotContainer);
         popup.appendChild(buttonsContainer);
         document.body.appendChild(overlay);
         document.body.appendChild(popup);

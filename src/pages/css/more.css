@@ -189,18 +189,55 @@
   gap: 20px;
   align-items: center;
 }
-.popup--verticalLarge {
+.popup--deleteAllConfirmation {
   flex-direction: column;
   gap: 50px;
   padding: 50px 70px;
 }
+.popup--bookmarkAction {
+  align-items: stretch;
+  gap: 50px;
+  padding: 50px 60px;
+}
 .popup__message {
   font-size: 2rem;
   color: #ffffff;
+  width: 100%;
+  max-width: 400px;
+}
+.popup__url {
+  font-size: 1.25rem;
+  padding-bottom: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+.popup__message, .popup__url {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.popup__snapshot {
+  width: 500px;
+  border-radius: 6px;
+}
+.popup__snapshotContainer {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(0, 0, 0, 0.329);
+  padding: 40px 50px;
+  border-radius: 15px;
 }
 .popup__btnsContainer {
   display: flex;
   gap: 20%;
+}
+.popup__btnsContainer--vertical {
+  flex-direction: column;
+  gap: 14%;
 }
 .popup__btn {
   padding: 20px 30px;

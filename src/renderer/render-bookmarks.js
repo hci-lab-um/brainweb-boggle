@@ -30,6 +30,11 @@ ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) 
 
         initialiseBookmarksOverlay();
 
+        // Update pagination indicators if this is a reload
+        if (isReload) {
+            updatePaginationIndicators();
+        }
+
         // Obtaining the scenarioId based on the number of bookmarks and pagination state
         const scenarioId = getBookmarksScenarioId(
             bookmarks.length,
@@ -42,6 +47,62 @@ ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) 
         console.error('Error in bookmarks-loaded handler:', error);
     }
 });
+
+function updatePaginationIndicators() {
+    const paginationContainer = document.querySelector('.pagination__container');
+    if (!paginationContainer) return;
+
+    const totalPages = Math.ceil(bookmarks.length / pageSize);
+    paginationContainer.innerHTML = '';
+    
+    if (bookmarks.length > pageSize) {
+        for (let i = 0; i < totalPages; i++) {
+            const pageIndicator = document.createElement('div');
+            pageIndicator.classList.add('pagination__indicator');
+            if (i === currentPage) {
+                pageIndicator.classList.add('pagination__indicator--active');
+            }
+            paginationContainer.appendChild(pageIndicator);
+        }
+    }
+}
+
+function getBookmarksScenarioId(bookmarksCount, hasLeftArrow, hasRightArrow) {
+    // If there are no bookmarks, return the scenario ID for the empty state
+    if (bookmarksCount === 0) return 21;
+
+    const totalPages = Math.ceil(bookmarksCount / pageSize);
+    const isFirstPage = currentPage === 0;
+    const isLastPage = currentPage === totalPages - 1;
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, bookmarksCount);
+    const bookmarksOnPage = end - start;
+
+    const getScenarioId = (bookmarksOnPage, left, right) => {
+        // Determine the scenario ID based on the number of bookmarks and arrow visibility
+        if (bookmarksOnPage >= 1 && bookmarksOnPage <= 3) {
+            // 21–24 (no arrow), 25–28 (left arrow), 29–30 (right arrow)
+            return 21 + bookmarksOnPage + ((left || right) ? 4 : 0);
+        }
+        if (bookmarksOnPage === 4) {
+            if (left && right) return 30;
+            if (left || right) return 29;
+            return 25;
+        }
+        return 21;
+    };
+
+    if (bookmarksCount <= pageSize || isLastPage) {
+        return getScenarioId(bookmarksOnPage, hasLeftArrow, hasRightArrow);
+    }
+
+    // If there are more than 4 bookmarks, we need to consider pagination
+    if (!isFirstPage && !isLastPage) return 30; // both arrows
+    if (isFirstPage && hasRightArrow) return 29;
+    if (isLastPage && hasLeftArrow) return 29;
+
+    return 25;
+}
 
 function initialiseBookmarksOverlay() {
     try {
@@ -147,21 +208,7 @@ function initialiseBookmarksOverlay() {
                 }
 
                 // Add pagination indicators
-                if (bookmarks.length > pageSize) {
-                    const paginationContainer = document.querySelector('.pagination__container');
-                    paginationContainer.innerHTML = '';
-
-                    for (let i = 0; i < totalPages; i++) {
-                        const pageIndicator = document.createElement('div');
-                        pageIndicator.classList.add('pagination__indicator');
-
-                        if (i === currentPage) {
-                            pageIndicator.classList.add('pagination__indicator--active');
-                        }
-
-                        paginationContainer.appendChild(pageIndicator);
-                    }
-                }
+                updatePaginationIndicators();
             };
 
             if (bookmarks.length === 0) {
@@ -177,43 +224,6 @@ function initialiseBookmarksOverlay() {
     } catch (error) {
         console.error('Error initialising bookmarks overlay:', error);
     }
-}
-
-function getBookmarksScenarioId(bookmarksCount, hasLeftArrow, hasRightArrow) {
-    // If there are no bookmarks, return the scenario ID for the empty state
-    if (bookmarksCount === 0) return 21;
-
-    const totalPages = Math.ceil(bookmarksCount / pageSize);
-    const isFirstPage = currentPage === 0;
-    const isLastPage = currentPage === totalPages - 1;
-    const start = currentPage * pageSize;
-    const end = Math.min(start + pageSize, bookmarksCount);
-    const bookmarksOnPage = end - start;
-
-    const getScenarioId = (bookmarksOnPage, left, right) => {
-        // Determine the scenario ID based on the number of bookmarks and arrow visibility
-        if (bookmarksOnPage >= 1 && bookmarksOnPage <= 3) {
-            // 21–24 (no arrow), 25–28 (left arrow), 29–30 (right arrow)
-            return 21 + bookmarksOnPage + ((left || right) ? 4 : 0);
-        }
-        if (bookmarksOnPage === 4) {
-            if (left && right) return 30;
-            if (left || right) return 29;
-            return 25;
-        }
-        return 21;
-    };
-
-    if (bookmarksCount <= pageSize || isLastPage) {
-        return getScenarioId(bookmarksOnPage, hasLeftArrow, hasRightArrow);
-    }
-
-    // If there are more than 4 bookmarks, we need to consider pagination
-    if (!isFirstPage && !isLastPage) return 30; // both arrows
-    if (isFirstPage && hasRightArrow) return 29;
-    if (isLastPage && hasLeftArrow) return 29;
-
-    return 25;
 }
 
 function showBookmarkExistsPopup() {

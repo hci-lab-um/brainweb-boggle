@@ -5,7 +5,7 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createPopup } = require('../utils/utilityFunctions');
 
 let buttons = [];
-let bookmarks = [];     
+let bookmarks = [];
 const pageSize = 4;     // This is the maximum number of bookmarks that can be displayed at once in a page
 let currentPage = 0;    // Current page index
 
@@ -23,7 +23,7 @@ ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) 
          * Math.ceil((bookmarks.length + 1)/ pageSize) - 1 : We add 1 to bookmarks.length to identify if the user was on the last 
          * page before the deletion occurred.
          */
-        if (bookmarks.length % pageSize === 0 && isReload && currentPage === Math.ceil((bookmarks.length + 1)/ pageSize) - 1) {
+        if (bookmarks.length % pageSize === 0 && isReload && currentPage === Math.ceil((bookmarks.length + 1) / pageSize) - 1) {
             // Sets currentPage to the new last page.
             currentPage = (bookmarks.length / pageSize) - 1;
         }
@@ -221,8 +221,15 @@ function showBookmarkExistsPopup() {
         createPopup({
             message: 'Bookmark already exists',
             icon: createMaterialIcon('m', 'warning'),
-            classes: ['border', 'fadeInUp'],
-            timeout: 2000
+            timeout: 1750, // The duration of the fade-in animation + 1 second to read the message
+            onClose: async () => {
+                const scenarioId = getBookmarksScenarioId(
+                    bookmarks.length,
+                    currentPage > 0,
+                    (currentPage + 1) * pageSize < bookmarks.length
+                );
+                await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
+            }
         });
     } catch (error) {
         console.error('Error opening bookmark exists popup:', error.message);
@@ -234,8 +241,7 @@ function showBookmarkAddedPopup() {
         createPopup({
             message: 'Bookmark added successfully',
             icon: createMaterialIcon('m', 'bookmark_added'),
-            classes: ['border', 'fadeInUp'],
-            timeout: 2000,
+            timeout: 1750,
             onClose: () => {
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
@@ -251,8 +257,7 @@ function showBookmarkDeletedPopup(url) {
         createPopup({
             message: 'Bookmark deleted successfully',
             icon: createMaterialIcon('m', 'bookmark_remove'),
-            classes: ['border', 'fadeInUp'],
-            timeout: 2000,
+            timeout: 1750,
             onClose: () => {
                 ipcRenderer.send('bookmark-deleteByUrl', url);
             }
@@ -267,8 +272,7 @@ function showDeleteAllSuccessPopup() {
         createPopup({
             message: 'All bookmarks deleted',
             icon: createMaterialIcon('m', 'delete_forever'),
-            classes: ['border', 'fadeInUp'],
-            timeout: 2000,
+            timeout: 1750,
             onClose: () => {
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
@@ -287,8 +291,7 @@ async function showDeleteAllConfirmationPopup() {
         confirmBtn.classList.add('button', 'popup__btn');
         confirmBtn.textContent = 'Delete All';
         confirmBtn.onclick = () => {
-            popupElements.overlay.remove();
-            popupElements.popup.remove();
+            popupElements.close();
             bookmarks = [];
             ipcRenderer.send('bookmarks-deleteAll');
             showDeleteAllSuccessPopup();
@@ -299,8 +302,7 @@ async function showDeleteAllConfirmationPopup() {
         cancelBtn.classList.add('button', 'popup__btn', 'accent');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => {
-            popupElements.overlay.remove();
-            popupElements.popup.remove();
+            popupElements.close();
             requestAnimationFrame(async () => {
                 const scenarioId = getBookmarksScenarioId(
                     bookmarks.length,
@@ -314,7 +316,7 @@ async function showDeleteAllConfirmationPopup() {
         const popupElements = createPopup({
             message: 'Delete all bookmarks?',
             // icon: createMaterialIcon('m', 'delete_forever'),
-            classes: ['popup--deleteAllConfirmation', 'border', 'fadeInUp'],
+            classes: ['popup--deleteAllConfirmation'],
             buttons: [confirmBtn, cancelBtn]
         });
 
@@ -354,8 +356,7 @@ async function showBookmarkActionPopup(bookmark) {
         visitBtn.classList.add('button', 'popup__btn');
         visitBtn.textContent = 'Visit';
         visitBtn.onclick = () => {
-            popupElements.overlay.remove();
-            popupElements.popup.remove();
+            popupElements.close();
             ipcRenderer.send('url-load', bookmark.url);
             ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
             ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
@@ -366,8 +367,7 @@ async function showBookmarkActionPopup(bookmark) {
         deleteBtn.classList.add('button', 'popup__btn');
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = () => {
-            popupElements.overlay.remove();
-            popupElements.popup.remove();
+            popupElements.close();
             showBookmarkDeletedPopup(bookmark.url);
         };
 
@@ -376,8 +376,7 @@ async function showBookmarkActionPopup(bookmark) {
         cancelBtn.classList.add('button', 'popup__btn', 'accent');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => {
-            popupElements.overlay.remove();
-            popupElements.popup.remove();
+            popupElements.close();
             requestAnimationFrame(async () => {
                 const scenarioId = getBookmarksScenarioId(
                     bookmarks.length,

@@ -37,11 +37,11 @@ function createPopup({
 }) {
     // Creates black background overlay
     const overlay = document.createElement('div');
-    overlay.classList.add('overlay');
+    overlay.classList.add('overlay', 'fadeIn');
 
     // Create popup
     const popup = document.createElement('div');
-    popup.classList.add('popup', ...classes);
+    popup.classList.add('popup', 'border', 'fadeInUp', ...classes);
 
     // Add message if provided
     if (message) {
@@ -74,17 +74,33 @@ function createPopup({
     document.body.appendChild(overlay);
     document.body.appendChild(popup);
 
-    // Handle timeout/auto-close
-    if (timeout) {
-        setTimeout(() => {
+    // Helper to close with fadeOutDown
+    const close = () => {
+        // Only close once
+        popup.classList.remove('fadeInUp');
+        popup.classList.add('fadeOutDown');
+
+        overlay.classList.remove('fadeIn');
+        overlay.classList.add('fadeOut');
+        
+        // Removes the overlay and popup after the animation ends
+        const removePopup = () => {
             overlay.remove();
             popup.remove();
             if (onClose) onClose();
+        };
+        popup.addEventListener('animationend', removePopup, { once: true });
+    };
+
+    // Handle timeout/auto-close
+    if (timeout) {
+        setTimeout(() => {
+            close();
         }, timeout);
     }
 
-    // Return elements for further use
-    return { overlay, popup };
+    // Returns elements for further use, and exposes close method to be used when a button is clicked inside the popup
+    return { overlay, popup, close };
 }
 
 module.exports = {

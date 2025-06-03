@@ -252,6 +252,14 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('bookmark-deleteByUrl', async (event, url) => {
+        try {
+            await db.deleteBookmarkByUrl(url);
+            bookmarks = bookmarks.filter(bookmark => bookmark.url !== url);
+        } catch (err) {
+            console.error('Error deleting bookmark by URL:', err.message);
+        }
+    });
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
         // Always update webpageBounds before clicking

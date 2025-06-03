@@ -234,7 +234,7 @@ function showBookmarkAddedPopup() {
     }
 }
 
-function showDeleteAllConfirmationPopup() {
+async function showDeleteAllConfirmationPopup() {
     try {
         // Create and display the overlay
         const overlay = document.createElement("div");
@@ -292,6 +292,8 @@ function showDeleteAllConfirmationPopup() {
         popup.appendChild(buttonsContainer);
         document.body.appendChild(overlay);
         document.body.appendChild(popup);
+
+        await updateScenarioId(31, buttons, ViewNames.BOOKMARKS);
     } catch (error) {
         console.error('Error opening delete all confirmation popup:', error.message);
     }
@@ -328,6 +330,98 @@ function showDeleteAllSuccessPopup() {
     }
 }
 
+async function showBookmarkActionPopup(bookmark) {
+    try {
+        // Create and display the overlay
+        const overlay = document.createElement("div");
+        overlay.classList.add("overlay");
+
+        // Create and display the popup
+        const popup = document.createElement("div");
+        popup.classList.add("popup", "border", "fadeInUp");
+
+        // Title
+        const popupTitle = document.createElement("span");
+        popupTitle.classList.add("popup__message");
+        popupTitle.textContent = bookmark.title;
+        popup.appendChild(popupTitle);
+
+        // Snapshot image
+        // if (bookmark.snapshot) {
+        //     const img = document.createElement("img");
+        //     img.src = bookmark.snapshot;
+        //     img.alt = "Bookmark snapshot";
+        //     img.classList.add("popup__snapshot");
+        //     popup.appendChild(img);
+        // }
+
+        // URL
+        const urlSpan = document.createElement("span");
+        urlSpan.classList.add("popup__url");
+        urlSpan.textContent = bookmark.url;
+        popup.appendChild(urlSpan);
+
+        // Create buttons container
+        const buttonsContainer = document.createElement("div");
+        buttonsContainer.classList.add("popup__buttons");
+
+        // Visit button
+        const visitBtn = document.createElement("button");
+        visitBtn.setAttribute('id', 'visitBookmarkBtn');
+        visitBtn.classList.add("popup__btn", "popup__btn--accept");
+        visitBtn.textContent = "Visit";
+        visitBtn.onclick = () => {
+            overlay.remove();
+            popup.remove();
+            ipcRenderer.send('url-load', bookmark.url);
+            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
+            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+        };
+        buttonsContainer.appendChild(visitBtn);
+
+        // Delete button
+        const deleteBtn = document.createElement("button");
+        deleteBtn.setAttribute('id', 'deleteBookmarkBtn');
+        deleteBtn.classList.add("popup__btn", "popup__btn--delete");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => {
+            overlay.remove();
+            popup.remove();
+            ipcRenderer.send('bookmark-deleteByUrl', bookmark.url);
+        };
+        buttonsContainer.appendChild(deleteBtn);
+
+        // Cancel button
+        const cancelBtn = document.createElement("button");
+        cancelBtn.setAttribute('id', 'cancelBookmarkBtn');
+        cancelBtn.classList.add("popup__btn", "popup__btn--cancel");
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            popup.remove();
+
+            requestAnimationFrame(async () => {
+                const scenarioId = getBookmarksScenarioId(
+                    bookmarks.length,
+                    currentPage > 0, // hasLeftArrow
+                    (currentPage + 1) * pageSize < bookmarks.length // hasRightArrow
+                );
+                // Now you can use scenarioId to update scenario, e.g.:
+                await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
+            });
+        };
+        buttonsContainer.appendChild(cancelBtn);
+
+        popup.appendChild(buttonsContainer);
+        document.body.appendChild(overlay);
+        document.body.appendChild(popup);
+
+        await updateScenarioId(32, buttons, ViewNames.BOOKMARKS);
+    } catch (error) {
+        console.error('Error opening bookmark action popup:', error.message);
+    }
+}
+
 function attachEventListeners() {
     const bookmarksOverlay = document.getElementById('bookmarks');
     console.log('Attaching event listeners to bookmarks overlay:', bookmarksOverlay);
@@ -355,14 +449,22 @@ function attachEventListeners() {
             setTimeout(async () => {
                 await stopManager();
 
-                // if (buttonId.includes('BookmarkBtn')) {
-                //     const bookmarkIndex = parseInt(buttonId.charAt(0), 10) - 1; // Extract index from button ID
-                //     const bookmark = bookmarks[bookmarkIndex];
-
-                //     if (bookmark) {
-                //         await ipcRenderer.invoke('open-bookmark', bookmark.url);
-                //     }
-                // }
+                if (buttonId.includes('BookmarkBtn')) {
+                    const idMap = {
+                        firstBookmarkBtn: 0,
+                        secondBookmarkBtn: 1,
+                        thirdBookmarkBtn: 2,
+                        fourthBookmarkBtn: 3
+                    };
+                    const pageIndex = idMap[buttonId];
+                    if (pageIndex !== undefined) {
+                        const bookmarkIndex = currentPage * pageSize + pageIndex;
+                        const bookmark = bookmarks[bookmarkIndex];
+                        if (bookmark) {
+                            showBookmarkActionPopup(bookmark);
+                        }
+                    }
+                }
                 if (buttonId === 'cancelBtn') {
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
                 }

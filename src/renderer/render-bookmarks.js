@@ -232,6 +232,100 @@ function showBookmarkAddedPopup() {
     }
 }
 
+function showDeleteAllConfirmationPopup() {
+    try {
+        // Create and display the overlay
+        const overlay = document.createElement("div");
+        overlay.classList.add("overlay");
+
+        // Create and display the confirmation popup
+        const popup = document.createElement("div");
+        popup.classList.add("popup", "border", "fadeInUp");
+
+        const popupMessage = document.createElement("span");
+        popupMessage.classList.add("popup__message");
+        popupMessage.textContent = "Delete all bookmarks?";
+        popup.appendChild(popupMessage);
+
+        // Add icon
+        popup.innerHTML += createMaterialIcon('m', 'delete_forever');
+
+        // Create buttons container
+        const buttonsContainer = document.createElement("div");
+        buttonsContainer.classList.add("popup__buttons");
+
+        // Accept button
+        const acceptBtn = document.createElement("button");
+        acceptBtn.classList.add("popup__btn", "popup__btn--accept");
+        acceptBtn.textContent = "Delete All";
+        acceptBtn.onclick = () => {
+            overlay.remove();
+            popup.remove();
+            bookmarks = [];
+            ipcRenderer.send('bookmark-deleteAll');
+            showDeleteAllSuccessPopup();
+        };
+        buttonsContainer.appendChild(acceptBtn);
+
+        // Cancel button
+        const cancelBtn = document.createElement("button");
+        cancelBtn.classList.add("popup__btn", "popup__btn--cancel");
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            popup.remove();
+
+            requestAnimationFrame(async () => {
+                const scenarioId = getBookmarksScenarioId(
+                    bookmarks.length,
+                    currentPage > 0, // hasLeftArrow
+                    (currentPage + 1) * pageSize < bookmarks.length // hasRightArrow
+                );
+                // Now you can use scenarioId to update scenario, e.g.:
+                await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
+            });
+        };
+        buttonsContainer.appendChild(cancelBtn);
+
+        popup.appendChild(buttonsContainer);
+        document.body.appendChild(overlay);
+        document.body.appendChild(popup);
+    } catch (error) {
+        console.error('Error opening delete all confirmation popup:', error.message);
+    }
+}
+
+function showDeleteAllSuccessPopup() {
+    try {
+        // Create and display the overlay
+        const overlay = document.createElement("div");
+        overlay.classList.add("overlay");
+
+        // Create and display the success popup
+        const popup = document.createElement("div");
+        popup.classList.add("popup", "border", "fadeInUp");
+
+        const popupMessage = document.createElement("span");
+        popupMessage.classList.add("popup__message");
+        popupMessage.textContent = "All bookmarks deleted";
+        popup.appendChild(popupMessage);
+
+        popup.innerHTML += createMaterialIcon('m', 'delete_forever');
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            overlay.remove();
+            popup.remove();
+            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
+            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+        }, 2000);
+    } catch (error) {
+        console.error('Error opening delete all success popup:', error.message);
+    }
+}
+
 function attachEventListeners() {
     const bookmarksOverlay = document.getElementById('bookmarks');
     console.log('Attaching event listeners to bookmarks overlay:', bookmarksOverlay);
@@ -275,6 +369,9 @@ function attachEventListeners() {
 
                     // Creates a short pop-up message to indicate that the bookmark has been added then closes the overlay
                     showBookmarkAddedPopup();
+                }
+                else if (buttonId === 'deleteAllBtn') {
+                    showDeleteAllConfirmationPopup();
                 }
 
             }, CssConstants.SELECTION_ANIMATION_DURATION);

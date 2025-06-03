@@ -76,7 +76,7 @@ async function createTables() {
 // ============ ADDING =============
 // =================================
 
-function addBookmark({url, title, snapshot}) {
+function addBookmark({ url, title, snapshot }) {
     try {
         // Converting base64 image to buffer
         let base64Data = snapshot.replace(/^data:image\/\w+;base64,/, "");
@@ -87,7 +87,7 @@ function addBookmark({url, title, snapshot}) {
                 INSERT INTO bookmarks (url, title, snapshot)
                 VALUES (?, ?, ?)
             `;
-            db.run(insertBookmark, [url, title, binarySnapshot], function(err) {
+            db.run(insertBookmark, [url, title, binarySnapshot], function (err) {
                 if (err) {
                     console.error('Error inserting bookmark:', err.message);
                     reject(err);
@@ -109,12 +109,31 @@ function addBookmark({url, title, snapshot}) {
 function deleteBookmarkByUrl(url) {
     return new Promise((resolve, reject) => {
         const deleteBookmark = `DELETE FROM bookmarks WHERE url = ?`;
-        db.run(deleteBookmark, [url], function(err) {
+        db.run(deleteBookmark, [url], function (err) {
             if (err) {
                 console.error('Error deleting bookmark:', err.message);
                 reject(err);
             } else {
                 console.log(`Bookmark with URL: ${url} has been deleted`);
+                resolve();
+            }
+        });
+    });
+}
+
+// =================================
+// ========== REMOVE ALL ===========
+// =================================
+
+function deleteAllBookmarks() {
+    return new Promise((resolve, reject) => {
+        const deleteAll = `DELETE FROM bookmarks`;
+        db.run(deleteAll, function (err) {
+            if (err) {
+                console.error('Error deleting all bookmarks:', err.message);
+                reject(err);
+            } else {
+                console.log('All bookmarks have been deleted');
                 resolve();
             }
         });
@@ -159,4 +178,6 @@ module.exports = {
     getBookmarks,
 
     deleteBookmarkByUrl,
+
+    deleteAllBookmarks,
 };

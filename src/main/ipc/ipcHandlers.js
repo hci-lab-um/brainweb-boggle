@@ -238,11 +238,20 @@ function registerIpcHandlers(context) {
             bookmarks.push(bookmark);
 
             await db.addBookmark(bookmark);
-            mainWindowContent.webContents.send('bookmarks-update', bookmarks);
         } catch (err) {
             console.error('Error adding bookmark:', err.message);
         }
     });
+
+    ipcMain.on('bookmark-deleteAll', async (event) => {
+        try {
+            await db.deleteAllBookmarks();
+            bookmarks = [];
+        } catch (err) {
+            console.error('Error deleting all bookmarks:', err.message);
+        }
+    });
+
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
         // Always update webpageBounds before clicking

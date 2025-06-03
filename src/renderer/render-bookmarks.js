@@ -5,15 +5,28 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createPopup } = require('../utils/utilityFunctions');
 
 let buttons = [];
-let bookmarks = [];
-const pageSize = 4;     // The number of bookmarks to display per page
+let bookmarks = [];     
+const pageSize = 4;     // This is the maximum number of bookmarks that can be displayed at once in a page
 let currentPage = 0;    // Current page index
 
 // POSSIBLE CODE DUPLICATION WITH KEYBOARD KEYS!!!!!!!
-ipcRenderer.on('bookmarks-loaded', async (event, overlayData) => {
+ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) => {
     try {
         ({ bookmarks } = overlayData);
         buttons = document.querySelectorAll('button');
+
+        /**
+         * This is used to update the current page and display the last page of the bookmarks if the current page is the last page
+         * 
+         * bookmarks.length % pageSize === 0 : This checks if each page has exactly 4 bookmarks (after the deletion of the bookmark).
+         * isReload == true : We only want to update the current page if we are reloading the bookmarks overlay.
+         * Math.ceil((bookmarks.length + 1)/ pageSize) - 1 : We add 1 to bookmarks.length to identify if the user was on the last 
+         * page before the deletion occurred.
+         */
+        if (bookmarks.length % pageSize === 0 && isReload && currentPage === Math.ceil((bookmarks.length + 1)/ pageSize) - 1) {
+            // Sets currentPage to the new last page.
+            currentPage = (bookmarks.length / pageSize) - 1;
+        }
 
         initialiseBookmarksOverlay();
 
@@ -181,7 +194,7 @@ function getBookmarksScenarioId(bookmarksCount, hasLeftArrow, hasRightArrow) {
         // Determine the scenario ID based on the number of bookmarks and arrow visibility
         if (bookmarksOnPage >= 1 && bookmarksOnPage <= 3) {
             // 21–24 (no arrow), 25–28 (left arrow), 29–30 (right arrow)
-            return 21 + bookmarksOnPage + (left ? 4 : 0);
+            return 21 + bookmarksOnPage + ((left || right) ? 4 : 0);
         }
         if (bookmarksOnPage === 4) {
             if (left && right) return 30;

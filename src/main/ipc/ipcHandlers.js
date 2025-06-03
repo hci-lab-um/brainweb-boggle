@@ -256,6 +256,11 @@ function registerIpcHandlers(context) {
         try {
             await db.deleteBookmarkByUrl(url);
             bookmarks = bookmarks.filter(bookmark => bookmark.url !== url);
+
+            // Reloading the bookmarks to show the updated bookmarks list
+            let topMostView = viewsList[viewsList.length - 1];
+            let isReload = true;
+            topMostView.webContentsView.webContents.send('bookmarks-loaded', {bookmarks: bookmarks}, isReload);
         } catch (err) {
             console.error('Error deleting bookmark by URL:', err.message);
         }

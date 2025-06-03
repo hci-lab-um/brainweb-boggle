@@ -180,6 +180,7 @@
 
     &--deleteAllConfirmation {
         flex-direction: column;
+        text-align: center;
         gap: 50px;
         padding: 50px 70px;
     }
@@ -194,22 +195,28 @@
         font-size: 2rem;
         color: colors.$white;
         width: 100%;
-        max-width: 400px;
+
+        &--bookmarkAction {
+            max-width: 400px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
     }
 
     &__url {
         font-size: 1.25rem;
         padding-bottom: 20px;
         width: 100%;
-        max-width: 500px;
-    }
 
-    &__message,
-    &__url {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: block;
+        &--bookmarkAction {
+            max-width: 500px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
     }
 
     &__snapshot {
@@ -232,7 +239,7 @@
         display: flex;
         gap: 20%;
 
-        &--vertical {
+        &--bookmarkAction {
             flex-direction: column;
             gap: 14%;
         }

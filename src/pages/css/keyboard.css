@@ -191,6 +191,7 @@
 }
 .popup--deleteAllConfirmation {
   flex-direction: column;
+  text-align: center;
   gap: 50px;
   padding: 50px 70px;
 }
@@ -203,15 +204,21 @@
   font-size: 2rem;
   color: #ffffff;
   width: 100%;
+}
+.popup__message--bookmarkAction {
   max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 .popup__url {
   font-size: 1.25rem;
   padding-bottom: 20px;
   width: 100%;
-  max-width: 500px;
 }
-.popup__message, .popup__url {
+.popup__url--bookmarkAction {
+  max-width: 500px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -235,7 +242,7 @@
   display: flex;
   gap: 20%;
 }
-.popup__btnsContainer--vertical {
+.popup__btnsContainer--bookmarkAction {
   flex-direction: column;
   gap: 14%;
 }

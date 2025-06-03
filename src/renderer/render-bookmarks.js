@@ -216,7 +216,19 @@ function getBookmarksScenarioId(bookmarksCount, hasLeftArrow, hasRightArrow) {
     return 25;
 }
 
-// Refactored showBookmarkAddedPopup
+function showBookmarkExistsPopup() {
+    try {
+        createPopup({
+            message: 'Bookmark already exists',
+            icon: createMaterialIcon('m', 'warning'),
+            classes: ['border', 'fadeInUp'],
+            timeout: 2000
+        });
+    } catch (error) {
+        console.error('Error opening bookmark exists popup:', error.message);
+    }
+}
+
 function showBookmarkAddedPopup() {
     try {
         createPopup({
@@ -234,7 +246,22 @@ function showBookmarkAddedPopup() {
     }
 }
 
-// Refactored showDeleteAllSuccessPopup
+function showBookmarkDeletedPopup(url) {
+    try {
+        createPopup({
+            message: 'Bookmark deleted successfully',
+            icon: createMaterialIcon('m', 'bookmark_remove'),
+            classes: ['border', 'fadeInUp'],
+            timeout: 2000,
+            onClose: () => {
+                ipcRenderer.send('bookmark-deleteByUrl', url);
+            }
+        });
+    } catch (error) {
+        console.error('Error opening settings overlay:', error.message);
+    }
+}
+
 function showDeleteAllSuccessPopup() {
     try {
         createPopup({
@@ -252,7 +279,6 @@ function showDeleteAllSuccessPopup() {
     }
 }
 
-// Refactored showDeleteAllConfirmationPopup
 async function showDeleteAllConfirmationPopup() {
     try {
         // Create buttons
@@ -298,7 +324,6 @@ async function showDeleteAllConfirmationPopup() {
     }
 }
 
-// Refactored showBookmarkActionPopup
 async function showBookmarkActionPopup(bookmark) {
     try {
         // Custom content: snapshot, title, url
@@ -343,7 +368,7 @@ async function showBookmarkActionPopup(bookmark) {
         deleteBtn.onclick = () => {
             popupElements.overlay.remove();
             popupElements.popup.remove();
-            ipcRenderer.send('bookmark-deleteByUrl', bookmark.url);
+            showBookmarkDeletedPopup(bookmark.url);
         };
 
         const cancelBtn = document.createElement('button');
@@ -423,7 +448,13 @@ function attachEventListeners() {
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
                 }
                 else if (buttonId === 'addBookmarkBtn') {
-                    ipcRenderer.send('bookmark-add');
+                    // Only adds the bookmark if the url does not already exist in the bookmarks array
+                    let isAdded = await ipcRenderer.invoke('bookmark-add');
+                    if (!isAdded) {
+                        // Creates a pop-up message to indicate that the bookmark already exists
+                        showBookmarkExistsPopup();
+                        return;
+                    }
 
                     // Creates a short pop-up message to indicate that the bookmark has been added then closes the overlay
                     showBookmarkAddedPopup();

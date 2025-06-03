@@ -221,7 +221,7 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('bookmark-add', async (event) => {
+    ipcMain.handle('bookmark-add', async (event) => {
         try {
             try {
                 await captureSnapshot(tabView);
@@ -233,13 +233,18 @@ function registerIpcHandlers(context) {
             let title = tabView.webContents.getTitle();
             let snapshot = tabView.snapshot;
 
+            // Check if bookmark already exists
+            if (bookmarks.some(b => b.url === url)) {
+                return false; // Already exists
+            }
+
             var bookmark = { url: url, title: title, snapshot: snapshot };
-
             bookmarks.push(bookmark);
-
             await db.addBookmark(bookmark);
+            return true;
         } catch (err) {
             console.error('Error adding bookmark:', err.message);
+            return false;
         }
     });
 

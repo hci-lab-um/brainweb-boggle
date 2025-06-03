@@ -243,7 +243,7 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('bookmark-deleteAll', async (event) => {
+    ipcMain.on('bookmarks-deleteAll', async (event) => {
         try {
             await db.deleteAllBookmarks();
             bookmarks = [];

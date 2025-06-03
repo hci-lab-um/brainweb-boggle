@@ -178,8 +178,26 @@
     gap: 20px;
     align-items: center;
 
+    &--verticalLarge {
+        flex-direction: column;
+        gap: 50px;
+        padding: 50px 70px;
+    }
+
     &__message {
         font-size: 2rem;
         color: colors.$white;
+    }
+
+    &__btnsContainer {
+        display: flex;
+        gap: 20%;
+    }
+
+    &__btn {
+        padding: 20px 30px;
+        font-size: 1.75rem;
+        width: 300px;
+        height: 125px;
     }
 }

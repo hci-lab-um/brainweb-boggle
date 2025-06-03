@@ -242,7 +242,7 @@ function showDeleteAllConfirmationPopup() {
 
         // Create and display the confirmation popup
         const popup = document.createElement("div");
-        popup.classList.add("popup", "border", "fadeInUp");
+        popup.classList.add("popup", "popup--verticalLarge", "border", "fadeInUp");
 
         const popupMessage = document.createElement("span");
         popupMessage.classList.add("popup__message");
@@ -250,28 +250,30 @@ function showDeleteAllConfirmationPopup() {
         popup.appendChild(popupMessage);
 
         // Add icon
-        popup.innerHTML += createMaterialIcon('m', 'delete_forever');
+        // popup.innerHTML += createMaterialIcon('m', 'delete_forever');
 
         // Create buttons container
         const buttonsContainer = document.createElement("div");
-        buttonsContainer.classList.add("popup__buttons");
+        buttonsContainer.classList.add("popup__btnsContainer");
 
         // Accept button
-        const acceptBtn = document.createElement("button");
-        acceptBtn.classList.add("popup__btn", "popup__btn--accept");
-        acceptBtn.textContent = "Delete All";
-        acceptBtn.onclick = () => {
+        const confirmBtn = document.createElement("button");
+        confirmBtn.setAttribute("id", "confirmDeleteBtn");
+        confirmBtn.classList.add("button", "popup__btn");
+        confirmBtn.textContent = "Delete All";
+        confirmBtn.onclick = () => {
             overlay.remove();
             popup.remove();
             bookmarks = [];
-            ipcRenderer.send('bookmark-deleteAll');
+            ipcRenderer.send('bookmarks-deleteAll');
             showDeleteAllSuccessPopup();
         };
-        buttonsContainer.appendChild(acceptBtn);
+        buttonsContainer.appendChild(confirmBtn);
 
         // Cancel button
         const cancelBtn = document.createElement("button");
-        cancelBtn.classList.add("popup__btn", "popup__btn--cancel");
+        cancelBtn.setAttribute("id", "cancelDeleteBtn");
+        cancelBtn.classList.add("button", "popup__btn", "accent");
         cancelBtn.textContent = "Cancel";
         cancelBtn.onclick = () => {
             overlay.remove();

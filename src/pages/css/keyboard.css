@@ -44,11 +44,11 @@
 .border {
   box-sizing: border-box;
   border-radius: 10px;
-  box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.8) inset;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.8) inset;
 }
 .border--accent {
   border: none;
-  box-shadow: 0 0 50px rgba(183, 255, 0, 0.5), 0 0 0 3px #b7ff00 inset;
+  box-shadow: 0 0 50px rgba(183, 255, 0, 0.5), 0 0 0 2px #b7ff00 inset;
 }
 
 @keyframes fadeInUp {
@@ -189,9 +189,24 @@
   gap: 20px;
   align-items: center;
 }
+.popup--verticalLarge {
+  flex-direction: column;
+  gap: 50px;
+  padding: 50px 70px;
+}
 .popup__message {
   font-size: 2rem;
   color: #ffffff;
+}
+.popup__btnsContainer {
+  display: flex;
+  gap: 20%;
+}
+.popup__btn {
+  padding: 20px 30px;
+  font-size: 1.75rem;
+  width: 300px;
+  height: 125px;
 }
 
 body {

@@ -107,6 +107,15 @@ const scenarioConfig = {
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5, 1.5, 0, 0],
     },
 
+    scenario_31: {
+        name: ViewNames.BOOKMARKS,
+        description: 'Delete all bookmarks overlay, confirm and cancel button',
+        buttonIds: ['confirmDeleteBtn', 'cancelDeleteBtn'],
+        frequencies: [12.5, 7],
+        phases: [0, 0],
+    },
+
+
     // SELECT
     scenario_40: {
         name: ViewNames.SELECT,

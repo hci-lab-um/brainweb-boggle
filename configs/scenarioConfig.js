@@ -30,7 +30,7 @@ const scenarioConfig = {
     scenario_21: {
         name: ViewNames.BOOKMARKS,
         description: 'No bookmarks, add bookmark and cancel button',
-        buttonIds: ['AddBookmarkBtn', 'CancelBtn'],
+        buttonIds: ['addBookmarkBtn', 'cancelBtn'],
         frequencies: [12.5, 7],
         phases: [0, 0],
     },

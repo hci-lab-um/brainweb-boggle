@@ -238,6 +238,7 @@ body {
 }
 .bookmarks__container > * {
   height: 40%;
+  padding: 0 !important;
 }
 .bookmarks__bookmarksAndArrowsContainer {
   display: flex;
@@ -248,7 +249,7 @@ body {
 .bookmarks .button {
   display: flex;
   flex-direction: column;
-  padding: 0;
+  padding: 7px;
 }
 .bookmarks .button__title {
   width: 100%;
@@ -271,6 +272,15 @@ body {
   white-space: nowrap;
   box-sizing: border-box;
   padding: 0 30px 0;
+}
+
+.noBookmarksMessage {
+  height: 40%;
+  align-content: center;
+  text-align: center;
+  font-size: 3rem;
+  background-color: rgba(29, 43, 93, 0.341);
+  width: 100%;
 }
 
 /*# sourceMappingURL=bookmarks.css.map */

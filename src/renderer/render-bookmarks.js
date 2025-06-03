@@ -37,9 +37,11 @@ function initialiseBookmarksOverlay() {
 
         if (bookmarksAndArrowsContainer && bookmarksContainer) {
             const displayNoBookmarksMessage = () => {
+                bookmarksAndArrowsContainer.innerHTML = ''; // Clears the container
+
                 const noBookmarksMessage = document.createElement('div');
                 noBookmarksMessage.classList.add('noBookmarksMessage');
-                noBookmarksMessage.innerHTML = 'No bookmarks found';
+                noBookmarksMessage.innerHTML = 'No bookmarks found :(';
 
                 bookmarksAndArrowsContainer.appendChild(noBookmarksMessage);
             };

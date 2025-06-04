@@ -13,6 +13,7 @@ let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId 
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
 let bookmarks = [];        // This will hold the bookmarks fetched from the database
+let tabs = [];             // This will hold the tabs fetched from the database
 
 app.whenReady().then(async () => {
     try {
@@ -36,6 +37,7 @@ app.whenReady().then(async () => {
 async function initialiseVariables() {
     try {
         bookmarks = await db.getBookmarks();
+        tabs = await db.getTabs();
     } catch (err) {
         logger.error("Error initialising variables: ", err);
     }
@@ -111,6 +113,7 @@ function createMainWindow() {
                                     viewsList,
                                     scenarioIdDict,
                                     bookmarks,
+                                    tabs,
                                     db,
                                     updateWebpageBounds
                                 });

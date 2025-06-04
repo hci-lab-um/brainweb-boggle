@@ -5,13 +5,14 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createPopup, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
 
 let buttons = [];
-let tabs = [];
+let tabsList = [];
 const pageSize = 4;     // This is the maximum number of tabs that can be displayed at once in a page
 let currentPage = 0;    // Current page index
 
 ipcRenderer.on('tabs-loaded', async (event, overlayData, isReload = false) => {
     try {
-        ({ tabs } = overlayData);
+        ({ tabsList } = overlayData);
+        console.log('Tabs loaded:', tabsList);
         buttons = document.querySelectorAll('button');
 
         /**
@@ -22,9 +23,9 @@ ipcRenderer.on('tabs-loaded', async (event, overlayData, isReload = false) => {
          * Math.ceil((tabs.length + 1)/ pageSize) - 1 : We add 1 to tabs.length to identify if the user was on the last
          * page before the deletion occurred.
          */
-        if (tabs.length % pageSize === 0 && isReload && currentPage === Math.ceil((tabs.length + 1) / pageSize) - 1) {
+        if (tabsList.length % pageSize === 0 && isReload && currentPage === Math.ceil((tabsList.length + 1) / pageSize) - 1) {
             // Sets currentPage to the new last page.
-            currentPage = (tabs.length / pageSize) - 1;
+            currentPage = (tabsList.length / pageSize) - 1;
         }
 
         initialiseTabsOverlay();
@@ -36,9 +37,9 @@ ipcRenderer.on('tabs-loaded', async (event, overlayData, isReload = false) => {
 
         // Obtaining the scenarioId based on the number of tabs and pagination state
         const scenarioId = getTabsScenarioId(
-            tabs.length,
+            tabsList.length,
             false,
-            tabs.length > pageSize
+            tabsList.length > pageSize
         );
         // Updating the scenarioId for the tabs overlay
         await updateScenarioId(scenarioId, buttons, ViewNames.TABS);
@@ -105,7 +106,7 @@ function initialiseTabsOverlay() {
                     const idSuffix = ['first', 'second', 'third', 'fourth'][index];
 
                     const tabButton = document.createElement('button');
-                    tabButton.setAttribute('id', `${idSuffix}TabBtn`);
+                    tabButton.setAttribute('id', `${idSuffix}ItemBtn`);
                     tabButton.classList.add('button');
 
                     const buttonTitle = document.createElement('span');
@@ -130,9 +131,9 @@ function initialiseTabsOverlay() {
                 renderPage();
                 requestAnimationFrame(async () => {
                     const scenarioId = getTabsScenarioId(
-                        tabs.length,
+                        tabsList.length,
                         currentPage > 0,
-                        (currentPage + 1) * pageSize < tabs.length
+                        (currentPage + 1) * pageSize < tabsList.length
                     );
                     await updateScenarioId(scenarioId, buttons, ViewNames.TABS);
                 });
@@ -141,7 +142,7 @@ function initialiseTabsOverlay() {
             const renderPage = () => {
                 tabsContainer.innerHTML = '';
                 tabsAndArrowsContainer.innerHTML = '';
-                const pageTabs = paginate(tabs, pageSize, currentPage);
+                const pageTabs = paginate(tabsList, pageSize, currentPage);
 
                 // Add left navigation button
                 if (currentPage > 0) {
@@ -155,15 +156,15 @@ function initialiseTabsOverlay() {
                     tabsAndArrowsContainer.appendChild(tabsContainer);
                 });
                 // Add right navigation button
-                if ((currentPage + 1) * pageSize < tabs.length) {
+                if ((currentPage + 1) * pageSize < tabsList.length) {
                     const rightArrow = createNavigationButton('right', () => handleNavigation('right'));
                     tabsAndArrowsContainer.appendChild(rightArrow);
                 }
                 // Add pagination indicators using utility function
-                updatePaginationIndicators(tabs, pageSize, currentPage, '.pagination__container');
+                updatePaginationIndicators(tabsList, pageSize, currentPage, '.pagination__container');
             };
 
-            if (tabs.length === 0) {
+            if (tabsList.length === 0) {
                 displayNoTabsMessage();
             } else {
                 renderPage();
@@ -185,9 +186,9 @@ function showTabExistsPopup() {
             timeout: 1750, // The duration of the fade-in animation + 1 second to read the message
             onClose: async () => {
                 const scenarioId = getTabsScenarioId(
-                    tabs.length,
+                    tabsList.length,
                     currentPage > 0,
-                    (currentPage + 1) * pageSize < tabs.length
+                    (currentPage + 1) * pageSize < tabsList.length
                 );
                 await updateScenarioId(scenarioId, buttons, ViewNames.TABS);
             }
@@ -253,7 +254,7 @@ async function showDeleteAllConfirmationPopup() {
         confirmBtn.textContent = 'Delete All';
         confirmBtn.onclick = () => {
             popupElements.close();
-            tabs = [];
+            tabsList = [];
             ipcRenderer.send('tabs-deleteAll');
             showDeleteAllSuccessPopup();
         };
@@ -266,9 +267,9 @@ async function showDeleteAllConfirmationPopup() {
             popupElements.close();
             requestAnimationFrame(async () => {
                 const scenarioId = getTabsScenarioId(
-                    tabs.length,
+                    tabsList.length,
                     currentPage > 0,
-                    (currentPage + 1) * pageSize < tabs.length
+                    (currentPage + 1) * pageSize < tabsList.length
                 );
                 await updateScenarioId(scenarioId, buttons, ViewNames.TABS);
             });
@@ -287,19 +288,19 @@ async function showDeleteAllConfirmationPopup() {
     }
 }
 
-async function showTabActionPopup(tab) {
+async function showItemActionPopup(tab) {
     try {
         // Custom content: snapshot, title, url
         const snapshotContainer = document.createElement('div');
         snapshotContainer.classList.add('popup__snapshotContainer');
 
         const popupTitle = document.createElement('span');
-        popupTitle.classList.add('popup__message', 'popup__message--tabAction');
+        popupTitle.classList.add('popup__message', 'popup__message--itemAction');
         popupTitle.textContent = tab.title;
         snapshotContainer.appendChild(popupTitle);
 
         const urlSpan = document.createElement('span');
-        urlSpan.classList.add('popup__url', 'popup__url--tabAction');
+        urlSpan.classList.add('popup__url', 'popup__url--itemAction');
         urlSpan.textContent = tab.url;
         snapshotContainer.appendChild(urlSpan);
 
@@ -313,7 +314,7 @@ async function showTabActionPopup(tab) {
 
         // Buttons
         const visitBtn = document.createElement('button');
-        visitBtn.setAttribute('id', 'visitTabBtn');
+        visitBtn.setAttribute('id', 'visitItemBtn');
         visitBtn.classList.add('button', 'popup__btn');
         visitBtn.textContent = 'Visit';
         visitBtn.onclick = () => {
@@ -324,7 +325,7 @@ async function showTabActionPopup(tab) {
         };
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.setAttribute('id', 'deleteTabBtn');
+        deleteBtn.setAttribute('id', 'deleteItemBtn');
         deleteBtn.classList.add('button', 'popup__btn');
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = () => {
@@ -333,25 +334,25 @@ async function showTabActionPopup(tab) {
         };
 
         const cancelBtn = document.createElement('button');
-        cancelBtn.setAttribute('id', 'cancelTabBtn');
+        cancelBtn.setAttribute('id', 'cancelItemBtn');
         cancelBtn.classList.add('button', 'popup__btn', 'accent');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => {
             popupElements.close();
             requestAnimationFrame(async () => {
                 const scenarioId = getTabsScenarioId(
-                    tabs.length,
+                    tabsList.length,
                     currentPage > 0,
-                    (currentPage + 1) * pageSize < tabs.length
+                    (currentPage + 1) * pageSize < tabsList.length
                 );
                 await updateScenarioId(scenarioId, buttons, ViewNames.TABS);
             });
         };
 
         const popupElements = createPopup({
-            name: 'tabAction',
+            name: 'itemAction',
             customContent: snapshotContainer,
-            classes: ['popup--tabAction', 'border', 'fadeInUp'],
+            classes: ['popup--itemAction', 'border', 'fadeInUp'],
             buttons: [visitBtn, deleteBtn, cancelBtn]
         });
 
@@ -388,26 +389,26 @@ function attachEventListeners() {
             setTimeout(async () => {
                 await stopManager();
 
-                if (buttonId.includes('TabBtn')) {
+                if (buttonId.includes('ItemBtn')) {
                     const idMap = {
-                        firstTabBtn: 0,
-                        secondTabBtn: 1,
-                        thirdTabBtn: 2,
-                        fourthTabBtn: 3
+                        firstItemBtn: 0,
+                        secondItemBtn: 1,
+                        thirdItemBtn: 2,
+                        fourthItemBtn: 3
                     };
                     const pageIndex = idMap[buttonId];
                     if (pageIndex !== undefined) {
                         const tabIndex = currentPage * pageSize + pageIndex;
-                        const tab = tabs[tabIndex];
+                        const tab = tabsList[tabIndex];
                         if (tab) {
-                            showTabActionPopup(tab);
+                            showItemActionPopup(tab);
                         }
                     }
                 }
                 if (buttonId === 'cancelBtn') {
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.TABS);
                 }
-                else if (buttonId === 'addTabBtn') {
+                else if (buttonId === 'addBtn') {
                     // Only adds the tab if the url does not already exist in the tabs array
                     let isAdded = await ipcRenderer.invoke('tab-add');
                     if (!isAdded) {

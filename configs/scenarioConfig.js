@@ -30,7 +30,7 @@ const scenarioConfig = {
     scenario_21: {
         name: ViewNames.BOOKMARKS,
         description: 'No bookmarks, add bookmark and cancel button',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn'],
+        buttonIds: ['addBtn', 'cancelBtn'],
         frequencies: [12.5, 7],
         phases: [0, 0],
     },
@@ -38,7 +38,7 @@ const scenarioConfig = {
     scenario_22: {
         name: ViewNames.BOOKMARKS,
         description: 'One bookmark, delete all, add bookmark and cancel buttons',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn'],
         frequencies: [6, 14.5, 10.5, 8],
         phases: [1, 0.5, 1.5, 1.5],
     },
@@ -46,7 +46,7 @@ const scenarioConfig = {
     scenario_23: {
         name: ViewNames.BOOKMARKS,
         description: 'Two bookmarks, delete all, add bookmark and cancel buttons',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5],
         phases: [1, 0.5, 1.5, 1.5, 0],
     },
@@ -54,7 +54,7 @@ const scenarioConfig = {
     scenario_24: {
         name: ViewNames.BOOKMARKS,
         description: 'Three bookmarks, delete all, add bookmark and cancel buttons',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn', 'thirdBookmarkBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn', 'thirdItemBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5],
     },
@@ -62,7 +62,7 @@ const scenarioConfig = {
     scenario_25: {
         name: ViewNames.BOOKMARKS,
         description: 'Four bookmarks, delete all, add bookmark and cancel buttons',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn', 'thirdBookmarkBtn', 'fourthBookmarkBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn', 'thirdItemBtn', 'fourthItemBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9, 7.5],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5, 1.5],
     },
@@ -70,7 +70,7 @@ const scenarioConfig = {
     scenario_26: {
         name: ViewNames.BOOKMARKS,
         description: 'One bookmark, delete all, add bookmark, cancel buttons and one active arrow',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'firstArrowKeyBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'firstArrowKeyBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5],
         phases: [1, 0.5, 1.5, 1.5, 0],
     },
@@ -78,7 +78,7 @@ const scenarioConfig = {
     scenario_27: {
         name: ViewNames.BOOKMARKS,
         description: 'Two bookmarks, delete all, add bookmark, cancel buttons and one active arrow',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn', 'firstArrowKeyBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn', 'firstArrowKeyBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5],
     },
@@ -86,7 +86,7 @@ const scenarioConfig = {
     scenario_28: {
         name: ViewNames.BOOKMARKS,
         description: 'Three bookmarks, delete all, add bookmark, cancel buttons and one active arrow',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn', 'thirdBookmarkBtn', 'firstArrowKeyBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn', 'thirdItemBtn', 'firstArrowKeyBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9, 7.5],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5, 1.5],
     },
@@ -94,7 +94,7 @@ const scenarioConfig = {
     scenario_29: {
         name: ViewNames.BOOKMARKS,
         description: 'Four bookmarks, delete all, add bookmark, cancel buttons and one active arrow',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn', 'thirdBookmarkBtn', 'fourthBookmarkBtn', 'firstArrowKeyBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn', 'thirdItemBtn', 'fourthItemBtn', 'firstArrowKeyBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9, 7.5, 11],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5, 1.5, 0],
     },
@@ -102,7 +102,7 @@ const scenarioConfig = {
     scenario_30: {
         name: ViewNames.BOOKMARKS,
         description: 'Four bookmarks, delete all, add bookmark, cancel buttons and two active arrows',
-        buttonIds: ['addBookmarkBtn', 'cancelBtn', 'deleteAllBtn', 'firstBookmarkBtn', 'secondBookmarkBtn', 'thirdBookmarkBtn', 'fourthBookmarkBtn', 'firstArrowKeyBtn', 'secondArrowKeyBtn'],
+        buttonIds: ['addBtn', 'cancelBtn', 'deleteAllBtn', 'firstItemBtn', 'secondItemBtn', 'thirdItemBtn', 'fourthItemBtn', 'firstArrowKeyBtn', 'secondArrowKeyBtn'],
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9, 7.5, 11, 9.5],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5, 1.5, 0, 0],
     },
@@ -118,7 +118,7 @@ const scenarioConfig = {
     scenario_32: {
         name: ViewNames.BOOKMARKS,
         description: 'Bookmark overlay, visit, delete and cancel button',
-        buttonIds: ['visitBookmarkBtn', 'deleteBookmarkBtn', 'cancelBookmarkBtn'],
+        buttonIds: ['visitItemBtn', 'deleteItemBtn', 'cancelItemBtn'],
         frequencies: [6, 14.5, 10.5],
         phases: [1, 0.5, 1.5],
     },

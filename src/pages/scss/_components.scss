@@ -185,7 +185,7 @@
         padding: 50px 70px;
     }
 
-    &--bookmarkAction {
+    &--itemAction {
         align-items: stretch;
         gap: 50px;
         padding: 50px 60px;
@@ -196,9 +196,9 @@
         color: colors.$white;
         width: 100%;
 
-        &--bookmarkAction {
-            max-width: 400px;
+        &--itemAction {
             white-space: nowrap;
+            max-width: 400px;
             overflow: hidden;
             text-overflow: ellipsis;
             display: block;
@@ -210,7 +210,7 @@
         padding-bottom: 20px;
         width: 100%;
 
-        &--bookmarkAction {
+        &--itemAction {
             max-width: 500px;
             white-space: nowrap;
             overflow: hidden;
@@ -239,7 +239,7 @@
         display: flex;
         gap: 20%;
 
-        &--bookmarkAction {
+        &--itemAction {
             flex-direction: column;
             gap: 14%;
         }

@@ -4,23 +4,18 @@ function createMaterialIcon(size, icon_name) {
 }
 
 // Utility function to capture a snapshot of the active tab - used for the bookmark and tabs feature
-async function captureSnapshot(tabView) {
+async function captureSnapshot(activeTab) {
     try {
-        return new Promise((resolve, reject) => {
-            if (tabView && tabView.webContents) {
-                tabView.webContents.capturePage().then(snapshot => {
-                    tabView.snapshot = snapshot.toDataURL();
-                    resolve();
-                }).catch(err => {
-                    console.error('Error capturing snapshot:', err.message);
-                    reject(err);
-                });
-            } else {
-                reject(new Error('Active tab or webContents not available for capture'));
-            }
-        });
+        if (activeTab && activeTab.webContentsView && activeTab.webContentsView.webContents) {
+            const snapshot = await activeTab.webContentsView.webContents.capturePage();
+            activeTab.snapshot = snapshot.toDataURL();
+            return activeTab.snapshot;
+        } else {
+            console.error('Active tab or webContents not available for capture');
+        }
     } catch (err) {
         console.error('Error capturing snapshot:', err.message);
+        return null;
     }
 }
 
@@ -65,7 +60,7 @@ function createPopup({
     if (buttons.length > 0) {
         const buttonsContainer = document.createElement('div');
         buttonsContainer.classList.add('popup__btnsContainer');
-        if (name === 'bookmarkAction') buttonsContainer.classList.add('popup__btnsContainer--bookmarkAction');
+        if (name === 'itemAction') buttonsContainer.classList.add('popup__btnsContainer--itemAction');
         buttons.forEach(btn => buttonsContainer.appendChild(btn));
         popup.appendChild(buttonsContainer);
     }
@@ -140,11 +135,51 @@ function paginate(items, pageSize, currentPage) {
     return items.slice(start, end);
 }
 
+function slideInView(view, webpageBounds, duration = 200) {
+    try {
+        const fps = 120; // High frame rate for smoothness
+        const interval = 1000 / fps;
+        const steps = Math.ceil(duration / interval);
+
+        const initialX = view.getBounds().x;
+        const finalX = webpageBounds.x;
+
+        const deltaX = (finalX - initialX) / steps;
+
+        let currentX = initialX;
+        let step = 0;
+
+        const intervalId = setInterval(() => {
+            try {
+                step++;
+                currentX += deltaX;
+
+                view.setBounds({
+                    x: currentX,
+                    y: webpageBounds.y,
+                    width: webpageBounds.width,
+                    height: webpageBounds.height
+                });
+
+                if (step >= steps) {
+                    clearInterval(intervalId);
+                    view.setBounds(webpageBounds); // Ensure final bounds are set
+                }
+            } catch (err) {
+                console.error('Error during slide in view:', err.message);
+            }
+        }, interval);
+    } catch (err) {
+        console.error('Error sliding in view:', err.message);
+    }
+}
+
 module.exports = {
     createMaterialIcon,
     captureSnapshot,
     createPopup,
     createNavigationButton,
     updatePaginationIndicators,
-    paginate
+    paginate,
+    slideInView
 };

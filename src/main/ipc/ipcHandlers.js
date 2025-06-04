@@ -5,7 +5,7 @@ const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot } = require('../../utils/utilityFunctions');
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarks, tabs, db, updateWebpageBounds } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -29,6 +29,15 @@ function registerIpcHandlers(context) {
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
+        // Extracts the serialisable properties from tabsList
+        const serialisableTabsList = await Promise.all(tabsList.map(async tab => ({
+            tabId: tab.tabId,
+            isActive: tab.isActive,
+            snapshot: tab.snapshot ? tab.snapshot : await captureSnapshot(tab),
+            title: tab.webContentsView.webContents.getTitle() ? tab.webContentsView.webContents.getTitle() : tab.title,
+            url: tab.webContentsView.webContents.getURL() ? tab.webContentsView.webContents.getURL() : tab.url,
+        })));
+
         let overlayData = {
             overlayName: overlayName,
             scenarioId: scenarioId,
@@ -37,8 +46,8 @@ function registerIpcHandlers(context) {
             webpageBounds: webpageBounds,
             elementProperties: elementProperties,
             zoomFactor: await tabView.webContents.getZoomFactor(),
-            bookmarks: bookmarks,
-            tabs: tabs,
+            bookmarksList: bookmarksList,
+            tabsList: serialisableTabsList,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -224,23 +233,19 @@ function registerIpcHandlers(context) {
 
     ipcMain.handle('bookmark-add', async (event) => {
         try {
-            try {
-                await captureSnapshot(tabView);
-            } catch (err) {
-                console.error(err);
-            }
+            let activeTab = tabsList.find(tab => tab.isActive);
 
-            let url = tabView.webContents.getURL();
-            let title = tabView.webContents.getTitle();
-            let snapshot = tabView.snapshot;
+            let url = activeTab.webContentsView.getURL();
+            let title = activeTab.webContentsView.getTitle();
+            let snapshot = await captureSnapshot(activeTab);
 
             // Check if bookmark already exists
-            if (bookmarks.some(b => b.url === url)) {
+            if (bookmarksList.some(b => b.url === url)) {
                 return false; // Already exists
             }
 
             var bookmark = { url: url, title: title, snapshot: snapshot };
-            bookmarks.push(bookmark);
+            bookmarksList.push(bookmark);
             await db.addBookmark(bookmark);
             return true;
         } catch (err) {
@@ -252,7 +257,7 @@ function registerIpcHandlers(context) {
     ipcMain.on('bookmarks-deleteAll', async (event) => {
         try {
             await db.deleteAllBookmarks();
-            bookmarks = [];
+            bookmarksList = [];
         } catch (err) {
             console.error('Error deleting all bookmarks:', err.message);
         }
@@ -261,52 +266,48 @@ function registerIpcHandlers(context) {
     ipcMain.on('bookmark-deleteByUrl', async (event, url) => {
         try {
             await db.deleteBookmarkByUrl(url);
-            bookmarks = bookmarks.filter(bookmark => bookmark.url !== url);
+            bookmarksList = bookmarksList.filter(bookmark => bookmark.url !== url);
 
             // Reloading the bookmarks to show the updated bookmarks list
             let topMostView = viewsList[viewsList.length - 1];
             let isReload = true;
-            topMostView.webContentsView.webContents.send('bookmarks-loaded', {bookmarks: bookmarks}, isReload);
+            topMostView.webContentsView.webContents.send('bookmarks-loaded', { bookmarksList }, isReload);
         } catch (err) {
             console.error('Error deleting bookmark by URL:', err.message);
         }
     });
 
-    ipcMain.handle('tab-add', async (event) => {
-        try {
-            try {
-                await captureSnapshot(tabView);
-            } catch (err) {
-                console.error(err);
-            }
+    // ipcMain.handle('tab-add', async (event) => {
+    //     try {
+    //         let activeTab = tabsList.find(tab => tab.isActive);
 
-            let url = tabView.webContents.getURL();
-            let title = tabView.webContents.getTitle();
-            let snapshot = tabView.snapshot;
+    //         let url = activeTab.webContentsView.getURL();
+    //         let title = activeTab.webContentsView.getTitle();
+    //         let snapshot = await captureSnapshot(activeTab);
 
-            // Check if tab already exists
-            if (tabs.some(t => t.url === url)) {
-                return false; // Already exists
-            }
+    //         // Check if tab already exists
+    //         if (tabsList.some(t => t.url === url)) {
+    //             return false; // Already exists
+    //         }
 
-            var tab = { url: url, title: title, snapshot: snapshot };
-            tabs.push(tab);
-            await db.addTab(tab);
-            return true;
-        } catch (err) {
-            console.error('Error adding tab:', err.message);
-            return false;
-        }
-    });
+    //         var tab = { url: url, title: title, snapshot: snapshot };
 
-    ipcMain.on('tabs-deleteAll', async (event) => {
-        try {
-            await db.deleteAllTabs();
-            tabs = [];
-        } catch (err) {
-            console.error('Error deleting all tabs:', err.message);
-        }
-    });
+    //         tabsList.push(tab);
+    //         return true;
+    //     } catch (err) {
+    //         console.error('Error adding tab:', err.message);
+    //         return false;
+    //     }
+    // });
+
+    // ipcMain.on('tabs-deleteAll', async (event) => {
+    //     try {
+    //         await db.deleteAllTabs();
+    //         tabs = [];
+    //     } catch (err) {
+    //         console.error('Error deleting all tabs:', err.message);
+    //     }
+    // });
 
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {

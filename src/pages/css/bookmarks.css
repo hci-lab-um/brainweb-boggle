@@ -242,7 +242,7 @@
   gap: 50px;
   padding: 50px 70px;
 }
-.popup--bookmarkAction {
+.popup--itemAction {
   align-items: stretch;
   gap: 50px;
   padding: 50px 60px;
@@ -252,9 +252,9 @@
   color: #ffffff;
   width: 100%;
 }
-.popup__message--bookmarkAction {
-  max-width: 400px;
+.popup__message--itemAction {
   white-space: nowrap;
+  max-width: 400px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
@@ -264,7 +264,7 @@
   padding-bottom: 20px;
   width: 100%;
 }
-.popup__url--bookmarkAction {
+.popup__url--itemAction {
   max-width: 500px;
   white-space: nowrap;
   overflow: hidden;
@@ -289,7 +289,7 @@
   display: flex;
   gap: 20%;
 }
-.popup__btnsContainer--bookmarkAction {
+.popup__btnsContainer--itemAction {
   flex-direction: column;
   gap: 14%;
 }

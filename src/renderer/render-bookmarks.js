@@ -5,14 +5,14 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createPopup, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
 
 let buttons = [];
-let bookmarks = [];
+let bookmarksList = [];
 const pageSize = 4;     // This is the maximum number of bookmarks that can be displayed at once in a page
 let currentPage = 0;    // Current page index
 
 // POSSIBLE CODE DUPLICATION WITH KEYBOARD KEYS!!!!!!!
 ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) => {
     try {
-        ({ bookmarks } = overlayData);
+        ({ bookmarksList } = overlayData);
         buttons = document.querySelectorAll('button');
 
         /**
@@ -23,9 +23,9 @@ ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) 
          * Math.ceil((bookmarks.length + 1)/ pageSize) - 1 : We add 1 to bookmarks.length to identify if the user was on the last 
          * page before the deletion occurred.
          */
-        if (bookmarks.length % pageSize === 0 && isReload && currentPage === Math.ceil((bookmarks.length + 1) / pageSize) - 1) {
+        if (bookmarksList.length % pageSize === 0 && isReload && currentPage === Math.ceil((bookmarksList.length + 1) / pageSize) - 1) {
             // Sets currentPage to the new last page.
-            currentPage = (bookmarks.length / pageSize) - 1;
+            currentPage = (bookmarksList.length / pageSize) - 1;
         }
 
         initialiseBookmarksOverlay();
@@ -37,9 +37,9 @@ ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) 
 
         // Obtaining the scenarioId based on the number of bookmarks and pagination state
         const scenarioId = getBookmarksScenarioId(
-            bookmarks.length,
+            bookmarksList.length,
             false,
-            bookmarks.length > pageSize
+            bookmarksList.length > pageSize
         );
         // Updating the scenarioId for the bookmarks overlay
         await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
@@ -106,7 +106,7 @@ function initialiseBookmarksOverlay() {
                     const idSuffix = ['first', 'second', 'third', 'fourth'][index];
 
                     const bookmarkButton = document.createElement('button');
-                    bookmarkButton.setAttribute('id', `${idSuffix}BookmarkBtn`);
+                    bookmarkButton.setAttribute('id', `${idSuffix}ItemBtn`);
                     bookmarkButton.classList.add('button');
 
                     const buttonTitle = document.createElement('span');
@@ -131,9 +131,9 @@ function initialiseBookmarksOverlay() {
                 renderPage();
                 requestAnimationFrame(async () => {
                     const scenarioId = getBookmarksScenarioId(
-                        bookmarks.length,
+                        bookmarksList.length,
                         currentPage > 0,
-                        (currentPage + 1) * pageSize < bookmarks.length
+                        (currentPage + 1) * pageSize < bookmarksList.length
                     );
                     await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
                 });
@@ -142,7 +142,7 @@ function initialiseBookmarksOverlay() {
             const renderPage = () => {
                 bookmarksContainer.innerHTML = '';
                 bookmarksAndArrowsContainer.innerHTML = '';
-                const pageBookmarks = paginate(bookmarks, pageSize, currentPage);
+                const pageBookmarks = paginate(bookmarksList, pageSize, currentPage);
 
                 // Add left navigation button
                 if (currentPage > 0) {
@@ -156,15 +156,15 @@ function initialiseBookmarksOverlay() {
                     bookmarksAndArrowsContainer.appendChild(bookmarksContainer);
                 });
                 // Add right navigation button
-                if ((currentPage + 1) * pageSize < bookmarks.length) {
+                if ((currentPage + 1) * pageSize < bookmarksList.length) {
                     const rightArrow = createNavigationButton('right', () => handleNavigation('right'));
                     bookmarksAndArrowsContainer.appendChild(rightArrow);
                 }
                 // Add pagination indicators using utility function
-                updatePaginationIndicators(bookmarks, pageSize, currentPage, '.pagination__container');
+                updatePaginationIndicators(bookmarksList, pageSize, currentPage, '.pagination__container');
             };
 
-            if (bookmarks.length === 0) {
+            if (bookmarksList.length === 0) {
                 displayNoBookmarksMessage();
             } else {
                 renderPage();
@@ -186,9 +186,9 @@ function showBookmarkExistsPopup() {
             timeout: 1750, // The duration of the fade-in animation + 1 second to read the message
             onClose: async () => {
                 const scenarioId = getBookmarksScenarioId(
-                    bookmarks.length,
+                    bookmarksList.length,
                     currentPage > 0,
-                    (currentPage + 1) * pageSize < bookmarks.length
+                    (currentPage + 1) * pageSize < bookmarksList.length
                 );
                 await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
             }
@@ -254,7 +254,7 @@ async function showDeleteAllConfirmationPopup() {
         confirmBtn.textContent = 'Delete All';
         confirmBtn.onclick = () => {
             popupElements.close();
-            bookmarks = [];
+            bookmarksList = [];
             ipcRenderer.send('bookmarks-deleteAll');
             showDeleteAllSuccessPopup();
         };
@@ -267,9 +267,9 @@ async function showDeleteAllConfirmationPopup() {
             popupElements.close();
             requestAnimationFrame(async () => {
                 const scenarioId = getBookmarksScenarioId(
-                    bookmarks.length,
+                    bookmarksList.length,
                     currentPage > 0,
-                    (currentPage + 1) * pageSize < bookmarks.length
+                    (currentPage + 1) * pageSize < bookmarksList.length
                 );
                 await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
             });
@@ -288,19 +288,19 @@ async function showDeleteAllConfirmationPopup() {
     }
 }
 
-async function showBookmarkActionPopup(bookmark) {
+async function showItemActionPopup(bookmark) {
     try {
         // Custom content: snapshot, title, url
         const snapshotContainer = document.createElement('div');
         snapshotContainer.classList.add('popup__snapshotContainer');
 
         const popupTitle = document.createElement('span');
-        popupTitle.classList.add('popup__message', 'popup__message--bookmarkAction');
+        popupTitle.classList.add('popup__message', 'popup__message--itemAction');
         popupTitle.textContent = bookmark.title;
         snapshotContainer.appendChild(popupTitle);
 
         const urlSpan = document.createElement('span');
-        urlSpan.classList.add('popup__url', 'popup__url--bookmarkAction');
+        urlSpan.classList.add('popup__url', 'popup__url--itemAction');
         urlSpan.textContent = bookmark.url;
         snapshotContainer.appendChild(urlSpan);
 
@@ -314,7 +314,7 @@ async function showBookmarkActionPopup(bookmark) {
 
         // Buttons
         const visitBtn = document.createElement('button');
-        visitBtn.setAttribute('id', 'visitBookmarkBtn');
+        visitBtn.setAttribute('id', 'visitItemBtn');
         visitBtn.classList.add('button', 'popup__btn');
         visitBtn.textContent = 'Visit';
         visitBtn.onclick = () => {
@@ -325,7 +325,7 @@ async function showBookmarkActionPopup(bookmark) {
         };
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.setAttribute('id', 'deleteBookmarkBtn');
+        deleteBtn.setAttribute('id', 'deleteItemBtn');
         deleteBtn.classList.add('button', 'popup__btn');
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = () => {
@@ -334,25 +334,25 @@ async function showBookmarkActionPopup(bookmark) {
         };
 
         const cancelBtn = document.createElement('button');
-        cancelBtn.setAttribute('id', 'cancelBookmarkBtn');
+        cancelBtn.setAttribute('id', 'cancelItemBtn');
         cancelBtn.classList.add('button', 'popup__btn', 'accent');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => {
             popupElements.close();
             requestAnimationFrame(async () => {
                 const scenarioId = getBookmarksScenarioId(
-                    bookmarks.length,
+                    bookmarksList.length,
                     currentPage > 0,
-                    (currentPage + 1) * pageSize < bookmarks.length
+                    (currentPage + 1) * pageSize < bookmarksList.length
                 );
                 await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
             });
         };
 
         const popupElements = createPopup({
-            name: 'bookmarkAction',
+            name: 'itemAction',
             customContent: snapshotContainer,
-            classes: ['popup--bookmarkAction', 'border', 'fadeInUp'],
+            classes: ['popup--itemAction', 'border', 'fadeInUp'],
             buttons: [visitBtn, deleteBtn, cancelBtn]
         });
 
@@ -389,26 +389,26 @@ function attachEventListeners() {
             setTimeout(async () => {
                 await stopManager();
 
-                if (buttonId.includes('BookmarkBtn')) {
+                if (buttonId.includes('ItemBtn')) {
                     const idMap = {
-                        firstBookmarkBtn: 0,
-                        secondBookmarkBtn: 1,
-                        thirdBookmarkBtn: 2,
-                        fourthBookmarkBtn: 3
+                        firstItemBtn: 0,
+                        secondItemBtn: 1,
+                        thirdItemBtn: 2,
+                        fourthItemBtn: 3
                     };
                     const pageIndex = idMap[buttonId];
                     if (pageIndex !== undefined) {
                         const bookmarkIndex = currentPage * pageSize + pageIndex;
-                        const bookmark = bookmarks[bookmarkIndex];
+                        const bookmark = bookmarksList[bookmarkIndex];
                         if (bookmark) {
-                            showBookmarkActionPopup(bookmark);
+                            showItemActionPopup(bookmark);
                         }
                     }
                 }
                 if (buttonId === 'cancelBtn') {
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.BOOKMARKS);
                 }
-                else if (buttonId === 'addBookmarkBtn') {
+                else if (buttonId === 'addBtn') {
                     // Only adds the bookmark if the url does not already exist in the bookmarks array
                     let isAdded = await ipcRenderer.invoke('bookmark-add');
                     if (!isAdded) {

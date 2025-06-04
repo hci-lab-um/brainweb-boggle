@@ -9,7 +9,7 @@ body {
     color: white;
 }
 
-.bookmarks {
+.items {
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -38,7 +38,7 @@ body {
         }
     }
 
-    &__bookmarksAndArrowsContainer {
+    &__itemsAndArrowsContainer {
         display: flex;
         height: 100%;
         flex-direction: row;
@@ -76,7 +76,7 @@ body {
     }
 }
 
-.noBookmarksMessage {
+.noItemsMessage {
     height: 40%;
     align-content: center;
     text-align: center;

@@ -1,11 +1,13 @@
-const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron')
+const { app, WebContentsView, BaseWindow, ipcMain, screen, View } = require('electron')
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot } = require('../../utils/utilityFunctions');
 
+const defaultUrl = 'https://www.google.com';
+
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds, createTabView } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -34,10 +36,11 @@ function registerIpcHandlers(context) {
             tabId: tab.tabId,
             isActive: tab.isActive,
             snapshot: tab.snapshot ? tab.snapshot : await captureSnapshot(tab),
-            title: tab.webContentsView.webContents.getTitle() ? tab.webContentsView.webContents.getTitle() : tab.title,
-            url: tab.webContentsView.webContents.getURL() ? tab.webContentsView.webContents.getURL() : tab.url,
+            title: await tab.webContentsView.webContents.getTitle() ? await tab.webContentsView.webContents.getTitle() : tab.title,
+            url: await tab.webContentsView.webContents.getURL() ? await tab.webContentsView.webContents.getURL() : tab.url,
         })));
 
+        let activeTab = tabsList.find(tab => tab.isActive);
         let overlayData = {
             overlayName: overlayName,
             scenarioId: scenarioId,
@@ -45,7 +48,7 @@ function registerIpcHandlers(context) {
             isUpperCase: isUpperCase,
             webpageBounds: webpageBounds,
             elementProperties: elementProperties,
-            zoomFactor: await tabView.webContents.getZoomFactor(),
+            zoomFactor: await activeTab.webContentsView.webContents.getZoomFactor(),
             bookmarksList: bookmarksList,
             tabsList: serialisableTabsList,
         }
@@ -150,22 +153,23 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('url-load', (event, url) => {
-        try {
-            if (tabView && tabView.webContents) {
-                tabView.webContents.loadURL(url);
+        try {            
+            let activeTab = tabsList.find(tab => tab.isActive);
+            if (activeTab) {
+                activeTab.webContentsView.webContents.loadURL(url);
                 mainWindowContent.webContents.send('omniboxText-update', url)
             } else {
-                console.error('tabView is not initialized.');
+                console.error('activeTab is not initialized.');
             }
         } catch (err) {
-            console.error('Error loading URL in tabView:', err.message);
+            console.error('Error loading URL in activeTab:', err.message);
         }
     });
 
     ipcMain.on('webpage-refresh', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.reload();
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.reload();
         } catch (err) {
             console.error('Error refreshing webpage:', err.message);
         }
@@ -173,8 +177,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('webpage-zoomIn', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.setZoomLevel(tabView.webContents.getZoomLevel() + 1);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.setZoomLevel(activeTab.webContentsView.webContents.getZoomLevel() + 1);
         } catch (err) {
             console.error('Error zooming in webpage:', err.message);
         }
@@ -182,8 +186,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('webpage-zoomOut', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.setZoomLevel(tabView.webContents.getZoomLevel() - 1);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.setZoomLevel(activeTab.webContentsView.webContents.getZoomLevel() - 1);
         } catch (err) {
             console.error('Error zooming out webpage:', err.message);
         }
@@ -191,8 +195,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('webpage-zoomReset', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.setZoomLevel(0);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.setZoomLevel(0);
         } catch (err) {
             console.error('Error resetting webpage zoom:', err.message);
         }
@@ -201,7 +205,7 @@ function registerIpcHandlers(context) {
     ipcMain.handle('interactiveElements-get', (event) => {
         return new Promise((resolve, reject) => {
             try {
-                tabView.webContents.send('interactiveElements-get');
+                activeTab.webContentsView.webContents.send('interactiveElements-get');
                 ipcMain.once('interactiveElements-response', (event, elements) => {
                     if (elements) {
                         resolve(elements);
@@ -217,7 +221,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('interactiveElements-addHighlight', (event, elements) => {
         try {
-            tabView.webContents.send('interactiveElements-addHighlight', elements);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('interactiveElements-addHighlight', elements);
         } catch (err) {
             console.error('Error adding highlight to interactive elements:', err.message);
         }
@@ -225,7 +230,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('interactiveElements-removeHighlight', (event, elements) => {
         try {
-            tabView.webContents.send('interactiveElements-removeHighlight', elements);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight', elements);
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
         }
@@ -235,8 +241,8 @@ function registerIpcHandlers(context) {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
 
-            let url = activeTab.webContentsView.getURL();
-            let title = activeTab.webContentsView.getTitle();
+            let url = activeTab.webContentsView.webContents.getURL();
+            let title = activeTab.webContentsView.webContents.getTitle();
             let snapshot = await captureSnapshot(activeTab);
 
             // Check if bookmark already exists
@@ -277,28 +283,41 @@ function registerIpcHandlers(context) {
         }
     });
 
-    // ipcMain.handle('tab-add', async (event) => {
-    //     try {
-    //         let activeTab = tabsList.find(tab => tab.isActive);
+    ipcMain.handle('tab-add', async () => {
+        try {
+            createTabView(defaultUrl, true);
+            return true;
+        } catch (err) {
+            console.error('Error adding tab:', err.message);
+            return false;
+        }
+    });
 
-    //         let url = activeTab.webContentsView.getURL();
-    //         let title = activeTab.webContentsView.getTitle();
-    //         let snapshot = await captureSnapshot(activeTab);
+    ipcMain.on('tab-visit', (event, tabId) => {
+        // This is used to display the select tab when the user clicks on a tab
+        try {
+            let tabToActivate = tabsList.find(tab => tab.tabId === tabId);
+            if (tabToActivate) {
+                tabsList.forEach(tab => tab.isActive = false); // Deactivate all tabs
+                tabToActivate.isActive = true; // Activate the selected tab
 
-    //         // Check if tab already exists
-    //         if (tabsList.some(t => t.url === url)) {
-    //             return false; // Already exists
-    //         }
+                if (tabToActivate.isErrorPage) {
+                    tabToActivate.webContentsView.webContents.loadURL(tabToActivate.originalURL);
+                } else {
+                    tabToActivate.webContentsView.webContents.loadURL(tabToActivate.url);
+                }
 
-    //         var tab = { url: url, title: title, snapshot: snapshot };
+                // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
+                mainWindow.contentView.removeChildView(tabToActivate.webContentsView);
+                mainWindow.contentView.addChildView(tabToActivate.webContentsView);
+            } else {
+                console.error(`Tab with ID ${tabId} not found.`);
+            }
+        } catch (err) {
+            console.error('Error activating tab:', err.message);
+        }
 
-    //         tabsList.push(tab);
-    //         return true;
-    //     } catch (err) {
-    //         console.error('Error adding tab:', err.message);
-    //         return false;
-    //     }
-    // });
+    });
 
     // ipcMain.on('tabs-deleteAll', async (event) => {
     //     try {
@@ -331,7 +350,8 @@ function registerIpcHandlers(context) {
         const webpageX = windowScreenX + webpageBounds.x;
         const webpageY = windowScreenY + webpageBounds.y;
 
-        const zoomFactor = await tabView.webContents.getZoomFactor();
+        let activeTab = tabsList.find(tab => tab.isActive);
+        const zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
 
         // Get the element's position within the tab (taking the zoom level into consideration)
         const elementX = webpageX + (coordinates.x * zoomFactor);

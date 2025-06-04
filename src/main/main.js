@@ -117,7 +117,8 @@ function createMainWindow() {
                                     bookmarksList,
                                     tabsList,
                                     db,
-                                    updateWebpageBounds
+                                    updateWebpageBounds,
+                                    createTabView
                                 });
                             });
                         } catch (err) {

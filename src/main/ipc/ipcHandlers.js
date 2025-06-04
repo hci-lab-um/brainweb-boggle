@@ -152,11 +152,13 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('url-load', (event, url) => {
+    ipcMain.on('url-load', async (event, url) => {
         try {            
             let activeTab = tabsList.find(tab => tab.isActive);
             if (activeTab) {
-                activeTab.webContentsView.webContents.loadURL(url);
+                await activeTab.webContentsView.webContents.loadURL(url);
+                activeTab.url = url; // Update the URL in the tab object
+                activeTab.snapshot = await captureSnapshot(activeTab);
                 mainWindowContent.webContents.send('omniboxText-update', url)
             } else {
                 console.error('activeTab is not initialized.');

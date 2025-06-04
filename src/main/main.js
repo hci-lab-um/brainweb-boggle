@@ -251,7 +251,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
             // Getting the maximum tabId from the tabsList and incrementing it by 1 to assign a new tabId
             const maxTabId = tabsList.reduce((maxId, tab) => Math.max(maxId, tab.tabId), 0);
-            tabsList.push({ tabId: maxTabId + 1, webContentsView: tabView, isActive: true });
+            tabsList.push({ tabId: maxTabId + 1, webContentsView: tabView, isActive: true, url: defaultUrl });
         }
 
         // ------------------------------------------

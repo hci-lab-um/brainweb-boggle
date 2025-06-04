@@ -103,8 +103,48 @@ function createPopup({
     return { overlay, popup, close };
 }
 
+function createNavigationButton(direction, onClick) {
+    const button = document.createElement('button');
+    button.classList.add('button', 'button__triangle', `button__triangle--${direction}`);
+
+    if (!document.getElementById('firstArrowKeyBtn')) {
+        button.setAttribute('id', 'firstArrowKeyBtn');
+    } else if (!document.getElementById('secondArrowKeyBtn')) {
+        button.setAttribute('id', 'secondArrowKeyBtn');
+    }
+
+    button.addEventListener('click', onClick);
+    return button;
+}
+
+function updatePaginationIndicators(items, pageSize, currentPage, containerSelector) {
+    const paginationContainer = document.querySelector(containerSelector);
+    if (!paginationContainer) return;
+
+    const totalPages = Math.ceil(items.length / pageSize);
+    paginationContainer.innerHTML = '';
+
+    if (items.length > pageSize) {
+        for (let i = 0; i < totalPages; i++) {
+            const indicator = document.createElement('div');
+            indicator.classList.add('pagination__indicator');
+            if (i === currentPage) indicator.classList.add('pagination__indicator--active');
+            paginationContainer.appendChild(indicator);
+        }
+    }
+}
+
+function paginate(items, pageSize, currentPage) {
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, items.length);
+    return items.slice(start, end);
+}
+
 module.exports = {
     createMaterialIcon,
     captureSnapshot,
-    createPopup
+    createPopup,
+    createNavigationButton,
+    updatePaginationIndicators,
+    paginate
 };

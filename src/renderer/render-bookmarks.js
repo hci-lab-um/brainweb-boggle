@@ -2,7 +2,7 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
-const { createMaterialIcon, createPopup } = require('../utils/utilityFunctions');
+const { createMaterialIcon, createPopup, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
 
 let buttons = [];
 let bookmarks = [];
@@ -47,25 +47,6 @@ ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) 
         console.error('Error in bookmarks-loaded handler:', error);
     }
 });
-
-function updatePaginationIndicators() {
-    const paginationContainer = document.querySelector('.pagination__container');
-    if (!paginationContainer) return;
-
-    const totalPages = Math.ceil(bookmarks.length / pageSize);
-    paginationContainer.innerHTML = '';
-    
-    if (bookmarks.length > pageSize) {
-        for (let i = 0; i < totalPages; i++) {
-            const pageIndicator = document.createElement('div');
-            pageIndicator.classList.add('pagination__indicator');
-            if (i === currentPage) {
-                pageIndicator.classList.add('pagination__indicator--active');
-            }
-            paginationContainer.appendChild(pageIndicator);
-        }
-    }
-}
 
 function getBookmarksScenarioId(bookmarksCount, hasLeftArrow, hasRightArrow) {
     // If there are no bookmarks, return the scenario ID for the empty state
@@ -144,77 +125,48 @@ function initialiseBookmarksOverlay() {
                 }
             };
 
-            const createNavigationButton = (direction) => {
-                const button = document.createElement('button');
-                button.classList.add('button', 'button__triangle', `button__triangle--${direction}`);
-
-                if (!document.getElementById('firstArrowKeyBtn')) {
-                    button.setAttribute('id', 'firstArrowKeyBtn');
-                } else if (!document.getElementById('secondArrowKeyBtn')) {
-                    button.setAttribute('id', 'secondArrowKeyBtn');
-                }
-
-                button.addEventListener('click', async () => {
-                    // Update current page based on the direction
-                    currentPage += direction === 'left' ? -1 : 1;
-
-                    await stopManager();
-                    renderPage();
-
-                    // Waiting for the page to render all the buttons before updating the scenarioId 
-                    // (IMP requestAnimationFrame remains in the event loop)
-                    requestAnimationFrame(async () => {
-                        const scenarioId = getBookmarksScenarioId(
-                            bookmarks.length,
-                            currentPage > 0, // hasLeftArrow
-                            (currentPage + 1) * pageSize < bookmarks.length // hasRightArrow
-                        );
-                        // Now you can use scenarioId to update scenario, e.g.:
-                        await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
-                    });
+            const handleNavigation = async (direction) => {
+                currentPage += direction === 'left' ? -1 : 1;
+                await stopManager();
+                renderPage();
+                requestAnimationFrame(async () => {
+                    const scenarioId = getBookmarksScenarioId(
+                        bookmarks.length,
+                        currentPage > 0,
+                        (currentPage + 1) * pageSize < bookmarks.length
+                    );
+                    await updateScenarioId(scenarioId, buttons, ViewNames.BOOKMARKS);
                 });
-                console.log(`Created ${direction} navigation button with ID: ${button.id}`);
-                return button;
             };
 
             const renderPage = () => {
-                const totalPages = Math.ceil(bookmarks.length / pageSize);
-
                 bookmarksContainer.innerHTML = '';
                 bookmarksAndArrowsContainer.innerHTML = '';
+                const pageBookmarks = paginate(bookmarks, pageSize, currentPage);
 
-                // Calculate start and end indices for the current page
-                const start = currentPage * pageSize;
-                const end = Math.min(start + pageSize, bookmarks.length);
-
-                // Add left navigation button                    
+                // Add left navigation button
                 if (currentPage > 0) {
-                    const leftArrow = createNavigationButton('left');
+                    const leftArrow = createNavigationButton('left', () => handleNavigation('left'));
                     bookmarksAndArrowsContainer.insertBefore(leftArrow, bookmarksAndArrowsContainer.firstChild);
                 }
-
                 // Add bookmarks for the current page
-                for (let i = start; i < end; i++) {
-                    const pageIndex = i - start; // Index within the current page
-                    const bookmarkElement = createBookmark(bookmarks[i], pageIndex);
+                pageBookmarks.forEach((bookmark, pageIndex) => {
+                    const bookmarkElement = createBookmark(bookmark, pageIndex);
                     bookmarksContainer.appendChild(bookmarkElement);
                     bookmarksAndArrowsContainer.appendChild(bookmarksContainer);
-                }
-
-                // Add right navigation button                    
-                if (end < bookmarks.length) {
-                    const rightArrow = createNavigationButton('right');
+                });
+                // Add right navigation button
+                if ((currentPage + 1) * pageSize < bookmarks.length) {
+                    const rightArrow = createNavigationButton('right', () => handleNavigation('right'));
                     bookmarksAndArrowsContainer.appendChild(rightArrow);
                 }
-
-                // Add pagination indicators
-                updatePaginationIndicators();
+                // Add pagination indicators using utility function
+                updatePaginationIndicators(bookmarks, pageSize, currentPage, '.pagination__container');
             };
 
             if (bookmarks.length === 0) {
                 displayNoBookmarksMessage();
-            }
-            else {
+            } else {
                 renderPage();
             }
 

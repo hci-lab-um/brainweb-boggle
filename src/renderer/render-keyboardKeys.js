@@ -2,7 +2,7 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
-const { createMaterialIcon } = require('../utils/utilityFunctions');
+const { createMaterialIcon, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
 
 let buttons = [];
 
@@ -79,52 +79,47 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                 }
             };
 
-            const renderPage = () => {
-                const totalPages = Math.ceil(keys.length / pageSize);
-                keysContainer.innerHTML = '';
+            const handleNavigation = async (direction) => {
+                currentPage += direction === 'left' ? -1 : 1;
+                await stopManager();
+                renderPage();
+                requestAnimationFrame(async () => {
+                    if (currentPage === 0) {
+                        await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
+                    } else if (currentPage === 1) {
+                        await updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
+                    } else if (currentPage === 2) {
+                        await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
+                    }
+                });
+            };
 
+            const renderPage = () => {
+                keysContainer.innerHTML = '';
                 if (buttonId === 'symbolsBtn') {
                     keysAndArrowsContainer.innerHTML = '';
-
-                    // Calculate start and end indices for the current page
-                    const start = currentPage * pageSize;
-                    const end = Math.min(start + pageSize, keys.length);
-
-                    // Add left navigation button                    
+                    const pageKeys = paginate(keys, pageSize, currentPage);
+                    // Add left navigation button
                     if (currentPage > 0) {
-                        const leftArrow = createNavigationButton('left');
+                        const leftArrow = createNavigationButton('left', () => handleNavigation('left'));
                         keysAndArrowsContainer.insertBefore(leftArrow, keysAndArrowsContainer.firstChild);
                     }
 
-                    // Add symbols for the current page
-                    for (let i = start; i < end; i++) {
-                        const pageIndex = i - start; // Index within the current page
-                        const keyElement = createKey(keys[i], pageIndex);
+                    // Add keys for the current page
+                    pageKeys.forEach((keyValue, pageIndex) => {
+                        const keyElement = createKey(keyValue, pageIndex);
                         keysContainer.appendChild(keyElement);
                         keysAndArrowsContainer.appendChild(keysContainer);
-                    }
+                    });
 
-                    // Add right navigation button                    
-                    if (end < keys.length) {
-                        const rightArrow = createNavigationButton('right');
+                    // Add right navigation button
+                    if ((currentPage + 1) * pageSize < keys.length) {
+                        const rightArrow = createNavigationButton('right', () => handleNavigation('right'));
                         keysAndArrowsContainer.appendChild(rightArrow);
                     }
 
-                    // Add pagination indicators
-                    const paginationContainer = document.querySelector('.pagination__container');
-                    paginationContainer.innerHTML = '';
-
-                    for (let i = 0; i < totalPages; i++) {
-                        const pageIndicator = document.createElement('div');
-                        pageIndicator.classList.add('pagination__indicator');
-
-                        if (i === currentPage) {
-                            pageIndicator.classList.add('pagination__indicator--active');
-                        }
-
-                        paginationContainer.appendChild(pageIndicator);
-                    }
-
+                    // Add pagination indicators using utility function
+                    updatePaginationIndicators(keys, pageSize, currentPage, '.pagination__container');
                     keyboard.insertBefore(keysAndArrowsContainer, keyboard.firstChild);
                 } else {
                     // Render all keys for non-symbol buttons
@@ -136,38 +131,6 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
                 buttons = document.querySelectorAll('button');
                 attachEventListeners();
-            };
-
-            const createNavigationButton = (direction) => {
-                const button = document.createElement('button');
-                button.classList.add('button', 'button__triangle', `button__triangle--${direction}`);
-
-                if (!document.getElementById('firstArrowKeyBtn')) {
-                    button.setAttribute('id', 'firstArrowKeyBtn');
-                } else if (!document.getElementById('secondArrowKeyBtn')) {
-                    button.setAttribute('id', 'secondArrowKeyBtn');
-                }
-
-                button.addEventListener('click', async () => {
-                    // Update current page based on the direction
-                    currentPage += direction === 'left' ? -1 : 1;
-
-                    await stopManager();
-                    renderPage();
-
-                    // Waiting for the page to render all the buttons before updating the scenarioId 
-                    // (IMP requestAnimationFrame remains in the event loop)
-                    requestAnimationFrame(async () => {
-                        if (currentPage === 0) {
-                            await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
-                        } else if (currentPage === 1) {
-                            await updateScenarioId(91, buttons, ViewNames.KEYBOARD_KEYS);
-                        } else if (currentPage === 2) {
-                            await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
-                        }
-                    });
-                });
-                return button;
             };
 
             renderPage();

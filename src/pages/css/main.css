@@ -44,11 +44,75 @@
 .border {
   box-sizing: border-box;
   border-radius: 10px;
-  box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.8) inset;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.8) inset;
 }
 .border--accent {
   border: none;
-  box-shadow: 0 0 50px rgba(183, 255, 0, 0.5), 0 0 0 3px #b7ff00 inset;
+  box-shadow: 0 0 50px rgba(183, 255, 0, 0.5), 0 0 0 2px #b7ff00 inset;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translate(-50%, -50%) translate3d(0, 120px, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+.fadeInUp {
+  animation-duration: 0.75s;
+  animation-fill-mode: both;
+  opacity: 0;
+  animation-name: fadeInUp;
+}
+
+@keyframes fadeOutDown {
+  from {
+    transform: translate(-50%, -50%) translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) translate3d(0, 120px, 0);
+    opacity: 0;
+  }
+}
+.fadeOutDown {
+  animation-duration: 0.75s;
+  animation-fill-mode: both;
+  opacity: 1;
+  animation-name: fadeOutDown;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fadeIn {
+  animation-duration: 0.75s;
+  animation-fill-mode: both;
+  opacity: 0;
+  animation-name: fadeIn;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.fadeOut {
+  animation-duration: 0.75s;
+  animation-fill-mode: both;
+  opacity: 1;
+  animation-name: fadeOut;
 }
 
 .accent {
@@ -56,7 +120,7 @@
 }
 
 .pagination__container {
-  padding: 0 0 2.5vw;
+  padding: 2.5vw 0 2.5vw;
   display: flex;
   gap: 18px;
   align-items: center;
@@ -114,7 +178,7 @@
 }
 
 .button {
-  color: #212529;
+  color: #ffffff;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;
@@ -126,6 +190,114 @@
   align-items: center;
   justify-content: center;
   gap: 10%;
+}
+.button__close {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+.button__close--flex2 {
+  flex: 2;
+}
+.button__close--wide {
+  width: 100%;
+}
+.button__triangle {
+  width: 100%;
+  height: 40%;
+  padding: 0;
+}
+.button__triangle--left {
+  clip-path: polygon(75% 0%, 0% 50%, 75% 100%);
+}
+.button__triangle--right {
+  clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+}
+
+.popup {
+  display: flex;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1d2b5d;
+  padding: 40px 50px;
+  z-index: 1000;
+  gap: 20px;
+  align-items: center;
+}
+.popup--deleteAllConfirmation {
+  flex-direction: column;
+  text-align: center;
+  gap: 50px;
+  padding: 50px 70px;
+}
+.popup--bookmarkAction {
+  align-items: stretch;
+  gap: 50px;
+  padding: 50px 60px;
+}
+.popup__message {
+  font-size: 2rem;
+  color: #ffffff;
+  width: 100%;
+}
+.popup__message--bookmarkAction {
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.popup__url {
+  font-size: 1.25rem;
+  padding-bottom: 20px;
+  width: 100%;
+}
+.popup__url--bookmarkAction {
+  max-width: 500px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.popup__snapshot {
+  width: 500px;
+  border-radius: 6px;
+}
+.popup__snapshotContainer {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(0, 0, 0, 0.329);
+  padding: 40px 50px;
+  border-radius: 15px;
+}
+.popup__btnsContainer {
+  display: flex;
+  gap: 20%;
+}
+.popup__btnsContainer--bookmarkAction {
+  flex-direction: column;
+  gap: 14%;
+}
+.popup__btn {
+  padding: 20px 30px;
+  font-size: 1.75rem;
+  width: 300px;
+  height: 125px;
 }
 
 body {

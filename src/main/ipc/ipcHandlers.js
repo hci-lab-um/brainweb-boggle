@@ -2,9 +2,10 @@ const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron'
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
+const { captureSnapshot } = require('../../utils/utilityFunctions');
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, updateWebpageBounds } = context;
+    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarks, db, updateWebpageBounds } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -36,6 +37,7 @@ function registerIpcHandlers(context) {
             webpageBounds: webpageBounds,
             elementProperties: elementProperties,
             zoomFactor: await tabView.webContents.getZoomFactor(),
+            bookmarks: bookmarks,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -216,6 +218,56 @@ function registerIpcHandlers(context) {
             tabView.webContents.send('interactiveElements-removeHighlight', elements);
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
+        }
+    });
+
+    ipcMain.handle('bookmark-add', async (event) => {
+        try {
+            try {
+                await captureSnapshot(tabView);
+            } catch (err) {
+                console.error(err);
+            }
+
+            let url = tabView.webContents.getURL();
+            let title = tabView.webContents.getTitle();
+            let snapshot = tabView.snapshot;
+
+            // Check if bookmark already exists
+            if (bookmarks.some(b => b.url === url)) {
+                return false; // Already exists
+            }
+
+            var bookmark = { url: url, title: title, snapshot: snapshot };
+            bookmarks.push(bookmark);
+            await db.addBookmark(bookmark);
+            return true;
+        } catch (err) {
+            console.error('Error adding bookmark:', err.message);
+            return false;
+        }
+    });
+
+    ipcMain.on('bookmarks-deleteAll', async (event) => {
+        try {
+            await db.deleteAllBookmarks();
+            bookmarks = [];
+        } catch (err) {
+            console.error('Error deleting all bookmarks:', err.message);
+        }
+    });
+
+    ipcMain.on('bookmark-deleteByUrl', async (event, url) => {
+        try {
+            await db.deleteBookmarkByUrl(url);
+            bookmarks = bookmarks.filter(bookmark => bookmark.url !== url);
+
+            // Reloading the bookmarks to show the updated bookmarks list
+            let topMostView = viewsList[viewsList.length - 1];
+            let isReload = true;
+            topMostView.webContentsView.webContents.send('bookmarks-loaded', {bookmarks: bookmarks}, isReload);
+        } catch (err) {
+            console.error('Error deleting bookmark by URL:', err.message);
         }
     });
 

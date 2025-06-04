@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
+    "sqlite3": "^5.1.7",
     "ssvep-stimuli": "^0.1.5"
   }
 }

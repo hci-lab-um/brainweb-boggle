@@ -1,4 +1,4 @@
-const { ipcRenderer, View } = require('electron');
+const { ipcRenderer } = require('electron');
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');

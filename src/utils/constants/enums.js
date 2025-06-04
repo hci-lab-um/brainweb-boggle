@@ -4,6 +4,7 @@ const ViewNames = Object.freeze({
     KEYBOARD_KEYS: "keyboardKeys",
     MORE: "more",
     SELECT: "select",
+    BOOKMARKS: "bookmarks",
 });
 
 const CssConstants = Object.freeze({

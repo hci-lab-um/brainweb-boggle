@@ -17,6 +17,14 @@ ipcRenderer.on('more-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+    try {
+        await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
+    } catch (error) {
+        console.error('Error in scenarioId-update handler:', error);
+    }
+});
+
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
@@ -31,7 +39,8 @@ function attachEventListeners() {
                         // tbi
                         break;
                     case "bookmarksBtn":
-                        // tbi
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.BOOKMARKS, -1);
                         break;
                     case "refreshBtn":
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);

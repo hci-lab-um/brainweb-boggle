@@ -21,7 +21,7 @@
 
 .pagination {
     &__container {
-        padding: 0 0 2.5vw;
+        padding: 2.5vw 0 2.5vw;
         display: flex;
         gap: 18px;
         align-items: center;
@@ -73,7 +73,7 @@
 }
 
 .button {
-    color: colors.$text-primary;
+    color: colors.$white;
     background-color: colors.$primary-muted;
     border-radius: 6px;
     border: none;
@@ -86,4 +86,169 @@
     align-items: center;
     justify-content: center;
     gap: 10%;
+
+    &__close {
+        flex: 1;
+        justify-content: center;
+        align-items: center;
+
+        &--flex2 {
+            flex: 2;
+        }
+
+        &--wide {
+            width: 100%;
+        }
+    }
+
+    &__triangle {
+        width: 100%;
+        height: 40%;
+        padding: 0;
+
+        &--left {
+            clip-path: polygon(75% 0%, 0% 50%, 75% 100%);
+        }
+
+        &--right {
+            clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
+        }
+    }
+}
+
+@mixin pagination-grid($columns: 5) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3vw;
+    width: 100%;
+    height: 100%;
+    justify-content: space-around;
+    align-items: center;
+
+    @if $columns == 5 {
+        flex: 4;
+        & > * {
+            flex: 1 1 calc(20% - 10px);
+            max-width: calc(20% - 40px);
+        }
+    } @else if $columns == 4 {
+        flex: 7;
+        & > * {
+            flex: 1 1 calc(25% - 10px);
+            max-width: calc(25% - 40px);
+        }
+    } @else if $columns == 3 {
+        & > * {
+            flex: 1 1 calc(33.333% - 10px);
+            max-width: calc(33.333% - 40px);
+        }
+    } @else if $columns == 2 {
+        flex: 7;
+        & > * {
+            flex: 1 1 calc(50% - 10px);
+            max-width: calc(50% - 65px);
+        }
+    }
+
+    & > * {
+        box-sizing: border-box;
+        height: 60%;
+    }
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: colors.$bg-black-transparent-70;
+    z-index: 999;
+}
+
+.popup {
+    display: flex;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: colors.$primary; // #151d49
+    padding: 40px 50px;
+    z-index: 1000;
+    gap: 20px;
+    align-items: center;
+
+    &--deleteAllConfirmation {
+        flex-direction: column;
+        text-align: center;
+        gap: 50px;
+        padding: 50px 70px;
+    }
+
+    &--bookmarkAction {
+        align-items: stretch;
+        gap: 50px;
+        padding: 50px 60px;
+    }
+
+    &__message {
+        font-size: 2rem;
+        color: colors.$white;
+        width: 100%;
+
+        &--bookmarkAction {
+            max-width: 400px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+    }
+
+    &__url {
+        font-size: 1.25rem;
+        padding-bottom: 20px;
+        width: 100%;
+
+        &--bookmarkAction {
+            max-width: 500px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+    }
+
+    &__snapshot {
+        width: 500px;
+        border-radius: 6px;
+    }
+
+    &__snapshotContainer {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        background: colors.$bg-black-transparent;
+        padding: 40px 50px;
+        border-radius: 15px;
+    }
+
+    &__btnsContainer {
+        display: flex;
+        gap: 20%;
+
+        &--bookmarkAction {
+            flex-direction: column;
+            gap: 14%;
+        }
+    }
+
+    &__btn {
+        padding: 20px 30px;
+        font-size: 1.75rem;
+        width: 300px;
+        height: 125px;
+    }
 }

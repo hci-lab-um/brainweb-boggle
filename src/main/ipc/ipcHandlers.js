@@ -152,13 +152,11 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('url-load', async (event, url) => {
+    ipcMain.on('url-load', (event, url) => {
         try {            
             let activeTab = tabsList.find(tab => tab.isActive);
             if (activeTab) {
-                await activeTab.webContentsView.webContents.loadURL(url);
-                activeTab.url = url; // Update the URL in the tab object
-                activeTab.snapshot = await captureSnapshot(activeTab);
+                activeTab.webContentsView.webContents.loadURL(url);
                 mainWindowContent.webContents.send('omniboxText-update', url)
             } else {
                 console.error('activeTab is not initialized.');
@@ -282,6 +280,22 @@ function registerIpcHandlers(context) {
             topMostView.webContentsView.webContents.send('bookmarks-loaded', { bookmarksList }, isReload);
         } catch (err) {
             console.error('Error deleting bookmark by URL:', err.message);
+        }
+    });
+
+    ipcMain.handle('tabs-getData', async () => {
+        try {            
+            // Return data for all tabs, not just the active one
+            return await Promise.all(tabsList.map(async tab => ({
+                tabId: tab.tabId,
+                isActive: tab.isActive,
+                url: await tab.webContentsView.webContents.getURL(),
+                title: await tab.webContentsView.webContents.getTitle(),
+                snapshot: await captureSnapshot(tab)
+            })));
+        }
+        catch (err) {
+            console.error('Error getting tabs data:', err.message);
         }
     });
 

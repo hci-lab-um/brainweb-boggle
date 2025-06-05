@@ -283,22 +283,6 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.handle('tabs-getData', async () => {
-        try {            
-            // Return data for all tabs, not just the active one
-            return await Promise.all(tabsList.map(async tab => ({
-                tabId: tab.tabId,
-                isActive: tab.isActive,
-                url: await tab.webContentsView.webContents.getURL(),
-                title: await tab.webContentsView.webContents.getTitle(),
-                snapshot: await captureSnapshot(tab)
-            })));
-        }
-        catch (err) {
-            console.error('Error getting tabs data:', err.message);
-        }
-    });
-
     ipcMain.handle('tab-add', async () => {
         try {
             createTabView(defaultUrl, true);

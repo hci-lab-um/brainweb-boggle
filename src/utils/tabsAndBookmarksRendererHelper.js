@@ -20,12 +20,8 @@ async function initialise(overlayData, isReload = false, name) {
             itemsList = bookmarksList;
         }
         else if (overlayName === ViewNames.TABS) {
-            // let { tabsList } = overlayData;
-            // itemsList = tabsList;
-
-            // invoke the 'tabs-getData' IPC method to get the tabs data
-            itemsList = await ipcRenderer.invoke('tabs-getData');
-
+            let { tabsList } = overlayData;
+            itemsList = tabsList;
         }
 
         buttons = document.querySelectorAll('button');

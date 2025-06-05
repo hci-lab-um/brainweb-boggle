@@ -274,8 +274,10 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
-                let url = activeTab.webContentsView.webContents.getURL();
-                mainWindowContent.webContents.send('omniboxText-update', url)
+                if (activeTab && thisTabView === activeTab.webContentsView) {
+                    let url = activeTab.webContentsView.webContents.getURL();
+                    mainWindowContent.webContents.send('omniboxText-update', url)
+                }
             } catch (err) {
                 console.error('Error during tabview stop loading:', err.message);
             }

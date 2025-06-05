@@ -2,7 +2,7 @@ const { app, WebContentsView, BaseWindow, ipcMain, screen, View } = require('ele
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
-const { captureSnapshot } = require('../../utils/utilityFunctions');
+const { captureSnapshot, slideViewUpAndGrow, slideViewDownAndShrink } = require('../../utils/utilityFunctions');
 
 const defaultUrl = 'https://www.google.com';
 
@@ -334,9 +334,18 @@ function registerIpcHandlers(context) {
                     mainWindowContent.webContents.send('omniboxText-update', tabToVisit.webContentsView.webContents.getURL());
                 }
 
+                // Animate all tabs except the one to visit
+                tabsList.forEach(tab => {
+                    if (tab !== tabToVisit) {
+                        slideViewDownAndShrink(tab.webContentsView, webpageBounds);
+                    }
+                });
+
                 // Deactivates all tabs and activates the selected tab
-                tabsList.forEach(tab => tab.isActive = false); 
-                tabToVisit.isActive = true; 
+                tabsList.forEach(tab => tab.isActive = false);
+                tabToVisit.isActive = true;
+
+                slideViewUpAndGrow(tabToVisit.webContentsView, webpageBounds);
 
                 // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
                 mainWindow.contentView.removeChildView(tabToVisit.webContentsView);

@@ -1,11 +1,41 @@
-const { app, WebContentsView, BaseWindow, ipcMain, screen } = require('electron')
+const { app, WebContentsView, BaseWindow, ipcMain, screen, View } = require('electron')
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
-const { captureSnapshot } = require('../../utils/utilityFunctions');
+const { captureSnapshot, slideViewUpAndGrow, slideViewDownAndShrink } = require('../../utils/utilityFunctions');
+
+const defaultUrl = 'https://www.google.com';
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarks, db, updateWebpageBounds } = context;
+    //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
+    let { 
+        mainWindow, 
+        mainWindowContent, 
+        webpageBounds, 
+        viewsList, 
+        scenarioIdDict,
+        bookmarksList, 
+        tabsList, 
+        db, 
+        updateWebpageBounds, 
+        createTabView, 
+        deleteAndInsertAllTabs 
+    } = context;
+
+    // Helper function to serialise tabsList
+    async function getSerialisableTabsList(tabsList) {
+        return Promise.all(tabsList.map(async tab => {
+            const snapshot = await captureSnapshot(tab) || tab.snapshot;
+            tab.snapshot = snapshot; // Mutate the snapshot in tabsList
+            return {
+                tabId: tab.tabId,
+                isActive: tab.isActive,
+                snapshot: snapshot,
+                title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
+                url: (await tab.webContentsView.webContents.getURL()) || tab.url,
+            };
+        }));
+    }
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -29,6 +59,10 @@ function registerIpcHandlers(context) {
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
+        // Extracts the serialisable properties from tabsList
+        const serialisableTabsList = await getSerialisableTabsList(tabsList);
+
+        let activeTab = tabsList.find(tab => tab.isActive);
         let overlayData = {
             overlayName: overlayName,
             scenarioId: scenarioId,
@@ -36,8 +70,9 @@ function registerIpcHandlers(context) {
             isUpperCase: isUpperCase,
             webpageBounds: webpageBounds,
             elementProperties: elementProperties,
-            zoomFactor: await tabView.webContents.getZoomFactor(),
-            bookmarks: bookmarks,
+            zoomFactor: await activeTab.webContentsView.webContents.getZoomFactor(),
+            bookmarksList: bookmarksList,
+            tabsList: serialisableTabsList,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -140,22 +175,23 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('url-load', (event, url) => {
-        try {
-            if (tabView && tabView.webContents) {
-                tabView.webContents.loadURL(url);
+        try {            
+            let activeTab = tabsList.find(tab => tab.isActive);
+            if (activeTab) {
+                activeTab.webContentsView.webContents.loadURL(url);
                 mainWindowContent.webContents.send('omniboxText-update', url)
             } else {
-                console.error('tabView is not initialized.');
+                console.error('activeTab is not initialized.');
             }
         } catch (err) {
-            console.error('Error loading URL in tabView:', err.message);
+            console.error('Error loading URL in activeTab:', err.message);
         }
     });
 
     ipcMain.on('webpage-refresh', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.reload();
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.reload();
         } catch (err) {
             console.error('Error refreshing webpage:', err.message);
         }
@@ -163,8 +199,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('webpage-zoomIn', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.setZoomLevel(tabView.webContents.getZoomLevel() + 1);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.setZoomLevel(activeTab.webContentsView.webContents.getZoomLevel() + 1);
         } catch (err) {
             console.error('Error zooming in webpage:', err.message);
         }
@@ -172,8 +208,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('webpage-zoomOut', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.setZoomLevel(tabView.webContents.getZoomLevel() - 1);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.setZoomLevel(activeTab.webContentsView.webContents.getZoomLevel() - 1);
         } catch (err) {
             console.error('Error zooming out webpage:', err.message);
         }
@@ -181,8 +217,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('webpage-zoomReset', (event) => {
         try {
-            // Eventually use a tabViewsList instead of a single tabView, to find the active tabView
-            tabView.webContents.setZoomLevel(0);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.setZoomLevel(0);
         } catch (err) {
             console.error('Error resetting webpage zoom:', err.message);
         }
@@ -191,7 +227,8 @@ function registerIpcHandlers(context) {
     ipcMain.handle('interactiveElements-get', (event) => {
         return new Promise((resolve, reject) => {
             try {
-                tabView.webContents.send('interactiveElements-get');
+                let activeTab = tabsList.find(tab => tab.isActive);
+                activeTab.webContentsView.webContents.send('interactiveElements-get');
                 ipcMain.once('interactiveElements-response', (event, elements) => {
                     if (elements) {
                         resolve(elements);
@@ -207,7 +244,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('interactiveElements-addHighlight', (event, elements) => {
         try {
-            tabView.webContents.send('interactiveElements-addHighlight', elements);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('interactiveElements-addHighlight', elements);
         } catch (err) {
             console.error('Error adding highlight to interactive elements:', err.message);
         }
@@ -215,7 +253,8 @@ function registerIpcHandlers(context) {
 
     ipcMain.on('interactiveElements-removeHighlight', (event, elements) => {
         try {
-            tabView.webContents.send('interactiveElements-removeHighlight', elements);
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight', elements);
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
         }
@@ -223,23 +262,19 @@ function registerIpcHandlers(context) {
 
     ipcMain.handle('bookmark-add', async (event) => {
         try {
-            try {
-                await captureSnapshot(tabView);
-            } catch (err) {
-                console.error(err);
-            }
+            let activeTab = tabsList.find(tab => tab.isActive);
 
-            let url = tabView.webContents.getURL();
-            let title = tabView.webContents.getTitle();
-            let snapshot = tabView.snapshot;
+            let url = activeTab.webContentsView.webContents.getURL();
+            let title = activeTab.webContentsView.webContents.getTitle();
+            let snapshot = await captureSnapshot(activeTab);
 
             // Check if bookmark already exists
-            if (bookmarks.some(b => b.url === url)) {
+            if (bookmarksList.some(b => b.url === url)) {
                 return false; // Already exists
             }
 
             var bookmark = { url: url, title: title, snapshot: snapshot };
-            bookmarks.push(bookmark);
+            bookmarksList.push(bookmark);
             await db.addBookmark(bookmark);
             return true;
         } catch (err) {
@@ -251,7 +286,7 @@ function registerIpcHandlers(context) {
     ipcMain.on('bookmarks-deleteAll', async (event) => {
         try {
             await db.deleteAllBookmarks();
-            bookmarks = [];
+            bookmarksList = [];
         } catch (err) {
             console.error('Error deleting all bookmarks:', err.message);
         }
@@ -260,14 +295,108 @@ function registerIpcHandlers(context) {
     ipcMain.on('bookmark-deleteByUrl', async (event, url) => {
         try {
             await db.deleteBookmarkByUrl(url);
-            bookmarks = bookmarks.filter(bookmark => bookmark.url !== url);
+
+            // Updating the bookmarksList by removing the bookmark with the given URL
+            const idx = bookmarksList.findIndex(bookmark => bookmark.url === url);
+            if (idx !== -1) bookmarksList.splice(idx, 1);
 
             // Reloading the bookmarks to show the updated bookmarks list
             let topMostView = viewsList[viewsList.length - 1];
             let isReload = true;
-            topMostView.webContentsView.webContents.send('bookmarks-loaded', {bookmarks: bookmarks}, isReload);
+            topMostView.webContentsView.webContents.send('bookmarks-loaded', { bookmarksList }, isReload);
         } catch (err) {
             console.error('Error deleting bookmark by URL:', err.message);
+        }
+    });
+
+    ipcMain.handle('tab-add', async () => {
+        try {
+            createTabView(defaultUrl, true);
+            return true;
+        } catch (err) {
+            console.error('Error adding tab:', err.message);
+            return false;
+        }
+    });
+
+    ipcMain.on('tab-visit', (event, tabId) => {
+        // This is used to display the select tab when the user clicks on a tab
+        try {
+            let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
+            if (tabToVisit) {
+                
+                // Only if the tab is an error page, we reload the original URL to refresh the content.
+                // Otherwise, we just update the omnibox with the current URL of the tab.
+                if (tabToVisit.isErrorPage) {
+                    // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
+                    tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
+                } else {
+                    mainWindowContent.webContents.send('omniboxText-update', tabToVisit.webContentsView.webContents.getURL());
+                }
+
+                // Animate all tabs except the one to visit
+                tabsList.forEach(tab => {
+                    if (tab !== tabToVisit) {
+                        slideViewDownAndShrink(tab.webContentsView, webpageBounds);
+                    }
+                });
+
+                // Deactivates all tabs and activates the selected tab
+                tabsList.forEach(tab => tab.isActive = false);
+                tabToVisit.isActive = true;
+
+                slideViewUpAndGrow(tabToVisit.webContentsView, webpageBounds);
+
+                // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
+                mainWindow.contentView.removeChildView(tabToVisit.webContentsView);
+                mainWindow.contentView.addChildView(tabToVisit.webContentsView);
+            } else {
+                console.error(`Tab with ID ${tabId} not found.`);
+            }
+        } catch (err) {
+            console.error('Error activating tab:', err.message);
+        }
+
+    });
+
+    // This tab deletion does not update the database because the database is updated when the app is closed ONLY.
+    ipcMain.on('tabs-deleteAll', async (event) => {
+        try {
+            tabsList.length = 0;
+        } catch (err) {
+            console.error('Error deleting all tabs:', err.message);
+        }
+    });
+
+    // This tab deletion does not update the database because the database is updated when the app is closed ONLY.
+    ipcMain.on('tab-deleteById', async (event, tabId) => {
+        try {
+            // Updating the tabsList by removing the tab with the given tabId
+            const idx = tabsList.findIndex(tab => tab.tabId === tabId);
+            let tabToDelete = tabsList[idx];
+            
+            if (tabToDelete) {
+                if (idx !== -1) tabsList.splice(idx, 1);
+
+                // Removing the tabView from the main window child views
+                await mainWindow.contentView.removeChildView(tabToDelete.webContentsView);
+
+                // If the tab to delete is the active tab, we need to activate the previous tab instead
+                if (tabToDelete.isActive && tabsList.length > 0) {
+                    newActiveTab = tabsList[tabsList.length - 1];
+                    newActiveTab.isActive = true;
+
+                    // Updating the omnibox with the URL of the previous tab
+                    mainWindowContent.webContents.send('omniboxText-update', newActiveTab.webContentsView.webContents.getURL());
+                }
+
+                const topMostView = viewsList[viewsList.length - 1];
+                const isReload = true;
+                const serialisableTabsList = await getSerialisableTabsList(tabsList);
+                topMostView.webContentsView.webContents.send('tabs-loaded', { tabsList: serialisableTabsList }, isReload);
+            }
+        } catch (err) {
+            console.error('Error deleting tab by ID:', err.message);
         }
     });
 
@@ -292,7 +421,8 @@ function registerIpcHandlers(context) {
         const webpageX = windowScreenX + webpageBounds.x;
         const webpageY = windowScreenY + webpageBounds.y;
 
-        const zoomFactor = await tabView.webContents.getZoomFactor();
+        let activeTab = tabsList.find(tab => tab.isActive);
+        const zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
 
         // Get the element's position within the tab (taking the zoom level into consideration)
         const elementX = webpageX + (coordinates.x * zoomFactor);
@@ -335,8 +465,9 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('app-exit', (event) => {
+    ipcMain.on('app-exit', async(event) => {
         try {
+            await deleteAndInsertAllTabs()
             app.quit();
         } catch (err) {
             console.error('Error exiting app:', err.message);

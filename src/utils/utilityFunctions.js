@@ -4,23 +4,18 @@ function createMaterialIcon(size, icon_name) {
 }
 
 // Utility function to capture a snapshot of the active tab - used for the bookmark and tabs feature
-async function captureSnapshot(tabView) {
+async function captureSnapshot(activeTab) {
     try {
-        return new Promise((resolve, reject) => {
-            if (tabView && tabView.webContents) {
-                tabView.webContents.capturePage().then(snapshot => {
-                    tabView.snapshot = snapshot.toDataURL();
-                    resolve();
-                }).catch(err => {
-                    console.error('Error capturing snapshot:', err.message);
-                    reject(err);
-                });
-            } else {
-                reject(new Error('Active tab or webContents not available for capture'));
-            }
-        });
+        if (activeTab && activeTab.webContentsView && activeTab.webContentsView.webContents) {
+            const snapshot = await activeTab.webContentsView.webContents.capturePage();
+            activeTab.snapshot = snapshot.toDataURL();
+            return activeTab.snapshot;
+        } else {
+            console.error('Active tab or webContents not available for capture');
+        }
     } catch (err) {
         console.error('Error capturing snapshot:', err.message);
+        return null;
     }
 }
 
@@ -65,7 +60,7 @@ function createPopup({
     if (buttons.length > 0) {
         const buttonsContainer = document.createElement('div');
         buttonsContainer.classList.add('popup__btnsContainer');
-        if (name === 'bookmarkAction') buttonsContainer.classList.add('popup__btnsContainer--bookmarkAction');
+        if (name === 'itemAction') buttonsContainer.classList.add('popup__btnsContainer--itemAction');
         buttons.forEach(btn => buttonsContainer.appendChild(btn));
         popup.appendChild(buttonsContainer);
     }
@@ -140,11 +135,195 @@ function paginate(items, pageSize, currentPage) {
     return items.slice(start, end);
 }
 
+function slideInView(view, webpageBounds, duration = 300) {
+    try {
+        const fps = 120; // High frame rate for smoothness
+        const interval = 1000 / fps;
+        const steps = Math.ceil(duration / interval);
+
+        const initialX = view.getBounds().x;
+        const finalX = webpageBounds.x;
+
+        const deltaX = (finalX - initialX) / steps;
+
+        let currentX = initialX;
+        let step = 0;
+
+        const intervalId = setInterval(() => {
+            try {
+                step++;
+                currentX += deltaX;
+
+                view.setBounds({
+                    x: currentX,
+                    y: webpageBounds.y,
+                    width: webpageBounds.width,
+                    height: webpageBounds.height
+                });
+
+                if (step >= steps) {
+                    clearInterval(intervalId);
+                    view.setBounds(webpageBounds); // Ensure final bounds are set
+                }
+            } catch (err) {
+                console.error('Error during slide in view:', err.message);
+            }
+        }, interval);
+    } catch (err) {
+        console.error('Error sliding in view:', err.message);
+    }
+}
+
+/**
+ * Animates a view sliding in from the bottom, similar to macOS app open animation.
+ * @param {object} view - The view to animate (must support getBounds/setBounds).
+ * @param {object} webpageBounds - The final bounds for the view (x, y, width, height).
+ * @param {number} duration - Animation duration in ms (default 300).
+ */
+function slideViewUpAndGrow(view, webpageBounds, duration = 300) {
+    try {
+        const fps = 120;
+        const interval = 1000 / fps;
+        const steps = Math.ceil(duration / interval);
+
+        // Start with a width of 1px (almost zero)
+        const initialWidth = 0.5;
+        const finalWidth = webpageBounds.width;
+        const deltaWidth = (finalWidth - initialWidth) / steps;
+
+        const initialX = webpageBounds.x + (finalWidth - initialWidth) / 2;
+        const finalX = webpageBounds.x;
+        const deltaX = (finalX - initialX) / steps;
+
+        const initialY = webpageBounds.y + finalWidth; // below the visible area
+        const finalY = webpageBounds.y;
+        const deltaY = (finalY - initialY) / steps;
+
+        let currentY = initialY;
+        let currentWidth = initialWidth;
+        let currentX = initialX;
+        let step = 0;
+
+        // Optionally, animate scale for extra effect
+        const initialScale = 0.85;
+        const finalScale = 1;
+        const deltaScale = (finalScale - initialScale) / steps;
+        let currentScale = initialScale;
+
+        const intervalId = setInterval(() => {
+            try {
+                step++;
+                currentY += deltaY;
+                currentWidth += deltaWidth;
+                currentX += deltaX;
+                currentScale += deltaScale;
+
+                view.setBounds({
+                    x: currentX,
+                    y: currentY,
+                    width: currentWidth,
+                    height: webpageBounds.height
+                });
+
+                if (typeof view.setScale === 'function') {
+                    view.setScale(currentScale);
+                }
+
+                if (step >= steps) {
+                    clearInterval(intervalId);
+                    view.setBounds(webpageBounds); // Ensure final bounds are set
+                    if (typeof view.setScale === 'function') {
+                        view.setScale(finalScale);
+                    }
+                }
+            } catch (err) {
+                console.error('Error during slide in from bottom:', err.message);
+            }
+        }, interval);
+    } catch (err) {
+        console.error('Error sliding in from bottom:', err.message);
+    }
+}
+
+/**
+ * Animates a view sliding down and shrinking (opposite of slideViewUpAndGrow).
+ * The view shrinks its width to center and slides down out of view.
+ * @param {object} view - The view to animate (must support getBounds/setBounds).
+ * @param {object} webpageBounds - The initial bounds for the view (x, y, width, height).
+ * @param {number} duration - Animation duration in ms (default 300).
+ * @param {function} onComplete - Optional callback when animation finishes.
+ */
+function slideViewDownAndShrink(view, webpageBounds, duration = 600, onComplete) {
+    try {
+        // Lower fps for less CPU, but use ease for smoothness
+        const fps = 90;
+        const interval = 1000 / fps;
+        const steps = Math.ceil(duration / interval);
+
+        const initialWidth = webpageBounds.width;
+        const finalWidth = 0.5;
+        const initialX = webpageBounds.x;
+        const finalX = webpageBounds.x + (initialWidth - finalWidth) / 2;
+        const initialY = webpageBounds.y;
+        const finalY = webpageBounds.y + initialWidth;
+
+        let step = 0;
+
+        // Easing function (easeInOutCubic)
+        function ease(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        const initialScale = 1;
+        const finalScale = 0.85;
+
+        const intervalId = setInterval(() => {
+            try {
+                step++;
+                const t = Math.min(step / steps, 1);
+                const eased = ease(t);
+
+                const currentWidth = initialWidth + (finalWidth - initialWidth) * eased;
+                const currentX = initialX + (finalX - initialX) * eased;
+                const currentY = initialY + (finalY - initialY) * eased;
+                const currentScale = initialScale + (finalScale - initialScale) * eased;
+
+                view.setBounds({
+                    x: currentX,
+                    y: currentY,
+                    width: currentWidth,
+                    height: webpageBounds.height
+                });
+
+                if (typeof view.setScale === 'function') {
+                    view.setScale(currentScale);
+                }
+
+                if (step >= steps) {
+                    clearInterval(intervalId);
+                    view.setBounds(webpageBounds);
+                    if (typeof view.setScale === 'function') {
+                        view.setScale(1);
+                    }
+                    if (typeof onComplete === 'function') onComplete();
+                }
+            } catch (err) {
+                console.error('Error during slide down and shrink:', err.message);
+            }
+        }, interval);
+    } catch (err) {
+        console.error('Error sliding down and shrinking:', err.message);
+    }
+}
+
 module.exports = {
     createMaterialIcon,
     captureSnapshot,
     createPopup,
     createNavigationButton,
     updatePaginationIndicators,
-    paginate
+    paginate,
+    slideInView,
+    slideViewUpAndGrow,
+    slideViewDownAndShrink
 };

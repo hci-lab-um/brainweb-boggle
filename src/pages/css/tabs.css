@@ -306,7 +306,7 @@ body {
   color: white;
 }
 
-.bookmarks {
+.tabs {
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -314,16 +314,16 @@ body {
   box-sizing: border-box;
   justify-content: space-between;
 }
-.bookmarks__header {
+.tabs__header {
   align-self: center;
   margin: 0;
   padding-bottom: 20px;
 }
-.bookmarks__footer {
+.tabs__footer {
   display: flex;
   gap: 2vw;
 }
-.bookmarks__container {
+.tabs__container {
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
@@ -334,30 +334,30 @@ body {
   align-items: center;
   flex: 7;
 }
-.bookmarks__container > * {
+.tabs__container > * {
   flex: 1 1 calc(50% - 10px);
   max-width: calc(50% - 65px);
 }
-.bookmarks__container > * {
+.tabs__container > * {
   box-sizing: border-box;
   height: 60%;
 }
-.bookmarks__container > * {
+.tabs__container > * {
   height: 40%;
   padding: 0 !important;
 }
-.bookmarks__bookmarksAndArrowsContainer {
+.tabs__tabsAndArrowsContainer {
   display: flex;
   height: 100%;
   flex-direction: row;
   align-items: center;
 }
-.bookmarks .button {
+.tabs .button {
   display: flex;
   flex-direction: column;
   padding: 7px;
 }
-.bookmarks .button__title {
+.tabs .button__title {
   width: 100%;
   font-size: 1.75rem;
   height: 45%;
@@ -369,7 +369,7 @@ body {
   box-sizing: border-box;
   padding: 0 30px 0;
 }
-.bookmarks .button__url {
+.tabs .button__url {
   width: 100%;
   font-size: 1.25rem;
   align-content: center;
@@ -380,7 +380,7 @@ body {
   padding: 0 30px 0;
 }
 
-.noBookmarksMessage {
+.notabsMessage {
   height: 40%;
   align-content: center;
   text-align: center;
@@ -389,4 +389,4 @@ body {
   width: 100%;
 }
 
-/*# sourceMappingURL=bookmarks.css.map */
+/*# sourceMappingURL=tabs.css.map */

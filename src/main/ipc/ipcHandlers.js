@@ -8,17 +8,33 @@ const defaultUrl = 'https://www.google.com';
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
-    let { mainWindow, mainWindowContent, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds, createTabView } = context;
+    let { 
+        mainWindow, 
+        mainWindowContent, 
+        webpageBounds, 
+        viewsList, 
+        scenarioIdDict,
+        bookmarksList, 
+        tabsList, 
+        db, 
+        updateWebpageBounds, 
+        createTabView, 
+        deleteAndInsertAllTabs 
+    } = context;
 
     // Helper function to serialise tabsList
     async function getSerialisableTabsList(tabsList) {
-        return Promise.all(tabsList.map(async tab => ({
-            tabId: tab.tabId,
-            isActive: tab.isActive,
-            snapshot: await captureSnapshot(tab) || tab.snapshot,
-            title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
-            url: (await tab.webContentsView.webContents.getURL()) || tab.url,
-        })));
+        return Promise.all(tabsList.map(async tab => {
+            const snapshot = await captureSnapshot(tab) || tab.snapshot;
+            tab.snapshot = snapshot; // Mutate the snapshot in tabsList
+            return {
+                tabId: tab.tabId,
+                isActive: tab.isActive,
+                snapshot: snapshot,
+                title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
+                url: (await tab.webContentsView.webContents.getURL()) || tab.url,
+            };
+        }));
     }
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
@@ -440,8 +456,9 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('app-exit', (event) => {
+    ipcMain.on('app-exit', async(event) => {
         try {
+            await deleteAndInsertAllTabs()
             app.quit();
         } catch (err) {
             console.error('Error exiting app:', err.message);

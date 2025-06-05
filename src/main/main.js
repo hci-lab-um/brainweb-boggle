@@ -130,7 +130,8 @@ function createMainWindow() {
                                     tabsList,
                                     db,
                                     updateWebpageBounds,
-                                    createTabView
+                                    createTabView,
+                                    deleteAndInsertAllTabs
                                 });
                             });
                         } catch (err) {
@@ -236,10 +237,8 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             await thisTabView.webContents.loadURL(url);
         } else if (tabDataFromDB.isErrorPage) {
             await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
-            tab.setEventHandlers = false;
         } else {
             await thisTabView.webContents.loadURL(tabDataFromDB.url);
-            tab.setEventHandlers = false;
         }
 
         // -----------------------
@@ -374,19 +373,19 @@ async function deleteAndInsertAllTabs() {
         // Empty the table in the database before quitting
         await db.deleteAllTabs();
 
-        // // Update the database with the open tabs
-        // for (const tab of tabsList) {
-        //     const tabData = {
-        //         url: !tab.isErrorPage ? (tab.webContentsView.webContents.getURL() ? tab.webContentsView.webContents.getURL() : tab.url) : null,
-        //         title: tab.webContentsView.webContents.getTitle() ? tab.webContentsView.webContents.getTitle() : tab.title,
-        //         isActive: tab.isActive,
-        //         snapshot: tab.snapshot,
-        //         originalURL: tab.originalURL,
-        //         isErrorPage: tab.isErrorPage
-        //     };
+        // Update the database with the open tabs
+        for (const tab of tabsList) {
+            const tabData = {
+                url: !tab.isErrorPage ? (tab.webContentsView.webContents.getURL() ? tab.webContentsView.webContents.getURL() : tab.url) : null,
+                title: tab.webContentsView.webContents.getTitle() ? tab.webContentsView.webContents.getTitle() : tab.title,
+                isActive: tab.isActive,
+                snapshot: tab.snapshot,
+                originalURL: tab.originalURL,
+                isErrorPage: tab.isErrorPage
+            };
 
-        //     await db.addTab(tabData);
-        // }
+            await db.addTab(tabData);
+        }
     } catch (err) {
         logger.error('Error updating database with open tabs:', err.message);
     }

@@ -274,6 +274,10 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
+
+                // When loading the tabs from the database, each tab will start and stop loading,
+                // but the first tab might not be the active one, and so there might not be an 
+                // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
                     let url = activeTab.webContentsView.webContents.getURL();
                     mainWindowContent.webContents.send('omniboxText-update', url)

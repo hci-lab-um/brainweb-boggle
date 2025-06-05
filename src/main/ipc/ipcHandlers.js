@@ -7,7 +7,8 @@ const { captureSnapshot } = require('../../utils/utilityFunctions');
 const defaultUrl = 'https://www.google.com';
 
 function registerIpcHandlers(context) {
-    let { mainWindow, mainWindowContent, tabView, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds, createTabView } = context;
+    //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
+    let { mainWindow, mainWindowContent, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds, createTabView } = context;
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -35,9 +36,10 @@ function registerIpcHandlers(context) {
         const serialisableTabsList = await Promise.all(tabsList.map(async tab => ({
             tabId: tab.tabId,
             isActive: tab.isActive,
-            snapshot: tab.snapshot ? tab.snapshot : await captureSnapshot(tab),
-            title: await tab.webContentsView.webContents.getTitle() ? await tab.webContentsView.webContents.getTitle() : tab.title,
-            url: await tab.webContentsView.webContents.getURL() ? await tab.webContentsView.webContents.getURL() : tab.url,
+            snapshot: await captureSnapshot(tab) || tab.snapshot, // Capture snapshot or use an existing one if the snapshot failed. 
+                                                                  // We try to capture the snapshot first to ensure we have the latest state.
+            title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
+            url: (await tab.webContentsView.webContents.getURL()) || tab.url,
         })));
 
         let activeTab = tabsList.find(tab => tab.isActive);
@@ -205,6 +207,7 @@ function registerIpcHandlers(context) {
     ipcMain.handle('interactiveElements-get', (event) => {
         return new Promise((resolve, reject) => {
             try {
+                let activeTab = tabsList.find(tab => tab.isActive);
                 activeTab.webContentsView.webContents.send('interactiveElements-get');
                 ipcMain.once('interactiveElements-response', (event, elements) => {
                     if (elements) {
@@ -296,20 +299,25 @@ function registerIpcHandlers(context) {
     ipcMain.on('tab-visit', (event, tabId) => {
         // This is used to display the select tab when the user clicks on a tab
         try {
-            let tabToActivate = tabsList.find(tab => tab.tabId === tabId);
-            if (tabToActivate) {
-                tabsList.forEach(tab => tab.isActive = false); // Deactivate all tabs
-                tabToActivate.isActive = true; // Activate the selected tab
-
-                if (tabToActivate.isErrorPage) {
-                    tabToActivate.webContentsView.webContents.loadURL(tabToActivate.originalURL);
+            let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
+            if (tabToVisit) {
+                
+                // Only if the tab is an error page, we reload the original URL to refresh the content.
+                // Otherwise, we just update the omnibox with the current URL of the tab.
+                if (tabToVisit.isErrorPage) {
+                    // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
+                    tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
                 } else {
-                    tabToActivate.webContentsView.webContents.loadURL(tabToActivate.url);
+                    mainWindowContent.webContents.send('omniboxText-update', tabToVisit.webContentsView.webContents.getURL());
                 }
 
+                // Deactivates all tabs and activates the selected tab
+                tabsList.forEach(tab => tab.isActive = false); 
+                tabToVisit.isActive = true; 
+
                 // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
-                mainWindow.contentView.removeChildView(tabToActivate.webContentsView);
-                mainWindow.contentView.addChildView(tabToActivate.webContentsView);
+                mainWindow.contentView.removeChildView(tabToVisit.webContentsView);
+                mainWindow.contentView.addChildView(tabToVisit.webContentsView);
             } else {
                 console.error(`Tab with ID ${tabId} not found.`);
             }

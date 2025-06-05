@@ -125,6 +125,15 @@ function initialiseItemsOverlay() {
                     itemButton.setAttribute('id', `${idSuffix}ItemBtn`);
                     itemButton.classList.add('button');
 
+                    if (overlayName === ViewNames.TABS && item.isActive) {
+                        itemButton.classList.add('accent');
+
+                        const labelDiv = document.createElement('div');
+                        labelDiv.classList.add('button__label');
+                        labelDiv.textContent = 'ACTIVE';
+                        itemButton.appendChild(labelDiv);
+                    }
+
                     const buttonTitle = document.createElement('span');
                     buttonTitle.classList.add('button__title');
                     buttonTitle.textContent = item.title;
@@ -283,15 +292,18 @@ async function showDeleteAllConfirmationPopup() {
         confirmBtn.classList.add('button', 'popup__btn');
         confirmBtn.textContent = 'Delete All';
         confirmBtn.onclick = () => {
-            popupElements.close();
-            itemsList = [];
+            addButtonSelectionAnimation(confirmBtn);
+            setTimeout(() => {
+                popupElements.close();
+                itemsList = [];
 
-            if (overlayName === ViewNames.BOOKMARKS) {
-                ipcRenderer.send('bookmarks-deleteAll');
-            } else {
-                ipcRenderer.send('tabs-deleteAll');
-            }
-            showDeleteAllSuccessPopup();
+                if (overlayName === ViewNames.BOOKMARKS) {
+                    ipcRenderer.send('bookmarks-deleteAll');
+                } else {
+                    ipcRenderer.send('tabs-deleteAll');
+                }
+                showDeleteAllSuccessPopup();
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
         const cancelBtn = document.createElement('button');
@@ -299,15 +311,19 @@ async function showDeleteAllConfirmationPopup() {
         cancelBtn.classList.add('button', 'popup__btn', 'accent');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => {
-            popupElements.close();
-            requestAnimationFrame(async () => {
-                const scenarioId = getItemsScenarioId(
-                    itemsList.length,
-                    currentPage > 0,
-                    (currentPage + 1) * pageSize < itemsList.length
-                );
-                await updateScenarioId(scenarioId, buttons, overlayName);
-            });
+            addButtonSelectionAnimation(cancelBtn);
+            setTimeout(() => {
+                popupElements.close();
+                requestAnimationFrame(async () => {
+                    const scenarioId = getItemsScenarioId(
+                        itemsList.length,
+                        currentPage > 0,
+                        (currentPage + 1) * pageSize < itemsList.length
+                    );
+                    await updateScenarioId(scenarioId, buttons, overlayName);
+                });
+
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
         const popupElements = createPopup({
@@ -352,14 +368,17 @@ async function showItemActionPopup(item) {
         visitBtn.classList.add('button', 'popup__btn');
         visitBtn.textContent = 'Visit';
         visitBtn.onclick = () => {
-            popupElements.close();
-            if (overlayName === ViewNames.BOOKMARKS) {
-                ipcRenderer.send('url-load', item.url);
-            } else {
-                ipcRenderer.send('tab-visit', item.tabId);
-            }
-            ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-            ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+            addButtonSelectionAnimation(visitBtn);
+            setTimeout(() => {
+                popupElements.close();
+                if (overlayName === ViewNames.BOOKMARKS) {
+                    ipcRenderer.send('url-load', item.url);
+                } else {
+                    ipcRenderer.send('tab-visit', item.tabId);
+                }
+                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
         const deleteBtn = document.createElement('button');
@@ -367,8 +386,11 @@ async function showItemActionPopup(item) {
         deleteBtn.classList.add('button', 'popup__btn');
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = () => {
-            popupElements.close();
-            showItemDeletedPopup(item.url, item.tabId);
+            addButtonSelectionAnimation(deleteBtn);
+            setTimeout(() => {
+                popupElements.close();
+                showItemDeletedPopup(item.url, item.tabId);
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
         const cancelBtn = document.createElement('button');
@@ -376,15 +398,18 @@ async function showItemActionPopup(item) {
         cancelBtn.classList.add('button', 'popup__btn', 'accent');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.onclick = () => {
-            popupElements.close();
-            requestAnimationFrame(async () => {
-                const scenarioId = getItemsScenarioId(
-                    itemsList.length,
-                    currentPage > 0,
-                    (currentPage + 1) * pageSize < itemsList.length
-                );
-                await updateScenarioId(scenarioId, buttons, overlayName);
-            });
+            addButtonSelectionAnimation(cancelBtn);
+            setTimeout(() => {
+                popupElements.close();
+                requestAnimationFrame(async () => {
+                    const scenarioId = getItemsScenarioId(
+                        itemsList.length,
+                        currentPage > 0,
+                        (currentPage + 1) * pageSize < itemsList.length
+                    );
+                    await updateScenarioId(scenarioId, buttons, overlayName);
+                });
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
         const popupElements = createPopup({

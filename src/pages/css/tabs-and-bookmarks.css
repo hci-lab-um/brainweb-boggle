@@ -353,6 +353,7 @@ body {
   align-items: center;
 }
 .items .button {
+  position: relative;
   display: flex;
   flex-direction: column;
   padding: 7px;
@@ -378,6 +379,17 @@ body {
   white-space: nowrap;
   box-sizing: border-box;
   padding: 0 30px 0;
+}
+.items .button__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 5px 10px;
+  color: #212529;
+  font-size: 1.5rem;
+  background-color: rgba(183, 255, 0, 0.702);
+  width: min-content;
+  border-radius: 0 0 6px;
 }
 
 .noItemsMessage {

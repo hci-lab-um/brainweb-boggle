@@ -36,7 +36,8 @@ function attachEventListeners() {
 
                 switch (buttonId) {
                     case "tabsBtn":
-                        // tbi
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.TABS, -1);
                         break;
                     case "bookmarksBtn":
                         // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.

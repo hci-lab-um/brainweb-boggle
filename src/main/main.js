@@ -3,6 +3,7 @@ const { ViewNames } = require('../utils/constants/enums')
 const path = require('path')
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
+const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
 
 let splashWindow;
 let mainWindow;
@@ -12,7 +13,9 @@ let viewsList = [];        // This contains all the instantces of WebContentsVie
 let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
-let bookmarks = [];        // This will hold the bookmarks fetched from the database
+let bookmarksList = [];        // This will hold the bookmarks fetched from the database
+let tabsList = [];          // This will hold the list of tabs created in the main window
+let tabsFromDatabase = []; // This will hold the tabs fetched from the database
 
 app.whenReady().then(async () => {
     try {
@@ -20,7 +23,7 @@ app.whenReady().then(async () => {
         await db.createTables();
         await initialiseVariables();
     } catch (err) {
-        logger.error('Error initialising database:', err.message);
+        console.error('Error initialising database:', err.message);
     }
 
     try {
@@ -33,11 +36,25 @@ app.whenReady().then(async () => {
     }
 })
 
+app.on('window-all-closed', async () => {
+    try {
+        await deleteAndInsertAllTabs();
+
+        // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
+        if (process.platform !== 'darwin') {
+            app.quit()
+        }
+    } catch (err) {
+        logger.error('Error during app closure:', err.message);
+    }
+});
+
 async function initialiseVariables() {
     try {
-        bookmarks = await db.getBookmarks();
+        bookmarksList = await db.getBookmarks();
+        tabsFromDatabase = await db.getTabs();
     } catch (err) {
-        logger.error("Error initialising variables: ", err);
+        console.error("Error initialising variables: ", err);
     }
 }
 
@@ -99,20 +116,22 @@ function createMainWindow() {
                 scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
 
                 ipcMain.on('mainWindow-loaded-complete', (event) => {
-                    updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
+                    updateWebpageBounds(mainWindowContent.webContents).then(async webpageBounds => {
                         try {
-                            createTabView().then(() => {
+                            createInitialTabs().then(() => {
                                 // Register IPC handlers after the main window is created to be able to send messages to the renderer process
                                 registerIpcHandlers({
                                     mainWindow,
                                     mainWindowContent,
-                                    tabView,
                                     webpageBounds,
                                     viewsList,
                                     scenarioIdDict,
-                                    bookmarks,
+                                    bookmarksList,
+                                    tabsList,
                                     db,
-                                    updateWebpageBounds
+                                    updateWebpageBounds,
+                                    createTabView,
+                                    deleteAndInsertAllTabs
                                 });
                             });
                         } catch (err) {
@@ -161,9 +180,27 @@ function createMainWindow() {
     }
 }
 
-async function createTabView() {
+async function createInitialTabs() {
+    if (tabsFromDatabase.length === 0) {
+        await createTabView(defaultUrl);
+    } else {
+        for (const tab of tabsFromDatabase) {
+            await createTabView(tab.url, false, tab);
+        }
+
+        // The active tab is removed from the main window content view and added back to ensure it is displayed on top.
+        let activeTab = tabsList.find(tab => tab.isActive === true);
+        mainWindow.contentView.removeChildView(activeTab.webContentsView);
+        mainWindow.contentView.addChildView(activeTab.webContentsView);
+    }
+}
+
+async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
     try {
-        tabView = new WebContentsView({
+        let tabObject;
+
+        // We create a local variable to be sure that we are referencing the correct tabView instance inside the destroyed event handler.
+        const thisTabView = new WebContentsView({
             webPreferences: {
                 nodeIntegration: false,
                 contextIsolation: true,
@@ -171,20 +208,114 @@ async function createTabView() {
             }
         });
 
-        await mainWindow.contentView.addChildView(tabView);
-        tabView.setBounds(webpageBounds);
-        tabView.webContents.loadURL(defaultUrl); // default URL to be inserted in to browserConfig.js
-        tabView.webContents.openDevTools();
+        tabView = thisTabView
 
-        tabView.webContents.on('did-stop-loading', () => {
+        await mainWindow.contentView.addChildView(tabView);
+
+        // ---------------------------------
+        // Setting the bounds of the tabView
+        // ---------------------------------
+        if (isNewTab) {
+            // A slide-in animation is shown when a new tab is created. This is done by
+            // setting the tab to the right of the visible area and then sliding it in.
+            thisTabView.setBounds({
+                x: webpageBounds.x + webpageBounds.width,
+                y: webpageBounds.y,
+                width: webpageBounds.width,
+                height: webpageBounds.height
+            });
+            slideInView(thisTabView, webpageBounds);
+        } else {
+            //Set its location as per the webpage bounds
+            thisTabView.setBounds(webpageBounds);
+        }
+
+        // ---------------
+        // Loading the URL
+        // ---------------
+        if (!tabDataFromDB) {
+            await thisTabView.webContents.loadURL(url);
+        } else if (tabDataFromDB.isErrorPage) {
+            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
+        } else {
+            await thisTabView.webContents.loadURL(tabDataFromDB.url);
+        }
+
+        // -----------------------
+        // Populating the tabsList
+        // -----------------------
+        if (tabDataFromDB) {
+            tabObject = {
+                tabId: tabDataFromDB.id,
+                webContentsView: thisTabView,
+                url: tabDataFromDB.url,
+                title: tabDataFromDB.title,
+                isActive: tabDataFromDB.isActive === 1 ? true : false,
+                snapshot: tabDataFromDB.snapshot,
+                isErrorPage: tabDataFromDB.isErrorPage,
+                originalURL: tabDataFromDB.originalURL
+            };
+
+            tabsList.push(tabObject);
+        } else {
+            //Set new tab as active (if any)
+            tabsList.forEach(tab => {
+                tab.isActive = false
+            });
+
+            // Getting the maximum tabId from the tabsList and incrementing it by 1 to assign a new tabId
+            const maxTabId = tabsList.reduce((maxId, tab) => Math.max(maxId, tab.tabId), 0);
+            tabsList.push({ tabId: maxTabId + 1, webContentsView: thisTabView, isActive: true });
+        }
+
+        // ------------------------------------------
+        // Setting the event handlers for the tabView
+        // ------------------------------------------
+        thisTabView.webContents.on('did-stop-loading', () => {
             try {
-                let url = tabView.webContents.getURL();
-                mainWindowContent.webContents.send('omniboxText-update', url)
+                let activeTab = tabsList.find(tab => tab.isActive === true);
+
+                // When loading the tabs from the database, each tab will start and stop loading,
+                // but the first tab might not be the active one, and so there might not be an 
+                // activeTab. We check for its presence and update the omnibox text only if it exists.
+                if (activeTab && thisTabView === activeTab.webContentsView) {
+                    let url = activeTab.webContentsView.webContents.getURL();
+                    mainWindowContent.webContents.send('omniboxText-update', url)
+                }
             } catch (err) {
-                logger.error('Error during tabview stop loading:', err.message);
+                console.error('Error during tabview stop loading:', err.message);
             }
         });
 
+        // This is the handler for when a new tab is opened from the tabview such as when the user 
+        // clicks on a link that opens in a new tab.
+        thisTabView.webContents.setWindowOpenHandler(({ url }) => {
+            // It is important to return an object with the action property, to prevent Electron from 
+            // managing the popup. Instead, we handle the popup ourselves by creating a new tabview.
+            try {
+                createTabView(url, true);
+                return { action: 'deny' };
+            } catch (err) {
+                console.error('Error during window open handler:', err.message);
+                return { action: 'deny' };
+            }
+        });
+
+        // Certain tabs close on their own, so we need to listen for the destroyed event and 
+        // remove it from the list of tabs and mainWindow contentView accordingly. Failing to 
+        // do so will result in undefined behaviour and crashes.
+        thisTabView.webContents.once('destroyed', () => {
+            try {
+                mainWindow.contentView.removeChildView(thisTabView);
+                // Mutating tabsList in place instead of reassigning
+                const idx = tabsList.findIndex(tab => tab.webContentsView === thisTabView);
+                if (idx !== -1) tabsList.splice(idx, 1); /////// IMP: This MUTATES the tabsList in place, thus updating the variable inside IpcHandlers  ///////
+            } catch (err) {
+                console.warn('View already removed or invalid:', err.message);
+            }
+        });
+
+        thisTabView.webContents.openDevTools();
 
     } catch (err) {
         console.error('Error creating tab view:', err.message);
@@ -241,4 +372,27 @@ function updateWebpageBounds(webContents) {
             reject(new Error('Renderer process did not respond in time'));
         }, 5000);
     });
+}
+
+async function deleteAndInsertAllTabs() {
+    try {
+        // Empty the table in the database before quitting
+        await db.deleteAllTabs();
+
+        // Update the database with the open tabs
+        for (const tab of tabsList) {
+            const tabData = {
+                url: !tab.isErrorPage ? (tab.webContentsView.webContents.getURL() ? tab.webContentsView.webContents.getURL() : tab.url) : null,
+                title: tab.webContentsView.webContents.getTitle() ? tab.webContentsView.webContents.getTitle() : tab.title,
+                isActive: tab.isActive,
+                snapshot: tab.snapshot,
+                originalURL: tab.originalURL,
+                isErrorPage: tab.isErrorPage
+            };
+
+            await db.addTab(tabData);
+        }
+    } catch (err) {
+        logger.error('Error updating database with open tabs:', err.message);
+    }
 }

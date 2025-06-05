@@ -1,0 +1,86 @@
+@use "colors";
+@use "icons";
+@use "animation";
+@use "components";
+
+body {
+    background-color: colors.$bg-dark-blue;
+    font-family: "Roboto", sans-serif;
+    color: white;
+}
+
+.tabs {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+
+    &__header {
+        align-self: center;
+        margin: 0;
+        padding-bottom: 20px;
+    }
+
+    &__footer {
+        display: flex;
+        gap: 2vw;
+    }
+
+    &__container {
+        min-width: 0;
+        @include components.pagination-grid(2); // 2 columns
+
+        & > * {
+            height: 40%;
+            padding: 0 !important;
+        }
+    }
+
+    &__tabsAndArrowsContainer {
+        display: flex;
+        height: 100%;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    & .button {
+        display: flex;
+        flex-direction: column;
+        padding: 7px;
+
+        &__title {
+            width: 100%;
+            font-size: 1.75rem;
+            height: 45%;
+            background-color: colors.$bg-white-transparent-11;
+            align-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0 30px 0;
+        }
+
+        &__url {
+            width: 100%;
+            font-size: 1.25rem;
+            align-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-sizing: border-box;
+            padding: 0 30px 0;
+        }
+    }
+}
+
+.notabsMessage {
+    height: 40%;
+    align-content: center;
+    text-align: center;
+    font-size: 3rem;
+    background-color: colors.$blue-transparent;
+    width: 100%;
+}

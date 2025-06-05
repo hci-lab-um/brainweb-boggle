@@ -10,6 +10,17 @@ function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
     let { mainWindow, mainWindowContent, webpageBounds, viewsList, scenarioIdDict, bookmarksList, tabsList, db, updateWebpageBounds, createTabView } = context;
 
+    // Helper function to serialise tabsList
+    async function getSerialisableTabsList(tabsList) {
+        return Promise.all(tabsList.map(async tab => ({
+            tabId: tab.tabId,
+            isActive: tab.isActive,
+            snapshot: await captureSnapshot(tab) || tab.snapshot,
+            title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
+            url: (await tab.webContentsView.webContents.getURL()) || tab.url,
+        })));
+    }
+
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
 
@@ -33,14 +44,7 @@ function registerIpcHandlers(context) {
         overlayContent.webContents.openDevTools();
 
         // Extracts the serialisable properties from tabsList
-        const serialisableTabsList = await Promise.all(tabsList.map(async tab => ({
-            tabId: tab.tabId,
-            isActive: tab.isActive,
-            snapshot: await captureSnapshot(tab) || tab.snapshot, // Capture snapshot or use an existing one if the snapshot failed. 
-                                                                  // We try to capture the snapshot first to ensure we have the latest state.
-            title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
-            url: (await tab.webContentsView.webContents.getURL()) || tab.url,
-        })));
+        const serialisableTabsList = await getSerialisableTabsList(tabsList);
 
         let activeTab = tabsList.find(tab => tab.isActive);
         let overlayData = {
@@ -275,7 +279,10 @@ function registerIpcHandlers(context) {
     ipcMain.on('bookmark-deleteByUrl', async (event, url) => {
         try {
             await db.deleteBookmarkByUrl(url);
-            bookmarksList = bookmarksList.filter(bookmark => bookmark.url !== url);
+
+            // Updating the bookmarksList by removing the bookmark with the given URL
+            const idx = bookmarksList.findIndex(bookmark => bookmark.url === url);
+            if (idx !== -1) bookmarksList.splice(idx, 1);
 
             // Reloading the bookmarks to show the updated bookmarks list
             let topMostView = viewsList[viewsList.length - 1];
@@ -327,15 +334,46 @@ function registerIpcHandlers(context) {
 
     });
 
-    // ipcMain.on('tabs-deleteAll', async (event) => {
-    //     try {
-    //         await db.deleteAllTabs();
-    //         tabs = [];
-    //     } catch (err) {
-    //         console.error('Error deleting all tabs:', err.message);
-    //     }
-    // });
+    // This tab deletion does not update the database because the database is updated when the app is closed ONLY.
+    ipcMain.on('tabs-deleteAll', async (event) => {
+        try {
+            tabsList.length = 0;
+        } catch (err) {
+            console.error('Error deleting all tabs:', err.message);
+        }
+    });
 
+    // This tab deletion does not update the database because the database is updated when the app is closed ONLY.
+    ipcMain.on('tab-deleteById', async (event, tabId) => {
+        try {
+            // Updating the tabsList by removing the tab with the given tabId
+            const idx = tabsList.findIndex(tab => tab.tabId === tabId);
+            let tabToDelete = tabsList[idx];
+            
+            if (tabToDelete) {
+                if (idx !== -1) tabsList.splice(idx, 1);
+
+                // Removing the tabView from the main window child views
+                await mainWindow.contentView.removeChildView(tabToDelete.webContentsView);
+
+                // If the tab to delete is the active tab, we need to activate the previous tab instead
+                if (tabToDelete.isActive && tabsList.length > 0) {
+                    newActiveTab = tabsList[tabsList.length - 1];
+                    newActiveTab.isActive = true;
+
+                    // Updating the omnibox with the URL of the previous tab
+                    mainWindowContent.webContents.send('omniboxText-update', newActiveTab.webContentsView.webContents.getURL());
+                }
+
+                const topMostView = viewsList[viewsList.length - 1];
+                const isReload = true;
+                const serialisableTabsList = await getSerialisableTabsList(tabsList);
+                topMostView.webContentsView.webContents.send('tabs-loaded', { tabsList: serialisableTabsList }, isReload);
+            }
+        } catch (err) {
+            console.error('Error deleting tab by ID:', err.message);
+        }
+    });
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
         // Always update webpageBounds before clicking

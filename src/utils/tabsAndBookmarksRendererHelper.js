@@ -238,11 +238,18 @@ function showItemDeletedPopup(url, tabId) {
             message: overlayName === ViewNames.BOOKMARKS ? 'Bookmark deleted successfully' : 'Tab deleted successfully',
             icon: overlayName === ViewNames.BOOKMARKS ? createMaterialIcon('m', 'bookmark_remove') : createMaterialIcon('m', 'tab_close'),
             timeout: 1750,
-            onClose: () => {
+            onClose: async () => {
                 if (overlayName === ViewNames.BOOKMARKS) {
                     ipcRenderer.send('bookmark-deleteByUrl', url);
                 } else {
-                    ipcRenderer.send('tab-delete', tabId);
+                    ipcRenderer.send('tab-deleteById', tabId);
+
+                    // If there are no tabs left, a new tab is created with the default URL
+                    if (itemsList.length - 1 === 0) {
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('tab-add');
+                    }
                 }
             }
         });
@@ -257,9 +264,10 @@ function showDeleteAllSuccessPopup() {
             message: overlayName === ViewNames.BOOKMARKS ? 'All bookmarks deleted' : 'All tabs deleted',
             icon: createMaterialIcon('m', 'delete_forever'),
             timeout: 1750,
-            onClose: () => {
+            onClose: async () => {
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                if (overlayName === ViewNames.TABS) await ipcRenderer.invoke('tab-add');
             }
         });
     } catch (error) {
@@ -360,7 +368,7 @@ async function showItemActionPopup(item) {
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = () => {
             popupElements.close();
-            showItemDeletedPopup(item.url, item.id);
+            showItemDeletedPopup(item.url, item.tabId);
         };
 
         const cancelBtn = document.createElement('button');
@@ -453,7 +461,7 @@ function attachEventListeners() {
                     } else if (overlayName === ViewNames.TABS) {
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
-                        let isAdded = await ipcRenderer.invoke('tab-add');
+                        await ipcRenderer.invoke('tab-add');
                     }
                 }
                 else if (buttonId === 'deleteAllBtn') {

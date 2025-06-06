@@ -273,12 +273,16 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         // ------------------------------------------
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
-                let activeTab = tabsList.find(tab => tab.isActive === true);
+                let activeTab = tabsList.find(tab => tab.isActive === true);                
+                // Active tab was chosen because when any tab is created, it is set as active.
+                // The tabs loaded from the database will already have a snapshot.
+                // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
+                captureSnapshot(activeTab);
 
                 // When loading the tabs from the database, each tab will start and stop loading,
                 // but the first tab might not be the active one, and so there might not be an 
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
-                if (activeTab && thisTabView === activeTab.webContentsView) {
+                if (activeTab && thisTabView === activeTab.webContentsView) {                    
                     let url = activeTab.webContentsView.webContents.getURL();
                     mainWindowContent.webContents.send('omniboxText-update', url)
                 }
@@ -336,8 +340,16 @@ function resizeMainWindow() {
 
         updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
             try {
-                tabView.setBounds(webpageBounds);
-
+                // Update bounds for every tab in tabsList
+                tabsList.forEach(tab => {
+                    if (tab.webContentsView && typeof tab.webContentsView.setBounds === 'function') {
+                        tab.webContentsView.setBounds(webpageBounds);
+                    }
+                });
+                // Also update tabView if it exists
+                if (tabView && typeof tabView.setBounds === 'function') {
+                    tabView.setBounds(webpageBounds);
+                }
             } catch (err) {
                 console.error('Error updating webpage bounds:', err.message);
             }

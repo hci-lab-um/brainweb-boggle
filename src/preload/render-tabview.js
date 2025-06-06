@@ -61,6 +61,47 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
     }
 });
 
+ipcRenderer.on('body-animate-fadeInUp', (event) => {
+    stretchBodyFromBottomCenter();
+});
+
+function stretchBodyFromBottomCenter(duration = 500) {
+    const body = document.body;
+    body.style.overflow = 'hidden'; // prevents scrolling during animation
+
+    // Initial transform settings
+    body.style.transformOrigin = 'bottom center';
+    body.style.transform = 'scale(0, 0)';
+    body.style.opacity = '0';
+
+    const fps = 60;
+    const interval = 1000 / fps;
+    const steps = Math.ceil(duration / interval);
+
+    let currentStep = 0;
+
+    const intervalId = setInterval(() => {
+        currentStep++;
+        const progress = currentStep / steps;
+
+        // Ease-out (cubic)
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+        body.style.transform = `scale(${easedProgress}, ${easedProgress})`;
+        body.style.opacity = `${easedProgress}`;
+
+        if (currentStep >= steps) {
+            clearInterval(intervalId);
+            
+            // Cleans up styles
+            body.style.transform = '';
+            body.style.opacity = '';
+            body.style.transformOrigin = '';
+            body.style.overflow = '';
+        }
+    }, interval);
+}
+
 function filterVisibleElements(elements) {
     try {
         return elements.filter(element => {

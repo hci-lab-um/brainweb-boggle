@@ -9,13 +9,14 @@ let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
-let viewsList = [];        // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
-let scenarioIdDict = {};   // This is a dictionary that contains the scenarioId for each view
+let viewsList = [];             // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
+let scenarioIdDict = {};        // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
-let bookmarksList = [];        // This will hold the bookmarks fetched from the database
-let tabsList = [];          // This will hold the list of tabs created in the main window
-let tabsFromDatabase = []; // This will hold the tabs fetched from the database
+let bookmarksList = [];         // This will hold the bookmarks fetched from the database
+let tabsList = [];              // This will hold the list of tabs created in the main window
+let tabsFromDatabase = [];      // This will hold the tabs fetched from the database
+let isMainWindowLoaded = false; // This is a flag to track if main window is fully loaded
 
 app.whenReady().then(async () => {
     try {
@@ -38,7 +39,10 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', async () => {
     try {
-        await deleteAndInsertAllTabs();
+        if (isMainWindowLoaded) {
+            // Prevent deleting and inserting tabs if the main window is not loaded 
+            await deleteAndInsertAllTabs();
+        }
 
         // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
         if (process.platform !== 'darwin') {
@@ -133,6 +137,7 @@ function createMainWindow() {
                                     createTabView,
                                     deleteAndInsertAllTabs
                                 });
+                                isMainWindowLoaded = true; // Set flag to true when fully loaded
                             });
                         } catch (err) {
                             console.error('Error processing webpage bounds:', err.message);

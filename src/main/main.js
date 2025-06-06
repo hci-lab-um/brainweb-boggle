@@ -340,8 +340,16 @@ function resizeMainWindow() {
 
         updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
             try {
-                tabView.setBounds(webpageBounds);
-
+                // Update bounds for every tab in tabsList
+                tabsList.forEach(tab => {
+                    if (tab.webContentsView && typeof tab.webContentsView.setBounds === 'function') {
+                        tab.webContentsView.setBounds(webpageBounds);
+                    }
+                });
+                // Also update tabView if it exists
+                if (tabView && typeof tabView.setBounds === 'function') {
+                    tabView.setBounds(webpageBounds);
+                }
             } catch (err) {
                 console.error('Error updating webpage bounds:', err.message);
             }

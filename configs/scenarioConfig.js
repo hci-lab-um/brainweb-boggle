@@ -74,7 +74,7 @@ const scenarioConfig = {
         frequencies: [6, 14.5, 10.5, 8, 12.5],
         phases: [1, 0.5, 1.5, 1.5, 0],
     },
-    
+
     scenario_27: {
         name: `${ViewNames.BOOKMARKS} or ${ViewNames.TABS}`,
         description: 'Two bookmarks/tabs, delete all, add bookmark/tab, cancel buttons and one active arrow',
@@ -82,7 +82,7 @@ const scenarioConfig = {
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5],
     },
-    
+
     scenario_28: {
         name: `${ViewNames.BOOKMARKS} or ${ViewNames.TABS}`,
         description: 'Three bookmarks/tabs, delete all, add bookmark/tab, cancel buttons and one active arrow',
@@ -90,7 +90,7 @@ const scenarioConfig = {
         frequencies: [6, 14.5, 10.5, 8, 12.5, 9, 7.5],
         phases: [1, 0.5, 1.5, 1.5, 0, 0.5, 1.5],
     },
-    
+
     scenario_29: {
         name: `${ViewNames.BOOKMARKS} or ${ViewNames.TABS}`,
         description: 'Four bookmarks/tabs, delete all, add bookmark/tab, cancel buttons and one active arrow',
@@ -114,7 +114,7 @@ const scenarioConfig = {
         frequencies: [12.5, 7],
         phases: [0, 0],
     },
-    
+
     scenario_32: {
         name: `${ViewNames.BOOKMARKS} or ${ViewNames.TABS}`,
         description: 'bookmark/tab overlay, visit, delete and cancel button',
@@ -144,7 +144,7 @@ const scenarioConfig = {
         name: ViewNames.SELECT,
         description: '3 buttons in sidebar, with CLOSE/BACK button & toggle',
         buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
-        frequencies: [6, 8, 9, 14.5, 10.5], 
+        frequencies: [6, 8, 9, 14.5, 10.5],
         phases: [1, 1.5, 0.5, 0.5, 1.5],
     },
 
@@ -152,7 +152,7 @@ const scenarioConfig = {
         name: ViewNames.SELECT,
         description: '4 buttons in sidebar, with CLOSE/BACK button & toggle',
         buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
-        frequencies: [6, 8, 9, 7.5, 14.5, 10.5], 
+        frequencies: [6, 8, 9, 7.5, 14.5, 10.5],
         phases: [1, 1.5, 0.5, 1.5, 0.5, 1.5],
     },
 
@@ -160,7 +160,7 @@ const scenarioConfig = {
         name: ViewNames.SELECT,
         description: '5 buttons in sidebar, with CLOSE/BACK button & toggle',
         buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'fifthBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
-        frequencies: [6, 8, 9, 7.5, 13, 14.5, 10.5], 
+        frequencies: [6, 8, 9, 7.5, 13, 14.5, 10.5],
         phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 1.5],
     },
 
@@ -168,7 +168,7 @@ const scenarioConfig = {
         name: ViewNames.SELECT,
         description: '6 buttons in sidebar, with CLOSE/BACK button & toggle',
         buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'fifthBtn', 'sixthBtn', 'closeSelectBtn', 'toggleNumbersBtn'],
-        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5, 10.5], 
+        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5, 10.5],
         phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5, 1.5],
     },
 
@@ -176,7 +176,7 @@ const scenarioConfig = {
         name: ViewNames.SELECT,
         description: '4 sections with CLOSE/BACK button', // SECTIONS: A, B, C, D
         buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'closeSelectBtn'],
-        frequencies: [6, 8, 9, 7.5, 14.5], 
+        frequencies: [6, 8, 9, 7.5, 14.5],
         phases: [1, 1.5, 0.5, 1.5, 0.5],
     },
 
@@ -184,39 +184,39 @@ const scenarioConfig = {
         name: ViewNames.SELECT,
         description: '6 sections with CLOSE/BACK button', // SECTIONS: A, B, C, D, E, F
         buttonIds: ['firstBtn', 'secondBtn', 'thirdBtn', 'fourthBtn', 'fifthBtn', 'sixthBtn', 'closeSelectBtn'],
-        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5], 
+        frequencies: [6, 8, 9, 7.5, 13, 11.5, 14.5],
         phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5],
     },
 
-    
+
     // KEYBOARD
     scenario_80: {
         name: ViewNames.KEYBOARD,
         description: 'No text in search field',
-        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'keyboardSendBtn'],
-        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9],
-        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5],
+        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'spaceBtn', 'keyboardSendBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0],
     },
     scenario_81: {
         name: ViewNames.KEYBOARD,
         description: 'Text in search field, word suggestion available, cursor at end position',
-        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'autoCompleteBtn', 'backspaceBtn', 'keyboardSendBtn'],
-        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 14.5],
-        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 0.5],
+        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'spaceBtn', 'keyboardSendBtn', 'clearAllBtn', 'arrowKeysBtn', 'backspaceBtn', 'autoCompleteBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 12.5, 14.5],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0, 0.5],
     },
     scenario_82: {
         name: ViewNames.KEYBOARD,
         description: 'Text in search field, word suggestion unavailable, cursor at start position (autocomplete and backspace buttons disabled)',
-        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'keyboardSendBtn'],
-        frequencies: [7, 6.5, 8.5, 12.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
-        phases: [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0],
+        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'spaceBtn', 'keyboardSendBtn', 'clearAllBtn', 'arrowKeysBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1],
     },
     scenario_83: {
         name: ViewNames.KEYBOARD,
         description: 'Text in search field, word suggestion unavailable, cursor NOT at start position',
-        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'dotComBtn', 'spaceBtn', 'arrowKeysBtn', 'backspaceBtn', 'keyboardSendBtn'],
-        frequencies: [7, 6.5, 8.5, 12.5, 14.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
-        phases: [0, 0.5, 1, 0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0],
+        buttonIds: ['closeKeyboardBtn', 'numbersBtn', 'qwertBtn', 'yuiopBtn', 'asdBtn', 'fghBtn', 'jklBtn', 'upperCaseBtn', 'zxcBtn', 'vbnmBtn', 'enterBtn', 'symbolsBtn', 'spaceBtn', 'keyboardSendBtn', 'clearAllBtn', 'arrowKeysBtn', 'backspaceBtn'],
+        frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 12.5],
+        phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0],
     },
 
     // KEYBOARD KEYS

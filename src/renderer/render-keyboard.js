@@ -150,7 +150,7 @@ async function isSuggestionAvailable() {
     const input = textarea.value;
     const lastWord = input.split(/\s+/).pop().toLowerCase();
     if (!lastWord) return false;
-    return words.some(word => word.toLowerCase().startsWith(lastWord));
+    return words.some(word => word.toLowerCase().startsWith(lastWord) && word.toLowerCase() !== lastWord);
 }
 
 // Get suggestion for the last word
@@ -370,8 +370,15 @@ function attachEventListeners() {
                     case 'enterBtn':
                         updateTextareaAtCursor('\n');
                         break;
-                    case 'dotComBtn':
-                        updateTextareaAtCursor('.com');
+                    case 'clearAllBtn':
+                        textarea.value = '';
+                        updateGhostText();
+
+                        getScenarioNumber().then(scenarioNumber => {
+                            updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                        });
+
+                        textarea.focus();
                         break;
                     case 'keyboardSendBtn':
                         const input = textarea.value.trim();

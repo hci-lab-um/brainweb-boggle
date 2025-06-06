@@ -78,8 +78,15 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             currentElements[idx].labelNumber = startIdx + idx + 1;
 
             webpageBounds = await webpage.getBoundingClientRect();
-            label.style.left = `${(element.x * zoomFactor) + webpageBounds.x}px`;
-            label.style.top = `${(element.y * zoomFactor) + webpageBounds.y}px`;
+            let left = (element.x * zoomFactor) + webpageBounds.x;
+            let top = (element.y * zoomFactor) + webpageBounds.y;
+
+            // Placing label position at the edges of the visible bounds
+            left = Math.max(webpageBounds.x, Math.min(left, webpageBounds.x + webpageBounds.width - label.offsetWidth));
+            top = Math.max(webpageBounds.y, Math.min(top, webpageBounds.y + webpageBounds.height - label.offsetHeight));
+
+            label.style.left = `${left}px`;
+            label.style.top = `${top}px`;
 
             webpage.appendChild(label);
         });
@@ -383,9 +390,31 @@ function attachEventListeners() {
                     }
                 } else {
                     try {
+                        // Calculate intersection of element and visible bounds
+                        webpageBounds = await webpage.getBoundingClientRect();
+                        const elemLeft = elementToClick.x;
+                        const elemTop = elementToClick.y;
+                        const elemRight = elemLeft + elementToClick.width;
+                        const elemBottom = elemTop + elementToClick.height;
+
+                        const visibleLeft = Math.max(elemLeft, 0);
+                        const visibleTop = Math.max(elemTop, 0);
+                        const visibleRight = Math.min(elemRight, webpageBounds.width);
+                        const visibleBottom = Math.min(elemBottom, webpageBounds.height);
+
+                        // If element is not visible at all, fallback to clicking on the centre of the element
+                        let clickX, clickY;
+                        if (visibleLeft < visibleRight && visibleTop < visibleBottom) {
+                            clickX = (visibleLeft + visibleRight) / 2;
+                            clickY = (visibleTop + visibleBottom) / 2;
+                        } else {
+                            clickX = Math.max(0, Math.min(elemLeft + elementToClick.width / 2, webpageBounds.width));
+                            clickY = Math.max(0, Math.min(elemTop + elementToClick.height / 2, webpageBounds.height));
+                        }
+
                         const coordinates = {
-                            x: elementToClick.x + elementToClick.width / 2,
-                            y: elementToClick.y + elementToClick.height / 2
+                            x: clickX,
+                            y: clickY
                         }
 
                         ipcRenderer.send('mouse-click-nutjs', coordinates);

@@ -91,7 +91,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             webpage.appendChild(label);
         });
     } catch (error) {
-        console.error('Error in interactiveElements-displayNumbers handler:', error);
+        console.error('Error in addLabelsAndHighlightToElements:', error);
     }
 }
 

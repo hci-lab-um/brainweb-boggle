@@ -18,6 +18,7 @@ let elementsInTabView = [];         // These are all the interactive elements vi
 let currentElements = [];           // These are a subset of the interactive elements. They pertain to the selected region/group
 let previousElementsStack = [];     // This contains a history of current elements. It is used when pressing the BACK button
 let startIndex;                     // This is used when clicking the 'Toggle Numbers Visibility' button. It is updated in the renderNumericalButtonsInSidebar function
+let isRegionSplitView = false;      // This is used to determine if the current view is split into regions or not
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
@@ -26,25 +27,25 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
         navbar = document.getElementById('navbar');
         webpage = document.getElementById('webpage');
 
+        webpageBounds = webpage.getBoundingClientRect();
         await initSelectOverlay(); // Begin initialisation
     } catch (error) {
         console.error('Error in select-loaded handler:', error);
     }
 });
 
-ipcRenderer.on('select-rerenderElements', async (event) => {
-    try {
-        await new Promise(requestAnimationFrame);
-        webpageBounds = await webpage.getBoundingClientRect();
-        console.log(webpageBounds)
-
-        elementsInTabView = await ipcRenderer.invoke('interactiveElements-get');
-        currentElements = elementsInTabView;
-
-        removeLabelsAndHighlightFromElements(currentElements)
-        addLabelsAndHighlightToElements(currentElements, startIndex)
-    } catch (error) {
-        console.error('Error in select-rerender handler:', error);
+window.addEventListener('resize', async () => {
+    // Only re-initialize if in region split view
+    if (isRegionSplitView) {
+        // Remove any existing grid overlays
+        const gridContainer = document.getElementById('webpage');
+        if (gridContainer) gridContainer.innerHTML = '';
+        await initSelectOverlay();
+    }
+    else {
+        previousElementsStack = [];
+        removeLabelsAndHighlightFromElements(currentElements);
+        await initSelectOverlay(); // Re-initialise the overlay with the current elements
     }
 });
 
@@ -54,8 +55,10 @@ async function initSelectOverlay() {
 
     // Choose layout strategy based on number of elements
     if (elementsInTabView.length <= 36) {
+        isRegionSplitView = false; // Not in region split view
         await renderNumericalButtonsInSidebar(currentElements);
     } else {
+        isRegionSplitView = true; // In region split view
         await splitIntoRegions();
     }
 }
@@ -109,6 +112,8 @@ function removeLabelsAndHighlightFromElements(elements) {
 
 // Divides the webpage into 4 or 6 regions based on density of interactive elements
 async function splitIntoRegions() {
+    webpageBounds = await webpage.getBoundingClientRect();
+
     let splitIntoSix = false;
     let rows = 1, cols = 1;
 
@@ -332,6 +337,8 @@ function attachEventListeners() {
                     currentElements = elementsInRegion;
                     await renderNumericalButtonsInSidebar(elementsInRegion);
                 }
+
+                isRegionSplitView = false;
                 return;
             }
             // Handle grouped element buttons (1–6, 7–12, etc.)
@@ -434,6 +441,7 @@ function attachEventListeners() {
                     if (currentElements.length <= 36) await renderNumericalButtonsInSidebar(currentElements);
                     else {
                         navbar.innerHTML = '' // Removing the 'Toggle Numbers Visibility' button
+                        isRegionSplitView = true;
                         await splitIntoRegions();
                     }
                 } else {

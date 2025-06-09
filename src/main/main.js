@@ -335,10 +335,6 @@ function resizeMainWindow() {
     try {
         if (viewsList.length > 0) {
             viewsList.forEach(view => {
-                if (view.name === ViewNames.SELECT) {
-                    view.webContentsView.webContents.send(`${ViewNames.SELECT}-rerenderElements`)
-                }
-
                 view.webContentsView.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
             });
         }

@@ -188,6 +188,14 @@ const scenarioConfig = {
         phases: [1, 1.5, 0.5, 1.5, 1.5, 0.5, 0.5],
     },
 
+    scenario_48: {
+        name: ViewNames.SELECT,
+        description: 'NO buttons in sidebar, only CLOSE/BACK button',
+        buttonIds: ['closeSelectBtn'],
+        frequencies: [14.5],
+        phases: [0.5],
+    },
+
 
     // KEYBOARD
     scenario_80: {

@@ -113,16 +113,16 @@ function createMainWindow() {
 
         mainWindowContent.webContents.loadURL(path.join(__dirname, '../pages/html/index.html')).then(() => {
             try {
-                // 0 => the initial scenarioId when loading the mainWindow
-                mainWindowContent.webContents.send('mainWindow-loaded', 0);
+                updateWebpageBounds(mainWindowContent.webContents).then(async webpageBounds => {
+                    try {
+                        createInitialTabs().then(() => {
+                            // 0 => the initial scenarioId when loading the mainWindow
+                            mainWindowContent.webContents.send('mainWindow-loaded', 0);
 
-                // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
-                scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
+                            // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
+                            scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
 
-                ipcMain.on('mainWindow-loaded-complete', (event) => {
-                    updateWebpageBounds(mainWindowContent.webContents).then(async webpageBounds => {
-                        try {
-                            createInitialTabs().then(() => {
+                            ipcMain.on('mainWindow-loaded-complete', (event) => {
                                 // Register IPC handlers after the main window is created to be able to send messages to the renderer process
                                 registerIpcHandlers({
                                     mainWindow,
@@ -138,14 +138,14 @@ function createMainWindow() {
                                     deleteAndInsertAllTabs
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
-                            });
-                        } catch (err) {
-                            console.error('Error processing webpage bounds:', err.message);
-                        }
-                    }).catch(err => {
-                        console.error('Error executing JavaScript in main window:', err.message);
-                    });
-                })
+                            })
+                        });
+                    } catch (err) {
+                        console.error('Error processing webpage bounds:', err.message);
+                    }
+                }).catch(err => {
+                    console.error('Error executing JavaScript in main window:', err.message);
+                });
             } catch (err) {
                 console.error('Error sending scenarioId to render-mainwindow:', err.message);
             }
@@ -217,6 +217,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         await mainWindow.contentView.addChildView(tabView);
 
+
         // ---------------------------------
         // Setting the bounds of the tabView
         // ---------------------------------
@@ -231,8 +232,12 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             });
             slideInView(thisTabView, webpageBounds);
         } else {
-            //Set its location as per the webpage bounds
-            thisTabView.setBounds(webpageBounds);
+            if (tabDataFromDB && !tabDataFromDB.isActive) {
+                thisTabView.setBounds({ x: 0, y: 0, width: 0, height: 0 }); // Hide the tabView if it is not active
+            } else {
+                //Set its location as per the webpage bounds
+                thisTabView.setBounds(webpageBounds);
+            }
         }
 
         // ---------------
@@ -278,7 +283,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         // ------------------------------------------
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
-                let activeTab = tabsList.find(tab => tab.isActive === true);                
+                let activeTab = tabsList.find(tab => tab.isActive === true);
                 // Active tab was chosen because when any tab is created, it is set as active.
                 // The tabs loaded from the database will already have a snapshot.
                 // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
@@ -287,7 +292,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 // When loading the tabs from the database, each tab will start and stop loading,
                 // but the first tab might not be the active one, and so there might not be an 
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
-                if (activeTab && thisTabView === activeTab.webContentsView) {                    
+                if (activeTab && thisTabView === activeTab.webContentsView) {
                     let url = activeTab.webContentsView.webContents.getURL();
                     mainWindowContent.webContents.send('omniboxText-update', url)
                 }
@@ -335,10 +340,6 @@ function resizeMainWindow() {
     try {
         if (viewsList.length > 0) {
             viewsList.forEach(view => {
-                if (view.name === ViewNames.SELECT) {
-                    view.webContentsView.webContents.send(`${ViewNames.SELECT}-rerenderElements`)
-                }
-
                 view.webContentsView.setBounds({ x: 0, y: 0, width: mainWindow.getContentBounds().width, height: mainWindow.getContentBounds().height });
             });
         }

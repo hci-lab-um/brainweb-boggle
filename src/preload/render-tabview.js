@@ -6,16 +6,46 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
             'button', 'a:not([tabindex="-1"])', 'textarea', 'input', 'select', 'date', 'video', 'audio',
             '[role="button"]', '[role="link"]',
             '[role="checkbox"]', '[role="textbox"]', '[role="radio"]', '[role="option"]', '[role="tab"]',
-            '[role="menu"]', '[role="switch"]', '[role="slider"]', '[role="combobox"]', 'iframe[src]:not([src="about:blank"])', '[aria-selected]'
+            '[role="menu"]', '[role="switch"]', '[role="slider"]', '[role="combobox"]', '[aria-selected]'
         ];
-        const clickableElements = Array.from(document.querySelectorAll(clickableSelectors.join(', ')));
-        const visibleElements = filterVisibleElements(clickableElements);
+
+        const elementIframeMap = new Map(); // Track each element's iframe (or null if top-level)
+
+        // Top-level elements
+        let allElements = Array.from(document.querySelectorAll(clickableSelectors.join(', ')));
+        for (const el of allElements) {
+            elementIframeMap.set(el, null);
+        }
+
+        // Handle same-origin iframes
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc) {
+                    const iframeElements = Array.from(iframeDoc.querySelectorAll(clickableSelectors.join(', ')));
+                    for (const el of iframeElements) {
+                        allElements.push(el);
+                        elementIframeMap.set(el, iframe);
+                    }
+                }
+            } catch (err) {
+                console.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
+            }
+        }
+
+        // Filter only visible ones
+        const visibleElements = filterVisibleElements(allElements);
+
+        // Add boggle IDs
         visibleElements.forEach((el, idx) => {
             el.setAttribute('data-boggle-id', idx + 1);
         });
+
         console.log('visibleElements: ', visibleElements);
 
-        const serializedElements = visibleElements.map(serializeElement); //creating an element object for each element in the array
+        const serializedElements = visibleElements.map(el => serializeElement(el, elementIframeMap.get(el)));
         ipcRenderer.send('interactiveElements-response', serializedElements);
     } catch (error) {
         console.error('Error in interactiveElements-get handler:', error);
@@ -25,7 +55,37 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
     try {
         elements.forEach((element) => {
-            const elementInDom = document.querySelector(`[data-boggle-id="${element.boggleId}"]`);
+            let elementInDom = null;
+
+            if (element.inIframe && element.iframeBounds) {
+                // Handle iframe elements
+                const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+                // Find iframe matching the coordinates
+                const matchingIframe = iframes.find(iframe => {
+                    const rect = iframe.getBoundingClientRect();
+                    return rect.x === element.iframeBounds.x &&
+                           rect.y === element.iframeBounds.y &&
+                           rect.width === element.iframeBounds.width &&
+                           rect.height === element.iframeBounds.height;
+                });
+
+                if (matchingIframe) {
+                    try {
+                        const iframeDoc = matchingIframe.contentDocument || matchingIframe.contentWindow.document;
+                        if (iframeDoc) {
+                            elementInDom = iframeDoc.querySelector(`[data-boggle-id="${element.boggleId}"]`);
+                        }
+                    } catch (err) {
+                        console.warn('Cannot access iframe due to cross-origin restriction:', err);
+                    }
+                }
+            } else {
+                // Top-level element
+                elementInDom = document.querySelector(`[data-boggle-id="${element.boggleId}"]`);
+            }
+
+            if (!elementInDom) return;
 
             // Store original styles in data attributes if not already stored
             if (!elementInDom.hasAttribute('data-original-bg')) {
@@ -43,23 +103,41 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
     }
 });
 
+
 ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
     try {
+        // Remove highlights from top-level elements
         const elementsInDom = document.querySelectorAll('[data-boggle-id]');
-
         elementsInDom.forEach((elementInDom) => {
-
-            // Restore original styles
             elementInDom.style.backgroundColor = elementInDom.getAttribute('data-original-bg') || '';
             elementInDom.style.boxShadow = elementInDom.getAttribute('data-original-shadow') || '';
-            // Clean up data attributes
             elementInDom.removeAttribute('data-original-bg');
             elementInDom.removeAttribute('data-original-shadow');
         });
+
+        // Remove highlights from same-origin iframes
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!iframeDoc) continue;
+
+                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id]');
+                iframeElements.forEach((elementInDom) => {
+                    elementInDom.style.backgroundColor = elementInDom.getAttribute('data-original-bg') || '';
+                    elementInDom.style.boxShadow = elementInDom.getAttribute('data-original-shadow') || '';
+                    elementInDom.removeAttribute('data-original-bg');
+                    elementInDom.removeAttribute('data-original-shadow');
+                });
+            } catch (err) {
+                console.warn('Skipping iframe during removeHighlight due to cross-origin restriction:', iframe.src);
+            }
+        }
     } catch (error) {
         console.error('Error in interactiveElements-removeHighlight handler:', error);
     }
 });
+
 
 ipcRenderer.on('body-animate-fadeInUp', (event) => {
     stretchBodyFromBottomCenter();
@@ -92,7 +170,7 @@ function stretchBodyFromBottomCenter(duration = 500) {
 
         if (currentStep >= steps) {
             clearInterval(intervalId);
-            
+
             // Cleans up styles
             body.style.transform = '';
             body.style.opacity = '';
@@ -129,8 +207,28 @@ function filterVisibleElements(elements) {
     }
 }
 
-function serializeElement(element) {
+function serializeElement(element, iframe) {
     try {
+        const rect = element.getBoundingClientRect();
+        let x = rect.x;
+        let y = rect.y;
+
+        let iframeBounds = null;
+
+        if (iframe) {
+            const iframeRect = iframe.getBoundingClientRect();
+            iframeBounds = {
+                x: iframeRect.x,
+                y: iframeRect.y,
+                width: iframeRect.width,
+                height: iframeRect.height
+            };
+
+            // Shift x and y relative to the main document
+            x += iframeRect.x;
+            y += iframeRect.y;
+        }
+
         return {
             id: element.id,
             boggleId: element.getAttribute('data-boggle-id'),
@@ -139,12 +237,15 @@ function serializeElement(element) {
             tagName: element.tagName,
             type: element.getAttribute('type'),
             role: element.getAttribute('role'),
-            x: element.getBoundingClientRect().x,
-            y: element.getBoundingClientRect().y,
-            width: element.getBoundingClientRect().width,
-            height: element.getBoundingClientRect().height,
-        }
+            x, // adjusted if in iframe
+            y,
+            width: rect.width,
+            height: rect.height,
+            inIframe: !!iframe,
+            iframeBounds
+        };
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);
+        return null;
     }
 }

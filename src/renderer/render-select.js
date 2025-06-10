@@ -205,6 +205,11 @@ async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = 
     navbar.innerHTML = '';
     startIndex = startIdx;
 
+    // Show message if there are no options
+    if (!elements || elements.length === 0) {
+        sidebar.textContent = 'No options available';
+    }
+
     removeLabelsAndHighlightFromElements(elements);
     addLabelsAndHighlightToElements(elements, startIdx);
 
@@ -264,6 +269,7 @@ async function renderNumericalButtonsInSidebar(elements, startIdx = 0, endIdx = 
         case 6: await updateScenarioId(43, buttons, ViewNames.SELECT); break;
         case 7: await updateScenarioId(44, buttons, ViewNames.SELECT); break;
         case 8: await updateScenarioId(45, buttons, ViewNames.SELECT); break;
+        default: await updateScenarioId(48, buttons, ViewNames.SELECT); break;
     }
 
     // Track current state for possible navigation back

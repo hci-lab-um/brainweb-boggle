@@ -32,6 +32,9 @@ body {
     gap: 6%;
     flex: 6;
     background-color: colors.$bg-white-transparent-7;
+    color: colors.$text-muted;
+    font-size: 2rem;
+    text-align: center;
 }
 
 .grid {

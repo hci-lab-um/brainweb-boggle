@@ -1,18 +1,18 @@
 @use "colors";
 
 .border {
-    box-sizing: border-box;
-    border-radius: 10px;
-    box-shadow:
-        0 0 50px rgb(255 255 255 / 50%),
-        0 0 0 2px rgba(255, 255, 255, 0.8) inset;
+  box-sizing: border-box;
+  border-radius: 10px;
+  box-shadow:
+    0 0 50px rgb(255 255 255 / 50%),
+    0 0 0 2px rgba(255, 255, 255, 0.8) inset;
 
-    &--accent {
-        border: none;
-        box-shadow:
-            0 0 50px rgba(colors.$accent, 0.5),
-            0 0 0 2px colors.$accent inset;
-    }
+  &--accent {
+    border: none;
+    box-shadow:
+      0 0 50px rgba(colors.$accent, 0.5),
+      0 0 0 2px colors.$accent inset;
+  }
 }
 
 @keyframes fadeInUp {
@@ -81,4 +81,14 @@
   animation-fill-mode: both;
   opacity: 1;
   animation-name: fadeOut;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }

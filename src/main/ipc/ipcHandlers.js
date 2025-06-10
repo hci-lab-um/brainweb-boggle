@@ -25,6 +25,7 @@ function registerIpcHandlers(context) {
     // Helper function to serialise tabsList
     async function getSerialisableTabsList(tabsList) {
         return Promise.all(tabsList.map(async tab => {
+            tab.webContentsView.setBounds(webpageBounds);
             const snapshot = await captureSnapshot(tab) || tab.snapshot;
             tab.snapshot = snapshot; // Mutate the snapshot in tabsList
             return {

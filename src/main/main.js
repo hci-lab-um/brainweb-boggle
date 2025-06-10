@@ -215,7 +215,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         tabView = thisTabView
 
-        // await mainWindow.contentView.addChildView(tabView);
+        await mainWindow.contentView.addChildView(tabView);
 
 
         // ---------------------------------

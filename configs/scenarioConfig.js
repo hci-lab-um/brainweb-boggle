@@ -9,6 +9,31 @@ const scenarioConfig = {
         frequencies: [6, 14.5, 10.5, 8],
         phases: [1, 0.5, 1.5, 1.5],
     },
+
+    scenario_1: {
+        name: ViewNames.MAIN_WINDOW,
+        description: 'Active back button, inactive read mode, hidden scrollbars',
+        buttonIds: ['searchBtn', 'readBtn', 'selectBtn', 'moreBtn', 'backBtn'],
+        frequencies: [6, 14.5, 10.5, 8, 12.5],
+        phases: [1, 0.5, 1.5, 1.5, 0],
+    },
+
+    scenario_2: {
+        name: ViewNames.MAIN_WINDOW,
+        description: 'Active forward button, inactive read mode, hidden scrollbars',
+        buttonIds: ['searchBtn', 'readBtn', 'selectBtn', 'moreBtn', 'forwardBtn'],
+        frequencies: [6, 14.5, 10.5, 8, 9.5],
+        phases: [1, 0.5, 1.5, 1.5, 0],
+    },
+
+    scenario_3: {
+        name: ViewNames.MAIN_WINDOW,
+        description: 'Active forward and back buttons, inactive read mode, hidden scrollbars',
+        buttonIds: ['searchBtn', 'readBtn', 'selectBtn', 'moreBtn', 'forwardBtn', 'backBtn'],
+        frequencies: [6, 14.5, 10.5, 8, 9.5, 12.5],
+        phases: [1, 0.5, 1.5, 1.5, 0, 0],
+    },
+
     scenario_4: {
         name: ViewNames.MAIN_WINDOW,
         description: 'Disabled nav buttons, active read mode, hidden scrollbars',

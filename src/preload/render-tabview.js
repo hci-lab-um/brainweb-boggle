@@ -143,6 +143,24 @@ ipcRenderer.on('body-animate-fadeInUp', (event) => {
     stretchBodyFromBottomCenter();
 });
 
+ipcRenderer.on('navigate-back', (event) => {
+    try{
+        console.log('Navigating back');
+        window.history.back();
+    } catch (error) {
+        console.error('Error navigating back:', error);
+    }
+});
+
+ipcRenderer.on('navigate-forward', (event) => {
+    try {
+        console.log('Navigating back');
+        window.history.forward();
+    } catch (error) {
+        console.error('Error navigating forward:', error);
+    }
+});
+
 function stretchBodyFromBottomCenter(duration = 500) {
     const body = document.body;
     body.style.overflow = 'hidden'; // prevents scrolling during animation

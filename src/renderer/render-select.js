@@ -431,6 +431,9 @@ function attachEventListeners() {
                         }
 
                         ipcRenderer.send('mouse-click-nutjs', coordinates);
+
+                        await ipcRenderer.invoke('wait-for-page-load');
+                        ipcRenderer.send('webpage-canNavigate');
                     } catch (error) {
                         console.error('Error calculating the coordinates of the element', error);
                     }

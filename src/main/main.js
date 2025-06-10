@@ -189,7 +189,9 @@ async function createInitialTabs() {
     if (tabsFromDatabase.length === 0) {
         await createTabView(defaultUrl);
     } else {
-        for (const tab of tabsFromDatabase) {
+        // Sorting the tabs so that the active tab is always last so that the loading icon is displayed correctly.
+        const sortedTabs = [...tabsFromDatabase].sort((a, b) => (a.isActive ? 1 : 0) - (b.isActive ? 1 : 0));
+        for (const tab of sortedTabs) {
             await createTabView(tab.url, false, tab);
         }
 
@@ -216,7 +218,6 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         tabView = thisTabView
 
         await mainWindow.contentView.addChildView(tabView);
-
 
         // ---------------------------------
         // Setting the bounds of the tabView

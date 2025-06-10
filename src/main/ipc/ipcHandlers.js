@@ -8,18 +8,18 @@ const defaultUrl = 'https://www.google.com';
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
-    let { 
-        mainWindow, 
-        mainWindowContent, 
-        webpageBounds, 
-        viewsList, 
+    let {
+        mainWindow,
+        mainWindowContent,
+        webpageBounds,
+        viewsList,
         scenarioIdDict,
-        bookmarksList, 
-        tabsList, 
-        db, 
-        updateWebpageBounds, 
-        createTabView, 
-        deleteAndInsertAllTabs 
+        bookmarksList,
+        tabsList,
+        db,
+        updateWebpageBounds,
+        createTabView,
+        deleteAndInsertAllTabs
     } = context;
 
     // Helper function to serialise tabsList
@@ -176,7 +176,7 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('url-load', (event, url) => {
-        try {            
+        try {
             let activeTab = tabsList.find(tab => tab.isActive);
             if (activeTab) {
                 activeTab.webContentsView.webContents.loadURL(url);
@@ -222,6 +222,44 @@ function registerIpcHandlers(context) {
             activeTab.webContentsView.webContents.setZoomLevel(0);
         } catch (err) {
             console.error('Error resetting webpage zoom:', err.message);
+        }
+    });
+
+    ipcMain.on('webpage-canNavigate', (event) => {
+        try {
+            // Check if the active tab can go back
+            var tab = tabsList.find(tab => tab.isActive === true);
+            var canGoBack = tab.webContentsView.webContents.navigationHistory.canGoBack();
+            var canGoForward = tab.webContentsView.webContents.navigationHistory.canGoForward();
+            if (canGoBack && canGoForward) {
+                mainWindowContent.webContents.send('scenarioId-update', 3);
+            } else if (canGoBack) {
+                mainWindowContent.webContents.send('scenarioId-update', 1);
+            } else if (canGoForward) {
+                mainWindowContent.webContents.send('scenarioId-update', 2);
+            } else {
+                mainWindowContent.webContents.send('scenarioId-update', 0);
+            }
+        } catch (err) {
+            console.error('Error checking if tab can navigate:', err.message);
+        }
+    });
+
+    ipcMain.on('webpage-goBack', (event) => {
+        try {
+            var tab = tabsList.find(tab => tab.isActive === true);
+            tab.webContentsView.webContents.send('navigate-back');
+        } catch (err) {
+            console.error('Error in webpage-goBack handler:', err.message);
+        }
+    });
+
+    ipcMain.on('webpage-goForward', (event) => {
+        try {
+            var tab = tabsList.find(tab => tab.isActive === true);
+            tab.webContentsView.webContents.send('navigate-forward');
+        } catch (err) {
+            console.error('Error in webpage-goForward handler:', err.message);
         }
     });
 
@@ -325,7 +363,7 @@ function registerIpcHandlers(context) {
         try {
             let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
             if (tabToVisit) {
-                
+
                 // Only if the tab is an error page, we reload the original URL to refresh the content.
                 // Otherwise, we just update the omnibox with the current URL of the tab.
                 if (tabToVisit.isErrorPage) {
@@ -368,7 +406,7 @@ function registerIpcHandlers(context) {
             // Updating the tabsList by removing the tab with the given tabId
             const idx = tabsList.findIndex(tab => tab.tabId === tabId);
             let tabToDelete = tabsList[idx];
-            
+
             if (tabToDelete) {
                 if (idx !== -1) tabsList.splice(idx, 1);
 
@@ -391,6 +429,46 @@ function registerIpcHandlers(context) {
             }
         } catch (err) {
             console.error('Error deleting tab by ID:', err.message);
+        }
+    });
+
+    ipcMain.handle('wait-for-page-load', async () => {
+        try {
+            const tab = tabsList.find(tab => tab.isActive === true);
+            if (!tab) return;
+            const wc = tab.webContentsView.webContents;
+
+            return new Promise(resolve => {
+                // Listen for the next navigation
+                let didStart = false;
+
+                const cleanup = () => {
+                    wc.removeListener('did-start-loading', onStart);
+                    wc.removeListener('did-finish-load', onFinish);
+                };
+
+                const onStart = () => {
+                    didStart = true;
+                };
+
+                const onFinish = () => {
+                    if (didStart) {
+                        cleanup();
+                        resolve();
+                    }
+                };
+
+                wc.on('did-start-loading', onStart);
+                wc.on('did-finish-load', onFinish);
+
+                // Fallback: if no navigation starts within 1s, resolve anyway
+                setTimeout(() => {
+                    cleanup();
+                    resolve();
+                }, 1000);
+            });
+        } catch (err) {
+            console.error('Error waiting for page load:', err.message);
         }
     });
 
@@ -459,7 +537,7 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('app-exit', async(event) => {
+    ipcMain.on('app-exit', async (event) => {
         try {
             await deleteAndInsertAllTabs()
             app.quit();

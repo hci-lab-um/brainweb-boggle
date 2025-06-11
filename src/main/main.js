@@ -292,8 +292,8 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             }
         });
 
-        thisTabView.webContents.on('did-finish-load', () => {
-            // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
+        thisTabView.webContents.on('did-stop-loading', () => {
+            // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.=
             updateNavigationButtons(thisTabView);
         });
 
@@ -355,13 +355,13 @@ function updateNavigationButtons(thisTabView) {
         const lastScenarioId = scenarioIdDict[overlayName] && scenarioIdDict[overlayName].length > 0
             ? scenarioIdDict[overlayName][scenarioIdDict[overlayName].length - 1] : undefined;
 
-        if (canGoBack && canGoForward && lastScenarioId !== '3') {
+        if (canGoBack && canGoForward && lastScenarioId !== 3) {
             mainWindowContent.webContents.send('scenarioId-update', 3);
-        } else if (canGoBack && lastScenarioId !== '1') {
+        } else if (canGoBack && lastScenarioId !== 1) {
             mainWindowContent.webContents.send('scenarioId-update', 1);
-        } else if (canGoForward && lastScenarioId !== '2') {
+        } else if (canGoForward && lastScenarioId !== 2) {
             mainWindowContent.webContents.send('scenarioId-update', 2);
-        } else if (lastScenarioId !== '0') {
+        } else if (!canGoBack && !canGoForward && lastScenarioId !== 0) {
             mainWindowContent.webContents.send('scenarioId-update', 0);
         }
     }

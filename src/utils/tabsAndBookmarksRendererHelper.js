@@ -256,7 +256,7 @@ function showItemDeletedPopup(url, tabId) {
                     // If there are no tabs left, a new tab is created with the default URL
                     if (itemsList.length - 1 === 0) {
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        ipcRenderer.send('overlay-close', ViewNames.MORE);
                         await ipcRenderer.invoke('tab-add');
                     }
                 }
@@ -275,8 +275,15 @@ function showDeleteAllSuccessPopup() {
             timeout: 1750,
             onClose: async () => {
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
-                if (overlayName === ViewNames.TABS) await ipcRenderer.invoke('tab-add');
+
+                if (overlayName === ViewNames.BOOKMARKS) {
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                }
+
+                if (overlayName === ViewNames.TABS) {
+                    ipcRenderer.send('overlay-close', ViewNames.MORE);
+                    await ipcRenderer.invoke('tab-add');
+                }
             }
         });
     } catch (error) {
@@ -377,7 +384,7 @@ async function showItemActionPopup(item) {
                     ipcRenderer.send('tab-visit', item.tabId);
                 }
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                ipcRenderer.send('overlay-close', ViewNames.MORE);
             }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
@@ -485,7 +492,7 @@ function attachEventListeners() {
                         showItemAddedPopup();
                     } else if (overlayName === ViewNames.TABS) {
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        ipcRenderer.send('overlay-close', ViewNames.MORE);
                         await ipcRenderer.invoke('tab-add');
                     }
                 }

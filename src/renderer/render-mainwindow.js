@@ -102,14 +102,10 @@ function attachEventListeners() {
                         }
                         break;
                     case "backBtn":
-                        ipcRenderer.send('webpage-goBack');
-                        await ipcRenderer.invoke('wait-for-page-load');
-                        ipcRenderer.send('webpage-canNavigate');
+                        ipcRenderer.send('webpage-goBack');                        
                         break;
                     case "forwardBtn":
                         ipcRenderer.send('webpage-goForward');
-                        await ipcRenderer.invoke('wait-for-page-load');
-                        ipcRenderer.send('webpage-canNavigate');
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);

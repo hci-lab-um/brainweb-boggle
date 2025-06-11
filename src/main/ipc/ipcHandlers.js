@@ -19,7 +19,8 @@ function registerIpcHandlers(context) {
         db,
         updateWebpageBounds,
         createTabView,
-        deleteAndInsertAllTabs
+        deleteAndInsertAllTabs,
+        updateNavigationButtons
     } = context;
 
     // Helper function to serialise tabsList
@@ -123,15 +124,20 @@ function registerIpcHandlers(context) {
      * of the time). Therefore, the exact scenario that is needed is calculated through a function 'getScenarioNumber()' that
      * is found in the render-keybaord.js file.
      */
-    ipcMain.on('overlay-close', (event) => {
+    ipcMain.on('overlay-close', (event, overlayName) => {
         try {
             mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
 
-            // Deleting the dictionary entry for the closed overlay (i.e. the keyboard keys overlay)
-            delete scenarioIdDict[ViewNames.KEYBOARD_KEYS];
+            // Deleting the dictionary entry for the closed overlay
+            delete scenarioIdDict[overlayName];
 
             let topMostView = viewsList[viewsList.length - 1];
             topMostView.webContentsView.webContents.focus();
+
+            // let activeTab = tabsList.find(tab => tab.isActive === true);
+            // if (topMostView.name === ViewNames.MAIN_WINDOW) {
+            //     updateNavigationButtons(activeTab.webContentsView);
+            // }
         } catch (err) {
             console.error('Error closing overlay:', err.message);
         }
@@ -222,26 +228,6 @@ function registerIpcHandlers(context) {
             activeTab.webContentsView.webContents.setZoomLevel(0);
         } catch (err) {
             console.error('Error resetting webpage zoom:', err.message);
-        }
-    });
-
-    ipcMain.on('webpage-canNavigate', (event) => {
-        try {
-            // Check if the active tab can go back
-            var tab = tabsList.find(tab => tab.isActive === true);
-            var canGoBack = tab.webContentsView.webContents.navigationHistory.canGoBack();
-            var canGoForward = tab.webContentsView.webContents.navigationHistory.canGoForward();
-            if (canGoBack && canGoForward) {
-                mainWindowContent.webContents.send('scenarioId-update', 3);
-            } else if (canGoBack) {
-                mainWindowContent.webContents.send('scenarioId-update', 1);
-            } else if (canGoForward) {
-                mainWindowContent.webContents.send('scenarioId-update', 2);
-            } else {
-                mainWindowContent.webContents.send('scenarioId-update', 0);
-            }
-        } catch (err) {
-            console.error('Error checking if tab can navigate:', err.message);
         }
     });
 
@@ -382,6 +368,8 @@ function registerIpcHandlers(context) {
                 // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
                 mainWindow.contentView.removeChildView(tabToVisit.webContentsView);
                 mainWindow.contentView.addChildView(tabToVisit.webContentsView);
+
+                updateNavigationButtons(tabToVisit.webContentsView);
             } else {
                 console.error(`Tab with ID ${tabId} not found.`);
             }
@@ -429,46 +417,6 @@ function registerIpcHandlers(context) {
             }
         } catch (err) {
             console.error('Error deleting tab by ID:', err.message);
-        }
-    });
-
-    ipcMain.handle('wait-for-page-load', async () => {
-        try {
-            const tab = tabsList.find(tab => tab.isActive === true);
-            if (!tab) return;
-            const wc = tab.webContentsView.webContents;
-
-            return new Promise(resolve => {
-                // Listen for the next navigation
-                let didStart = false;
-
-                const cleanup = () => {
-                    wc.removeListener('did-start-loading', onStart);
-                    wc.removeListener('did-finish-load', onFinish);
-                };
-
-                const onStart = () => {
-                    didStart = true;
-                };
-
-                const onFinish = () => {
-                    if (didStart) {
-                        cleanup();
-                        resolve();
-                    }
-                };
-
-                wc.on('did-start-loading', onStart);
-                wc.on('did-finish-load', onFinish);
-
-                // Fallback: if no navigation starts within 1s, resolve anyway
-                setTimeout(() => {
-                    cleanup();
-                    resolve();
-                }, 1000);
-            });
-        } catch (err) {
-            console.error('Error waiting for page load:', err.message);
         }
     });
 

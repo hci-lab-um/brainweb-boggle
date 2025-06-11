@@ -170,12 +170,12 @@ function attachEventListeners() {
             await stopManager();
 
             if (isArrowKey) {
-                ipcRenderer.send('overlay-close');
+                ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-moveCursor', buttonText);
             } else if (buttonId === 'cancelBtn') {
                 ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
             } else if (!['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
-                ipcRenderer.send('overlay-close');
+                ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-populate', buttonText);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);

@@ -135,7 +135,8 @@ function createMainWindow() {
                                     db,
                                     updateWebpageBounds,
                                     createTabView,
-                                    deleteAndInsertAllTabs
+                                    deleteAndInsertAllTabs,
+                                    updateNavigationButtons
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
                             })
@@ -241,17 +242,6 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             }
         }
 
-        // ---------------
-        // Loading the URL
-        // ---------------
-        if (!tabDataFromDB) {
-            await thisTabView.webContents.loadURL(url);
-        } else if (tabDataFromDB.isErrorPage) {
-            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
-        } else {
-            await thisTabView.webContents.loadURL(tabDataFromDB.url);
-        }
-
         // -----------------------
         // Populating the tabsList
         // -----------------------
@@ -281,7 +271,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         // ------------------------------------------
         // Setting the event handlers for the tabView
-        // ------------------------------------------
+        // ------------------------------------------        
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
@@ -300,6 +290,11 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             } catch (err) {
                 console.error('Error during tabview stop loading:', err.message);
             }
+        });
+
+        thisTabView.webContents.on('did-finish-load', () => {
+            // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
+            updateNavigationButtons(thisTabView);
         });
 
         // This is the handler for when a new tab is opened from the tabview such as when the user 
@@ -330,10 +325,45 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             }
         });
 
+        // ---------------
+        // Loading the URL
+        // ---------------
+        if (!tabDataFromDB) {
+            await thisTabView.webContents.loadURL(url);
+        } else if (tabDataFromDB.isErrorPage) {
+            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
+        } else {
+            await thisTabView.webContents.loadURL(tabDataFromDB.url);
+        }
+
         thisTabView.webContents.openDevTools();
 
     } catch (err) {
         console.error('Error creating tab view:', err.message);
+    }
+}
+
+function updateNavigationButtons(thisTabView) {
+    let activeTab = tabsList.find(tab => tab.isActive === true);
+
+    if (activeTab && thisTabView === activeTab.webContentsView) {
+        var canGoBack = activeTab.webContentsView.webContents.navigationHistory.canGoBack();
+        var canGoForward = activeTab.webContentsView.webContents.navigationHistory.canGoForward();
+
+        // Get the last scenarioId for the current overlayName from scenarioIdDict
+        const overlayName = ViewNames.MAIN_WINDOW;
+        const lastScenarioId = scenarioIdDict[overlayName] && scenarioIdDict[overlayName].length > 0
+            ? scenarioIdDict[overlayName][scenarioIdDict[overlayName].length - 1] : undefined;
+
+        if (canGoBack && canGoForward && lastScenarioId !== '3') {
+            mainWindowContent.webContents.send('scenarioId-update', 3);
+        } else if (canGoBack && lastScenarioId !== '1') {
+            mainWindowContent.webContents.send('scenarioId-update', 1);
+        } else if (canGoForward && lastScenarioId !== '2') {
+            mainWindowContent.webContents.send('scenarioId-update', 2);
+        } else if (lastScenarioId !== '0') {
+            mainWindowContent.webContents.send('scenarioId-update', 0);
+        }
     }
 }
 

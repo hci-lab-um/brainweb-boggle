@@ -74,3 +74,10 @@ body {
     width: 50%;
     height: 50%;
 }
+
+#loaderContainer {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

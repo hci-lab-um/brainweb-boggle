@@ -293,8 +293,9 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         });
 
         thisTabView.webContents.on('did-stop-loading', () => {
-            // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.=
-            updateNavigationButtons(thisTabView, true);
+            // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
+            let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
+            updateNavigationButtons(thisTabView, stopManager);
         });
 
         // This is the handler for when a new tab is opened from the tabview such as when the user 

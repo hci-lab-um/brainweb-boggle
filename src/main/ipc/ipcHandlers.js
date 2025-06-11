@@ -133,11 +133,6 @@ function registerIpcHandlers(context) {
 
             let topMostView = viewsList[viewsList.length - 1];
             topMostView.webContentsView.webContents.focus();
-
-            // let activeTab = tabsList.find(tab => tab.isActive === true);
-            // if (topMostView.name === ViewNames.MAIN_WINDOW) {
-            //     updateNavigationButtons(activeTab.webContentsView);
-            // }
         } catch (err) {
             console.error('Error closing overlay:', err.message);
         }

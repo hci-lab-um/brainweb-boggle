@@ -5,12 +5,12 @@ const { ipcRenderer } = require("electron");
 
 let manager;
 
-async function updateScenarioId(scenarioId, buttons, viewName) {
+async function updateScenarioId(scenarioId, buttons, viewName, stop = true) {
     try {
         buttons = document.querySelectorAll('button');
         ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);
 
-        // await stopManager();
+        if (stop) await stopManager();
         let index = 0;
         const frequencies = scenarioConfig[`scenario_${scenarioId}`].frequencies;
         const phases = scenarioConfig[`scenario_${scenarioId}`].phases;

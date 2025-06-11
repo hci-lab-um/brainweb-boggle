@@ -16,9 +16,9 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     }
 });
 
-ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     try {
-        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
+        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
     } catch (error) {
         console.error('Error in scenarioId-update handler:', error);
     }

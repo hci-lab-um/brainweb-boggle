@@ -294,7 +294,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         thisTabView.webContents.on('did-stop-loading', () => {
             // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.=
-            updateNavigationButtons(thisTabView);
+            updateNavigationButtons(thisTabView, true);
         });
 
         // This is the handler for when a new tab is opened from the tabview such as when the user 
@@ -343,7 +343,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
     }
 }
 
-function updateNavigationButtons(thisTabView) {
+function updateNavigationButtons(thisTabView, stopManager) {
     let activeTab = tabsList.find(tab => tab.isActive === true);
 
     if (activeTab && thisTabView === activeTab.webContentsView) {
@@ -356,13 +356,13 @@ function updateNavigationButtons(thisTabView) {
             ? scenarioIdDict[overlayName][scenarioIdDict[overlayName].length - 1] : undefined;
 
         if (canGoBack && canGoForward && lastScenarioId !== 3) {
-            mainWindowContent.webContents.send('scenarioId-update', 3);
+            mainWindowContent.webContents.send('scenarioId-update', 3, stopManager);
         } else if (canGoBack && lastScenarioId !== 1) {
-            mainWindowContent.webContents.send('scenarioId-update', 1);
+            mainWindowContent.webContents.send('scenarioId-update', 1, stopManager);
         } else if (canGoForward && lastScenarioId !== 2) {
-            mainWindowContent.webContents.send('scenarioId-update', 2);
+            mainWindowContent.webContents.send('scenarioId-update', 2, stopManager);
         } else if (!canGoBack && !canGoForward && lastScenarioId !== 0) {
-            mainWindowContent.webContents.send('scenarioId-update', 0);
+            mainWindowContent.webContents.send('scenarioId-update', 0, stopManager);
         }
     }
 }

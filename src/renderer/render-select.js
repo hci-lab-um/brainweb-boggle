@@ -362,6 +362,7 @@ function attachEventListeners() {
             // Handle clicking of element
             else if (button.classList.contains('isElementButton')) {
                 removeLabelsAndHighlightFromElements(currentElements);
+                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
 
                 const elementToClick = currentElements.find(element => element.labelNumber === Number(button.innerHTML));
                 const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
@@ -395,8 +396,6 @@ function attachEventListeners() {
 
                 if (loadKeyboard) {
                     try {
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
-
                         // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, elementToClick);
                     } catch (error) {
@@ -404,8 +403,6 @@ function attachEventListeners() {
                     }
                 } else {
                     try {
-                        ipcRenderer.send('overlay-close', ViewNames.SELECT);
-
                         // Calculate intersection of element and visible bounds
                         webpageBounds = await webpage.getBoundingClientRect();
                         const elemLeft = elementToClick.x;

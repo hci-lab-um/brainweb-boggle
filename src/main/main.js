@@ -287,17 +287,15 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                     let url = activeTab.webContentsView.webContents.getURL();
                     mainWindowContent.webContents.send('omniboxText-update', url)
                 }
+
+                // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
+                let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
+                updateNavigationButtons(thisTabView, stopManager);
             } catch (err) {
                 console.error('Error during tabview stop loading:', err.message);
             }
         });
-
-        thisTabView.webContents.on('did-stop-loading', () => {
-            // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
-            let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
-            updateNavigationButtons(thisTabView, stopManager);
-        });
-
+        
         // This is the handler for when a new tab is opened from the tabview such as when the user 
         // clicks on a link that opens in a new tab.
         thisTabView.webContents.setWindowOpenHandler(({ url }) => {

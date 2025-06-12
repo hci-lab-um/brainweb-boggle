@@ -76,7 +76,7 @@ function attachEventListeners() {
                                 await updateScenarioId(4, buttons, ViewNames.MAIN_WINDOW);
                             } else {
                                 textElement.textContent = "Read";
-                                await updateScenarioId(0, buttons, ViewNames.MAIN_WINDOW);
+                                ipcRenderer.send('readMode-stop');
                             }
                         } catch (error) {
                             console.error('Error toggling read mode:', error);

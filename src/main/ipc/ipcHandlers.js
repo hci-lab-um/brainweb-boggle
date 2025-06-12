@@ -150,6 +150,17 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('readMode-stop', (event) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive === true);
+            if (activeTab) {
+                updateNavigationButtons(activeTab.webContentsView);
+            }
+        } catch (err) {
+            console.error('Error stopping read mode:', err.message);
+        }
+    });
+
     ipcMain.on('textarea-populate', (event, text) => {
         try {
             // Clearing the keyboard entry from the scenarioIdDict

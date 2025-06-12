@@ -285,17 +285,22 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
                     let url = activeTab.webContentsView.webContents.getURL();
-                    mainWindowContent.webContents.send('omniboxText-update', url)
-                }
 
-                // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
-                let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
-                updateNavigationButtons(thisTabView, stopManager);
+                    // Only run if the URL has changed since last time
+                    if (activeTab.lastNavigationUrl !== url) {
+                        activeTab.lastNavigationUrl = url; // Update the with last loaded URL
+                        mainWindowContent.webContents.send('omniboxText-update', url);
+
+                        // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
+                        let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
+                        updateNavigationButtons(thisTabView, stopManager);
+                    }
+                }
             } catch (err) {
                 console.error('Error during tabview stop loading:', err.message);
             }
         });
-        
+
         // This is the handler for when a new tab is opened from the tabview such as when the user 
         // clicks on a link that opens in a new tab.
         thisTabView.webContents.setWindowOpenHandler(({ url }) => {
@@ -349,18 +354,13 @@ function updateNavigationButtons(thisTabView, stopManager) {
         var canGoBack = activeTab.webContentsView.webContents.navigationHistory.canGoBack();
         var canGoForward = activeTab.webContentsView.webContents.navigationHistory.canGoForward();
 
-        // Get the last scenarioId for the current overlayName from scenarioIdDict
-        const overlayName = ViewNames.MAIN_WINDOW;
-        const lastScenarioId = scenarioIdDict[overlayName] && scenarioIdDict[overlayName].length > 0
-            ? scenarioIdDict[overlayName][scenarioIdDict[overlayName].length - 1] : undefined;
-
-        if (canGoBack && canGoForward && lastScenarioId !== 3) {
+        if (canGoBack && canGoForward) {
             mainWindowContent.webContents.send('scenarioId-update', 3, stopManager);
-        } else if (canGoBack && lastScenarioId !== 1) {
+        } else if (canGoBack) {
             mainWindowContent.webContents.send('scenarioId-update', 1, stopManager);
-        } else if (canGoForward && lastScenarioId !== 2) {
+        } else if (canGoForward) {
             mainWindowContent.webContents.send('scenarioId-update', 2, stopManager);
-        } else if (!canGoBack && !canGoForward && lastScenarioId !== 0) {
+        } else if (!canGoBack && !canGoForward) {
             mainWindowContent.webContents.send('scenarioId-update', 0, stopManager);
         }
     }

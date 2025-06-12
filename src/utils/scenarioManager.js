@@ -5,7 +5,7 @@ const { ipcRenderer } = require("electron");
 
 let manager;
 
-async function updateScenarioId(scenarioId, buttons, viewName, stop = true) {
+async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
     try {
         buttons = document.querySelectorAll('button');
         ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);

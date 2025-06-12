@@ -403,6 +403,7 @@ function registerIpcHandlers(context) {
 
                     // Updating the omnibox with the URL of the previous tab
                     mainWindowContent.webContents.send('omniboxText-update', newActiveTab.webContentsView.webContents.getURL());
+                    updateNavigationButtons(newActiveTab.webContentsView);
                 }
 
                 const topMostView = viewsList[viewsList.length - 1];

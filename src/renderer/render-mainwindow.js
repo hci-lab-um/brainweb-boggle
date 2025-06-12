@@ -8,7 +8,8 @@ let buttons = [];
 ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
-        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
+        // This line below was commented out because the scenario will be updated when the tab stops loading
+        // await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);  
         attachEventListeners();
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {

@@ -8,7 +8,8 @@ let buttons = [];
 ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
         buttons = document.querySelectorAll('button');
-        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
+        // This line below was commented out because the scenario will be updated when the tab stops loading
+        // await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);  
         attachEventListeners();
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
@@ -16,9 +17,9 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     }
 });
 
-ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     try {
-        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);
+        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
     } catch (error) {
         console.error('Error in scenarioId-update handler:', error);
     }
@@ -75,7 +76,7 @@ function attachEventListeners() {
                                 await updateScenarioId(4, buttons, ViewNames.MAIN_WINDOW);
                             } else {
                                 textElement.textContent = "Read";
-                                await updateScenarioId(0, buttons, ViewNames.MAIN_WINDOW);
+                                ipcRenderer.send('readMode-stop');
                             }
                         } catch (error) {
                             console.error('Error toggling read mode:', error);
@@ -100,6 +101,12 @@ function attachEventListeners() {
                         } catch (error) {
                             console.error('Error creating keyboard overlay:', error);
                         }
+                        break;
+                    case "backBtn":
+                        ipcRenderer.send('webpage-goBack');                        
+                        break;
+                    case "forwardBtn":
+                        ipcRenderer.send('webpage-goForward');
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);

@@ -135,7 +135,8 @@ function createMainWindow() {
                                     db,
                                     updateWebpageBounds,
                                     createTabView,
-                                    deleteAndInsertAllTabs
+                                    deleteAndInsertAllTabs,
+                                    updateNavigationButtons
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
                             })
@@ -189,7 +190,9 @@ async function createInitialTabs() {
     if (tabsFromDatabase.length === 0) {
         await createTabView(defaultUrl);
     } else {
-        for (const tab of tabsFromDatabase) {
+        // Sorting the tabs so that the active tab is always last so that the loading icon is displayed correctly.
+        const sortedTabs = [...tabsFromDatabase].sort((a, b) => (a.isActive ? 1 : 0) - (b.isActive ? 1 : 0));
+        for (const tab of sortedTabs) {
             await createTabView(tab.url, false, tab);
         }
 
@@ -217,7 +220,6 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         await mainWindow.contentView.addChildView(tabView);
 
-
         // ---------------------------------
         // Setting the bounds of the tabView
         // ---------------------------------
@@ -238,17 +240,6 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 //Set its location as per the webpage bounds
                 thisTabView.setBounds(webpageBounds);
             }
-        }
-
-        // ---------------
-        // Loading the URL
-        // ---------------
-        if (!tabDataFromDB) {
-            await thisTabView.webContents.loadURL(url);
-        } else if (tabDataFromDB.isErrorPage) {
-            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
-        } else {
-            await thisTabView.webContents.loadURL(tabDataFromDB.url);
         }
 
         // -----------------------
@@ -280,7 +271,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         // ------------------------------------------
         // Setting the event handlers for the tabView
-        // ------------------------------------------
+        // ------------------------------------------        
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
@@ -294,7 +285,16 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
                     let url = activeTab.webContentsView.webContents.getURL();
-                    mainWindowContent.webContents.send('omniboxText-update', url)
+
+                    // Only run if the URL has changed since last time
+                    if (activeTab.lastNavigationUrl !== url) {
+                        activeTab.lastNavigationUrl = url; // Update the with last loaded URL
+                        mainWindowContent.webContents.send('omniboxText-update', url);
+
+                        // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
+                        let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
+                        updateNavigationButtons(thisTabView, stopManager);
+                    }
                 }
             } catch (err) {
                 console.error('Error during tabview stop loading:', err.message);
@@ -329,10 +329,40 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             }
         });
 
+        // ---------------
+        // Loading the URL
+        // ---------------
+        if (!tabDataFromDB) {
+            await thisTabView.webContents.loadURL(url);
+        } else if (tabDataFromDB.isErrorPage) {
+            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
+        } else {
+            await thisTabView.webContents.loadURL(tabDataFromDB.url);
+        }
+
         thisTabView.webContents.openDevTools();
 
     } catch (err) {
         console.error('Error creating tab view:', err.message);
+    }
+}
+
+function updateNavigationButtons(thisTabView, stopManager) {
+    let activeTab = tabsList.find(tab => tab.isActive === true);
+
+    if (activeTab && thisTabView === activeTab.webContentsView) {
+        var canGoBack = activeTab.webContentsView.webContents.navigationHistory.canGoBack();
+        var canGoForward = activeTab.webContentsView.webContents.navigationHistory.canGoForward();
+
+        if (canGoBack && canGoForward) {
+            mainWindowContent.webContents.send('scenarioId-update', 3, stopManager);
+        } else if (canGoBack) {
+            mainWindowContent.webContents.send('scenarioId-update', 1, stopManager);
+        } else if (canGoForward) {
+            mainWindowContent.webContents.send('scenarioId-update', 2, stopManager);
+        } else if (!canGoBack && !canGoForward) {
+            mainWindowContent.webContents.send('scenarioId-update', 0, stopManager);
+        }
     }
 }
 

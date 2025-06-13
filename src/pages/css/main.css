@@ -170,9 +170,6 @@
   flex: 88%;
   width: 100%;
   background: rgba(255, 255, 255, 0.11);
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 #sidebar {
@@ -377,6 +374,13 @@ body {
 #brainLoader {
   width: 50%;
   height: 50%;
+}
+
+#loaderContainer {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /*# sourceMappingURL=main.css.map */

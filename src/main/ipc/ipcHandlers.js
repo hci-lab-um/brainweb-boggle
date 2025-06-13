@@ -8,18 +8,19 @@ const defaultUrl = 'https://www.google.com';
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
-    let { 
-        mainWindow, 
-        mainWindowContent, 
-        webpageBounds, 
-        viewsList, 
+    let {
+        mainWindow,
+        mainWindowContent,
+        webpageBounds,
+        viewsList,
         scenarioIdDict,
-        bookmarksList, 
-        tabsList, 
-        db, 
-        updateWebpageBounds, 
-        createTabView, 
-        deleteAndInsertAllTabs 
+        bookmarksList,
+        tabsList,
+        db,
+        updateWebpageBounds,
+        createTabView,
+        deleteAndInsertAllTabs,
+        updateNavigationButtons
     } = context;
 
     // Helper function to serialise tabsList
@@ -123,12 +124,12 @@ function registerIpcHandlers(context) {
      * of the time). Therefore, the exact scenario that is needed is calculated through a function 'getScenarioNumber()' that
      * is found in the render-keybaord.js file.
      */
-    ipcMain.on('overlay-close', (event) => {
+    ipcMain.on('overlay-close', (event, overlayName) => {
         try {
             mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
 
-            // Deleting the dictionary entry for the closed overlay (i.e. the keyboard keys overlay)
-            delete scenarioIdDict[ViewNames.KEYBOARD_KEYS];
+            // Deleting the dictionary entry for the closed overlay
+            delete scenarioIdDict[overlayName];
 
             let topMostView = viewsList[viewsList.length - 1];
             topMostView.webContentsView.webContents.focus();
@@ -146,6 +147,17 @@ function registerIpcHandlers(context) {
             console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
         } catch (err) {
             console.error('Error updating scenarioIdDict:', err.message);
+        }
+    });
+
+    ipcMain.on('readMode-stop', (event) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive === true);
+            if (activeTab) {
+                updateNavigationButtons(activeTab.webContentsView);
+            }
+        } catch (err) {
+            console.error('Error stopping read mode:', err.message);
         }
     });
 
@@ -176,7 +188,7 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('url-load', (event, url) => {
-        try {            
+        try {
             let activeTab = tabsList.find(tab => tab.isActive);
             if (activeTab) {
                 activeTab.webContentsView.webContents.loadURL(url);
@@ -222,6 +234,24 @@ function registerIpcHandlers(context) {
             activeTab.webContentsView.webContents.setZoomLevel(0);
         } catch (err) {
             console.error('Error resetting webpage zoom:', err.message);
+        }
+    });
+
+    ipcMain.on('webpage-goBack', (event) => {
+        try {
+            var tab = tabsList.find(tab => tab.isActive === true);
+            tab.webContentsView.webContents.send('navigate-back');
+        } catch (err) {
+            console.error('Error in webpage-goBack handler:', err.message);
+        }
+    });
+
+    ipcMain.on('webpage-goForward', (event) => {
+        try {
+            var tab = tabsList.find(tab => tab.isActive === true);
+            tab.webContentsView.webContents.send('navigate-forward');
+        } catch (err) {
+            console.error('Error in webpage-goForward handler:', err.message);
         }
     });
 
@@ -325,7 +355,7 @@ function registerIpcHandlers(context) {
         try {
             let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
             if (tabToVisit) {
-                
+
                 // Only if the tab is an error page, we reload the original URL to refresh the content.
                 // Otherwise, we just update the omnibox with the current URL of the tab.
                 if (tabToVisit.isErrorPage) {
@@ -344,6 +374,8 @@ function registerIpcHandlers(context) {
                 // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
                 mainWindow.contentView.removeChildView(tabToVisit.webContentsView);
                 mainWindow.contentView.addChildView(tabToVisit.webContentsView);
+
+                updateNavigationButtons(tabToVisit.webContentsView);
             } else {
                 console.error(`Tab with ID ${tabId} not found.`);
             }
@@ -368,7 +400,7 @@ function registerIpcHandlers(context) {
             // Updating the tabsList by removing the tab with the given tabId
             const idx = tabsList.findIndex(tab => tab.tabId === tabId);
             let tabToDelete = tabsList[idx];
-            
+
             if (tabToDelete) {
                 if (idx !== -1) tabsList.splice(idx, 1);
 
@@ -382,6 +414,7 @@ function registerIpcHandlers(context) {
 
                     // Updating the omnibox with the URL of the previous tab
                     mainWindowContent.webContents.send('omniboxText-update', newActiveTab.webContentsView.webContents.getURL());
+                    updateNavigationButtons(newActiveTab.webContentsView);
                 }
 
                 const topMostView = viewsList[viewsList.length - 1];
@@ -459,7 +492,7 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('app-exit', async(event) => {
+    ipcMain.on('app-exit', async (event) => {
         try {
             await deleteAndInsertAllTabs()
             app.quit();

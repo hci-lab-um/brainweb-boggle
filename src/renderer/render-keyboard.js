@@ -397,7 +397,7 @@ function attachEventListeners() {
                             ipcRenderer.send('keyboard-type-nutjs', input);
                         }
 
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
+                        ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                         break;
                     case 'arrowKeysBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');

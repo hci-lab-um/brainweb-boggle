@@ -141,6 +141,34 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
     }
 });
 
+ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
+    try {
+        // Remove boggle IDs from top-level elements
+        const elementsInDom = document.querySelectorAll('[data-boggle-id]');
+        elementsInDom.forEach((elementInDom) => {
+            elementInDom.removeAttribute('data-boggle-id');
+        });
+
+        // Remove boggle IDs from same-origin iframes
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!iframeDoc) continue;
+
+                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id]');
+                iframeElements.forEach((elementInDom) => {
+                    elementInDom.removeAttribute('data-boggle-id');
+                });
+            } catch (err) {
+                console.warn('Skipping iframe during removeBoggleId due to cross-origin restriction:', iframe.src);
+            }
+        }
+    } catch (error) {
+        console.error('Error in interactiveElements-removeBoggleId handler:', error);
+    }
+});
+
 
 ipcRenderer.on('body-animate-fadeInUp', (event) => {
     stretchBodyFromBottomCenter();

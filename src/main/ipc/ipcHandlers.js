@@ -291,6 +291,15 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('interactiveElements-removeBoggleId', (event, elements) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('interactiveElements-removeBoggleId', elements);
+        } catch (err) {
+            console.error('Error removing Boggle IDs from interactive elements:', err.message);
+        }
+    });
+
     ipcMain.handle('bookmark-add', async (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

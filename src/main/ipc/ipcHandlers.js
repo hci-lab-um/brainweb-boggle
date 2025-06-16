@@ -192,7 +192,9 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             if (activeTab) {
                 activeTab.webContentsView.webContents.loadURL(url);
-                mainWindowContent.webContents.send('omniboxText-update', url)
+                let title = activeTab.webContentsView.webContents.getTitle()
+                if (!title) title = url; // Fallback to URL if title is not available
+                mainWindowContent.webContents.send('omniboxText-update', title)
             } else {
                 console.error('activeTab is not initialized.');
             }
@@ -300,6 +302,15 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('interactiveElements-moved', (event) => {
+        try {
+            let selectOverlay = viewsList.find(view => view.name === ViewNames.SELECT);
+            selectOverlay.webContentsView.webContents.send('select-reInitialise');
+        } catch (err) {
+            console.error('Error handling interactive elements moved:', err.message);
+        }
+    });
+
     ipcMain.handle('bookmark-add', async (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
@@ -371,7 +382,9 @@ function registerIpcHandlers(context) {
                     // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
                     tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
                 } else {
-                    mainWindowContent.webContents.send('omniboxText-update', tabToVisit.webContentsView.webContents.getURL());
+                    let title = tabToVisit.webContentsView.webContents.getTitle();
+                    if (!title) title = tabToVisit.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
+                    mainWindowContent.webContents.send('omniboxText-update', title);
                 }
 
                 // Deactivates all tabs and activates the selected tab
@@ -422,7 +435,9 @@ function registerIpcHandlers(context) {
                     newActiveTab.isActive = true;
 
                     // Updating the omnibox with the URL of the previous tab
-                    mainWindowContent.webContents.send('omniboxText-update', newActiveTab.webContentsView.webContents.getURL());
+                    let title = newActiveTab.webContentsView.webContents.getTitle();
+                    if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
+                    mainWindowContent.webContents.send('omniboxText-update', title);
                     updateNavigationButtons(newActiveTab.webContentsView);
                 }
 

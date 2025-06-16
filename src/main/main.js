@@ -284,12 +284,17 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 // but the first tab might not be the active one, and so there might not be an 
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
-                    let url = activeTab.webContentsView.webContents.getURL();
+                    let title = activeTab.webContentsView.webContents.getTitle();
 
-                    // Only run if the URL has changed since last time
-                    if (activeTab.lastNavigationUrl !== url) {
-                        activeTab.lastNavigationUrl = url; // Update the with last loaded URL
-                        mainWindowContent.webContents.send('omniboxText-update', url);
+                    // Fallback to URL if there is no title
+                    if (!title || title.trim() === '') {
+                        title = activeTab.webContentsView.webContents.getURL();
+                    }
+
+                    // Only run if the title has changed since last time
+                    if (activeTab.lastNavigationTitle !== title) {
+                        activeTab.lastNavigationTitle = title; // Update with last loaded title
+                        mainWindowContent.webContents.send('omniboxText-update', title);
 
                         // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
                         let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.

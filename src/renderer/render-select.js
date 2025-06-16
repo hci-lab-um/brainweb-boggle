@@ -34,19 +34,12 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('select-reInitialise', async () => {
+    await reInitialiseSelectOverlay();
+});
+
 window.addEventListener('resize', async () => {
-    // Only re-initialize if in region split view
-    if (isRegionSplitView) {
-        // Remove any existing grid overlays
-        const gridContainer = document.getElementById('webpage');
-        if (gridContainer) gridContainer.innerHTML = '';
-        await initSelectOverlay();
-    }
-    else {
-        previousElementsStack = [];
-        removeLabelsAndHighlightFromElements(currentElements);
-        await initSelectOverlay(); // Re-initialise the overlay with the current elements
-    }
+    await reInitialiseSelectOverlay();
 });
 
 async function initSelectOverlay() {
@@ -298,6 +291,21 @@ async function renderLetterButtonsInSidebar(numButtons) {
 
     attachEventListeners();
 };
+
+async function reInitialiseSelectOverlay() {
+    // Only re-initialize if in region split view
+    if (isRegionSplitView) {
+        // Remove any existing grid overlays
+        const gridContainer = document.getElementById('webpage');
+        if (gridContainer) gridContainer.innerHTML = '';
+        await initSelectOverlay();
+    }
+    else {
+        previousElementsStack = [];
+        removeLabelsAndHighlightFromElements(currentElements);
+        await initSelectOverlay(); // Re-initialise the overlay with the current elements
+    }
+}
 
 function attachEventListeners() {
     const overlay = document.getElementById('selectOverlay')

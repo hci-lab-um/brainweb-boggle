@@ -1,5 +1,7 @@
 const { ipcRenderer } = require("electron");
 
+const movementTracker = new Map();
+
 ipcRenderer.on('interactiveElements-get', async (event) => {
     try {
         const clickableSelectors = [
@@ -47,6 +49,8 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 
         const serializedElements = visibleElements.map(el => serializeElement(el, elementIframeMap.get(el)));
         ipcRenderer.send('interactiveElements-response', serializedElements);
+
+        setInterval(checkAllInteractiveElementPositions, 4000);
     } catch (error) {
         console.error('Error in interactiveElements-get handler:', error);
     }
@@ -329,5 +333,49 @@ function serializeElement(element, iframe) {
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);
         return null;
+    }
+}
+
+function checkAllInteractiveElementPositions() {
+    // Top-level elements
+    const elements = Array.from(document.querySelectorAll('[data-boggle-id]'));
+    elements.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const currentPosition = { x: rect.x, y: rect.y };
+        const lastPosition = movementTracker.get(el);
+        if (!lastPosition || currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
+            elements.forEach((element) => {
+                element.removeAttribute('data-boggle-id');
+            });
+
+            movementTracker.set(el, currentPosition);
+            ipcRenderer.send('interactiveElements-moved');
+            return;
+        }
+    });
+
+    // Same-origin iframes
+    const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+    for (const iframe of iframes) {
+        try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!iframeDoc) continue;
+            const iframeElements = Array.from(iframeDoc.querySelectorAll('[data-boggle-id]'));
+            iframeElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const currentPosition = { x: rect.x, y: rect.y };
+                const lastPosition = movementTracker.get(el);
+                if (!lastPosition || currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
+                    iframeElements.forEach((iframeElement) => {
+                        iframeElement.removeAttribute('data-boggle-id');
+                    });
+                    movementTracker.set(el, currentPosition);
+                    ipcRenderer.send('interactiveElements-moved');
+                    return;
+                }
+            });
+        } catch (err) {
+            // Cross-origin iframes are skipped
+        }
     }
 }

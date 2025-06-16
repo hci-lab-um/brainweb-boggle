@@ -9,7 +9,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
             '[role="menu"]', '[role="switch"]', '[role="slider"]', '[role="combobox"]', '[aria-selected]'
         ];
 
-        const elementIframeMap = new Map(); // Track each element's iframe (or null if top-level)
+        let elementIframeMap = new Map(); // Track each element's iframe (or null if top-level)
 
         // Top-level elements
         let allElements = Array.from(document.querySelectorAll(clickableSelectors.join(', ')));
@@ -85,7 +85,10 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
                 elementInDom = document.querySelector(`[data-boggle-id="${element.boggleId}"]`);
             }
 
-            if (!elementInDom) return;
+            if (!elementInDom) {
+                console.warn(`Element with boggleId ${element.boggleId} not found in the DOM.`);
+                return;
+            }
 
             // Store original styles in data attributes if not already stored
             if (!elementInDom.hasAttribute('data-original-bg')) {
@@ -218,10 +221,43 @@ function filterVisibleElements(elements) {
 
                 ) &&
                 element.disabled !== true
+                && !isElementFullyOccluded(element)
             );
         });
     } catch (error) {
         console.error(`Error filtering visible elements: ${error.message}`);
+    }
+}
+
+// Returns true if the element is fully occluded (not visible at any point)
+function isElementFullyOccluded(element) {
+    try {
+        const rect = element.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return true;
+
+        // Sample points: center and four corners (with a small offset to avoid borders)
+        let points = [
+            [rect.left + rect.width / 2, rect.top + rect.height / 2], // center
+            [rect.left + 1, rect.top + 1], // top-left
+            [rect.right - 1, rect.top + 1], // top-right
+            [rect.left + 1, rect.bottom - 1], // bottom-left
+            [rect.right - 1, rect.bottom - 1] // bottom-right
+        ];
+
+        // For elements inside iframes, check in the iframe's context
+        let doc = element.ownerDocument;
+        for (const [x, y] of points) {
+            // Skip points outside the viewport
+            if (x < 0 || y < 0 || x > (doc.defaultView.innerWidth) || y > (doc.defaultView.innerHeight)) continue;
+            const elAtPoint = doc.elementFromPoint(x, y);
+            if (elAtPoint === element || element.contains(elAtPoint)) {
+                return false; // At least one point is visible
+            }
+        }
+        return true; // All points are occluded
+    } catch (error) {
+        console.error('Error in isElementFullyOccluded:', error);
+        return false;
     }
 }
 

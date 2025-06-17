@@ -24,6 +24,13 @@ async function initialise(overlayData, isReload = false, name) {
             itemsList = tabsList;
         }
 
+        const activeIndex = itemsList.findIndex(tab => tab.isActive);
+        if (activeIndex !== -1) {
+            currentPage = Math.floor(activeIndex / pageSize);
+        } else {
+            currentPage = 0;
+        }
+
         buttons = document.querySelectorAll('button');
 
         /**

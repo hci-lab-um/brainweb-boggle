@@ -87,7 +87,6 @@ function attachEventListeners() {
                             const omnibox = document.getElementById('omnibox');
                             let elementProperties = {
                                 id: 'omnibox',
-                                value: omnibox.value,
                                 type: omnibox.type,
                             }
                             ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);

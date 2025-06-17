@@ -25,10 +25,10 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     }
 });
 
-ipcRenderer.on('omniboxText-update', (event, url) => {
+ipcRenderer.on('omniboxText-update', (event, title) => {
     try {
-        console.log('url in omniboxText-update', url)
-        updateOmniboxText(url);
+        console.log('title in omniboxText-update', title)
+        updateOmniboxText(title);
     } catch (error) {
         console.error('Error in omniboxText-update handler:', error);
     }
@@ -49,9 +49,9 @@ ipcRenderer.on('webpageBounds-get', () => {
     }
 });
 
-function updateOmniboxText(url) {
+function updateOmniboxText(title) {
     const omniboxText = document.getElementById('omnibox');
-    omniboxText.value = url;
+    omniboxText.value = title;
 }
 
 function attachEventListeners() {

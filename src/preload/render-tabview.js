@@ -1,5 +1,7 @@
 const { ipcRenderer } = require("electron");
 
+const movementTracker = new Map();
+
 ipcRenderer.on('interactiveElements-get', async (event) => {
     try {
         const clickableSelectors = [
@@ -9,7 +11,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
             '[role="menu"]', '[role="switch"]', '[role="slider"]', '[role="combobox"]', '[aria-selected]'
         ];
 
-        const elementIframeMap = new Map(); // Track each element's iframe (or null if top-level)
+        let elementIframeMap = new Map(); // Track each element's iframe (or null if top-level)
 
         // Top-level elements
         let allElements = Array.from(document.querySelectorAll(clickableSelectors.join(', ')));
@@ -47,6 +49,8 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 
         const serializedElements = visibleElements.map(el => serializeElement(el, elementIframeMap.get(el)));
         ipcRenderer.send('interactiveElements-response', serializedElements);
+
+        setInterval(checkAllInteractiveElementPositions, 4000);
     } catch (error) {
         console.error('Error in interactiveElements-get handler:', error);
     }
@@ -85,7 +89,10 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
                 elementInDom = document.querySelector(`[data-boggle-id="${element.boggleId}"]`);
             }
 
-            if (!elementInDom) return;
+            if (!elementInDom) {
+                console.warn(`Element with boggleId ${element.boggleId} not found in the DOM.`);
+                return;
+            }
 
             // Store original styles in data attributes if not already stored
             if (!elementInDom.hasAttribute('data-original-bg')) {
@@ -135,6 +142,34 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
         }
     } catch (error) {
         console.error('Error in interactiveElements-removeHighlight handler:', error);
+    }
+});
+
+ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
+    try {
+        // Remove boggle IDs from top-level elements
+        const elementsInDom = document.querySelectorAll('[data-boggle-id]');
+        elementsInDom.forEach((elementInDom) => {
+            elementInDom.removeAttribute('data-boggle-id');
+        });
+
+        // Remove boggle IDs from same-origin iframes
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!iframeDoc) continue;
+
+                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id]');
+                iframeElements.forEach((elementInDom) => {
+                    elementInDom.removeAttribute('data-boggle-id');
+                });
+            } catch (err) {
+                console.warn('Skipping iframe during removeBoggleId due to cross-origin restriction:', iframe.src);
+            }
+        }
+    } catch (error) {
+        console.error('Error in interactiveElements-removeBoggleId handler:', error);
     }
 });
 
@@ -218,10 +253,43 @@ function filterVisibleElements(elements) {
 
                 ) &&
                 element.disabled !== true
+                && !isElementFullyOccluded(element)
             );
         });
     } catch (error) {
         console.error(`Error filtering visible elements: ${error.message}`);
+    }
+}
+
+// Returns true if the element is fully occluded (not visible at any point)
+function isElementFullyOccluded(element) {
+    try {
+        const rect = element.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return true;
+
+        // Sample points: center and four corners (with a small offset to avoid borders)
+        let points = [
+            [rect.left + rect.width / 2, rect.top + rect.height / 2], // center
+            [rect.left + 1, rect.top + 1], // top-left
+            [rect.right - 1, rect.top + 1], // top-right
+            [rect.left + 1, rect.bottom - 1], // bottom-left
+            [rect.right - 1, rect.bottom - 1] // bottom-right
+        ];
+
+        // For elements inside iframes, check in the iframe's context
+        let doc = element.ownerDocument;
+        for (const [x, y] of points) {
+            // Skip points outside the viewport
+            if (x < 0 || y < 0 || x > (doc.defaultView.innerWidth) || y > (doc.defaultView.innerHeight)) continue;
+            const elAtPoint = doc.elementFromPoint(x, y);
+            if (elAtPoint === element || element.contains(elAtPoint)) {
+                return false; // At least one point is visible
+            }
+        }
+        return true; // All points are occluded
+    } catch (error) {
+        console.error('Error in isElementFullyOccluded:', error);
+        return false;
     }
 }
 
@@ -265,5 +333,49 @@ function serializeElement(element, iframe) {
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);
         return null;
+    }
+}
+
+function checkAllInteractiveElementPositions() {
+    // Top-level elements
+    const elements = Array.from(document.querySelectorAll('[data-boggle-id]'));
+    elements.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const currentPosition = { x: rect.x, y: rect.y };
+        const lastPosition = movementTracker.get(el);
+        if (!lastPosition || currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
+            elements.forEach((element) => {
+                element.removeAttribute('data-boggle-id');
+            });
+
+            movementTracker.set(el, currentPosition);
+            ipcRenderer.send('interactiveElements-moved');
+            return;
+        }
+    });
+
+    // Same-origin iframes
+    const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+    for (const iframe of iframes) {
+        try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!iframeDoc) continue;
+            const iframeElements = Array.from(iframeDoc.querySelectorAll('[data-boggle-id]'));
+            iframeElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const currentPosition = { x: rect.x, y: rect.y };
+                const lastPosition = movementTracker.get(el);
+                if (!lastPosition || currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
+                    iframeElements.forEach((iframeElement) => {
+                        iframeElement.removeAttribute('data-boggle-id');
+                    });
+                    movementTracker.set(el, currentPosition);
+                    ipcRenderer.send('interactiveElements-moved');
+                    return;
+                }
+            });
+        } catch (err) {
+            // Cross-origin iframes are skipped
+        }
     }
 }

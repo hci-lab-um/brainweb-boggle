@@ -59,22 +59,22 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
         switch (iconName) {
             case 'first_page':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'home');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'home');
                 break;
             case 'keyboard_arrow_up':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'up');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'up');
                 break;
             case 'last_page':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'end');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'end');
                 break;
             case 'keyboard_arrow_left':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'left');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'left');
                 break;
             case 'keyboard_arrow_down':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'down');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'down');
                 break;
             case 'keyboard_arrow_right':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'right');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'right');
                 break;
         }
 
@@ -193,10 +193,10 @@ async function updateGhostText() {
 }
 
 async function getScenarioNumber() {
+    const suggestionAvailable = await isSuggestionAvailable();
     const textAreaPopulated = textarea.value.length > 0;
     const cursorAtStart = textarea.selectionStart === 0;
     const cursorAtEnd = textarea.selectionStart === textarea.value.length;
-    const suggestionAvailable = await isSuggestionAvailable();
 
     if (!textAreaPopulated) {
         return 80; // Scenario: No text in search field

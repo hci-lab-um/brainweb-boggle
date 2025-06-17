@@ -487,7 +487,7 @@ function registerIpcHandlers(context) {
         mouse.move(targetPoint).then(() => mouse.leftClick());
     });
 
-    ipcMain.on('keyboard-arrow-nutjs', async (event, direction) => {
+    ipcMain.handle('keyboard-arrow-nutjs', async (event, direction) => {
         const keyMap = {
             up: Key.Up,
             down: Key.Down,
@@ -500,6 +500,7 @@ function registerIpcHandlers(context) {
         if (key) {
             await keyboard.pressKey(key);
             await keyboard.releaseKey(key);
+            return true; // Indicate success
         }
     });
 

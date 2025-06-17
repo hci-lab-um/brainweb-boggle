@@ -36,7 +36,7 @@ body {
     gap: 20px;
 }
 
-#urlHolder {
+#searchBtn {
     flex: 3;
     display: flex;
     padding: 23px;
@@ -45,7 +45,8 @@ body {
     height: 100%;
     box-sizing: border-box;
     align-items: center;
-    border: 2px solid colors.$transparent-text-muted;
+    // border: 2px solid colors.$transparent-text-muted;
+    gap: 0px;
 }
 
 #omnibox {
@@ -54,20 +55,15 @@ body {
     background: transparent;
     border: none;
     width: 100%;
-    color: colors.$text-muted;
-}
-
-#sidebar .button {
     color: colors.$white;
 }
 
 .button {
     font-size: 25px;
-    color: colors.$text-muted;
 }
 
-#favicon {    
-    color: colors.$muted-green;
+#favicon {
+    color: colors.$bright-green;
 }
 
 #brainLoader {

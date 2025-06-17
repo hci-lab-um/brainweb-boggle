@@ -384,20 +384,30 @@ body {
   font-family: monospace;
   z-index: 1;
   border: none;
+  padding: 2px;
+  line-height: 1.2;
+  overflow: hidden;
+  color: transparent;
+  caret-color: #000000;
 }
 .textarea__autocomplete {
   position: absolute;
-  color: gray;
-  white-space: pre-wrap;
-  font: inherit;
+  top: 0;
+  left: 0;
+  color: #000000;
   font-size: 40px;
   font-family: monospace;
+  white-space: pre-wrap;
   padding: 2px;
-  border: none;
-  height: 100%;
+  max-height: 100%;
   width: 100%;
-  overflow: hidden;
+  line-height: 1.2;
+  pointer-events: none;
   z-index: 2;
+  background: transparent;
+}
+.textarea__autocomplete span {
+  color: #aaa;
 }
 
 .keyboard__keysContainer {

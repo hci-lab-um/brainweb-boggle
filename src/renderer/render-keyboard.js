@@ -11,7 +11,7 @@ let corpusWords = null;
 let isUpperCase = false;
 let elementProperties;
 let suggestion = '';
-let wrapper;
+let textareaAutocomplete;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
@@ -19,7 +19,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
 
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
-        wrapper = document.getElementById('textarea-autocomplete');
+        textareaAutocomplete = document.getElementById('textarea-autocomplete');
 
         textarea.value = elementProperties.value;
 
@@ -59,22 +59,22 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     try {
         switch (iconName) {
             case 'first_page':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'home');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'home');
                 break;
             case 'keyboard_arrow_up':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'up');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'up');
                 break;
             case 'last_page':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'end');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'end');
                 break;
             case 'keyboard_arrow_left':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'left');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'left');
                 break;
             case 'keyboard_arrow_down':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'down');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'down');
                 break;
             case 'keyboard_arrow_right':
-                ipcRenderer.send('keyboard-arrow-nutjs', 'right');
+                await ipcRenderer.invoke('keyboard-arrow-nutjs', 'right');
                 break;
         }
 
@@ -161,39 +161,42 @@ function getSuggestion(partialWord, corpus) {
     return match ? match.slice(partialWord.length) : '';
 }
 
-// Sync ghost text with textarea input
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\n/g, '<br>')
+        .replace(/ {2}/g, ' &nbsp;'); // preserves double spaces
+}
+
 async function updateGhostText() {
-    const text = textarea.value;
-    const words = await loadCorpus();
-    const parts = text.split(/\s+/);
-    const lastWord = parts.pop();
-    suggestion = getSuggestion(lastWord, words);
+  const text = textarea.value;
+  const words = await loadCorpus();
+  const parts = text.split(/\s+/);
+  const lastWord = parts.pop();
+  suggestion = getSuggestion(lastWord, words);
 
-    // Show suggestion only if cursor is at end
-    if (textarea.selectionStart === textarea.value.length && suggestion) {
-        // If isUpperCase, show suggestion in caps
-        const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
-        // Replace each character in the textarea with a space (except newlines)
-        let ghost = '';
+  if (textarea.selectionStart === textarea.value.length && suggestion) {
+    const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
 
-        for (let i = 0; i < text.length; i++) {
-            if (text[i] === '\n') {
-                ghost += '\n';
-            } else {
-                ghost += ' ';
-            }
-        }
-        wrapper.innerHTML = ghost + `<span style="color:#aaa;">${displaySuggestion}</span>`;
-    } else {
-        wrapper.textContent = '';
-    }
+    // Breaks into HTML-safe string
+    const escapedText = escapeHtml(text);
+    const escapedSuggestion = `<span>${escapeHtml(displaySuggestion)}</span>`;
+
+    textareaAutocomplete.innerHTML = escapedText + escapedSuggestion;
+  } else {
+    textareaAutocomplete.innerHTML = escapeHtml(text);
+  }
 }
 
 async function getScenarioNumber() {
+    const suggestionAvailable = await isSuggestionAvailable();
     const textAreaPopulated = textarea.value.length > 0;
     const cursorAtStart = textarea.selectionStart === 0;
     const cursorAtEnd = textarea.selectionStart === textarea.value.length;
-    const suggestionAvailable = await isSuggestionAvailable();
 
     if (!textAreaPopulated) {
         return 80; // Scenario: No text in search field

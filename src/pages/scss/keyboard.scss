@@ -89,21 +89,33 @@ body {
         font-family: monospace;
         z-index: 1;
         border: none;
+        padding: 2px; // crucial to match with autocomplete
+        line-height: 1.2; // make sure this matches in both
+        overflow: hidden;
+        color: transparent;
+        caret-color: colors.$black; // makes the caret visible
     }
 
     &__autocomplete {
         position: absolute;
-        color: gray;
-        white-space: pre-wrap;
-        font: inherit;
+        top: 0;
+        left: 0;
+        color: colors.$black;
         font-size: 40px;
         font-family: monospace;
+        white-space: pre-wrap;
+        // word-break: break-word;
         padding: 2px;
-        border: none;
-        height: 100%;
+        max-height: 100%;
         width: 100%;
-        overflow: hidden;
+        line-height: 1.2;
+        pointer-events: none;
         z-index: 2;
+        background: transparent;
+    }
+
+    &__autocomplete span {
+        color: #aaa;
     }
 }
 
@@ -117,7 +129,7 @@ body {
     &--threeColumns {
         @include components.pagination-grid(3);
     }
-    
+
     &--doubleRow {
         & > * {
             height: 40%;

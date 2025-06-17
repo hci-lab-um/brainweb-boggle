@@ -50,7 +50,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
         const serializedElements = visibleElements.map(el => serializeElement(el, elementIframeMap.get(el)));
         ipcRenderer.send('interactiveElements-response', serializedElements);
 
-        setInterval(checkAllInteractiveElementPositions, 4000);
+        // setInterval(checkAllInteractiveElementPositions, 4000);
     } catch (error) {
         console.error('Error in interactiveElements-get handler:', error);
     }

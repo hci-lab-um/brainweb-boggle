@@ -9,9 +9,9 @@
 
 <body id="browser">
     <div id='sidebar'>
-        <button id='searchBtn' class="button">
-            <p>Search</p>
-            <i class="material-icons--s" aria-hidden="true">search</i>
+        <button id='seekBtn' class="button">
+            <p>Seek</p>
+            <i class="material-icons--s" aria-hidden="true">swap_vert</i>
         </button>
 
         <button id='selectBtn' class="button">
@@ -34,14 +34,14 @@
             <button id="backBtn" class="button">
                 <i class="material-icons--s" aria-hidden="true">arrow_back_ios</i>
             </button>
-            <div id="urlHolder">
+            <button id="searchBtn" class="button">
                 <div id="loader"></div>
                 <div id="favicon">
                     <i class="material-icons--s">check</i>
                 </div>
                 <input type="text" id="omnibox" readonly placeholder="Loading..." unselectable="on"
                     onfocus="this.blur();">
-            </div>
+            </button>
             <button id="forwardBtn" class="button">
                 <i class="material-icons--s" aria-hidden="true">arrow_forward_ios</i>
             </button>

@@ -11,7 +11,7 @@ let corpusWords = null;
 let isUpperCase = false;
 let elementProperties;
 let suggestion = '';
-let wrapper;
+let textareaAutocomplete;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
@@ -19,7 +19,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
 
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
-        wrapper = document.getElementById('textarea-autocomplete');
+        textareaAutocomplete = document.getElementById('textarea-autocomplete');
 
         textarea.value = elementProperties.value;
 
@@ -161,32 +161,35 @@ function getSuggestion(partialWord, corpus) {
     return match ? match.slice(partialWord.length) : '';
 }
 
-// Sync ghost text with textarea input
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\n/g, '<br>')
+        .replace(/ {2}/g, ' &nbsp;'); // preserves double spaces
+}
+
 async function updateGhostText() {
-    const text = textarea.value;
-    const words = await loadCorpus();
-    const parts = text.split(/\s+/);
-    const lastWord = parts.pop();
-    suggestion = getSuggestion(lastWord, words);
+  const text = textarea.value;
+  const words = await loadCorpus();
+  const parts = text.split(/\s+/);
+  const lastWord = parts.pop();
+  suggestion = getSuggestion(lastWord, words);
 
-    // Show suggestion only if cursor is at end
-    if (textarea.selectionStart === textarea.value.length && suggestion) {
-        // If isUpperCase, show suggestion in caps
-        const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
-        // Replace each character in the textarea with a space (except newlines)
-        let ghost = '';
+  if (textarea.selectionStart === textarea.value.length && suggestion) {
+    const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
 
-        for (let i = 0; i < text.length; i++) {
-            if (text[i] === '\n') {
-                ghost += '\n';
-            } else {
-                ghost += ' ';
-            }
-        }
-        wrapper.innerHTML = ghost + `<span style="color:#aaa;">${displaySuggestion}</span>`;
-    } else {
-        wrapper.textContent = '';
-    }
+    // Breaks into HTML-safe string
+    const escapedText = escapeHtml(text);
+    const escapedSuggestion = `<span>${escapeHtml(displaySuggestion)}</span>`;
+
+    textareaAutocomplete.innerHTML = escapedText + escapedSuggestion;
+  } else {
+    textareaAutocomplete.innerHTML = escapeHtml(text);
+  }
 }
 
 async function getScenarioNumber() {

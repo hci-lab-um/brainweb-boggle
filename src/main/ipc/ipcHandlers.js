@@ -315,6 +315,24 @@ function registerIpcHandlers(context) {
             console.error('Error handling interactive elements moved:', err.message);
         }
     });
+    
+    ipcMain.handle('scrollableElements-get', (event) => {
+        return new Promise((resolve, reject) => {
+            try {
+                let activeTab = tabsList.find(tab => tab.isActive);
+                activeTab.webContentsView.webContents.send('scrollableElements-get');
+                ipcMain.once('scrollableElements-response', (event, elements) => {
+                    if (elements) {
+                        resolve(elements);
+                    } else {
+                        reject(new Error('No scrollable elements found'));
+                    }
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    });
 
     ipcMain.handle('bookmark-add', async (event) => {
         try {

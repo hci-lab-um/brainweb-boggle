@@ -20,6 +20,10 @@ body {
     height: 100vh;
 }
 
+#webpage{
+    background-color: transparent !important;
+}
+
 #sidebar {
     background-color: colors.$bg-dark;
     gap: 5%;

@@ -325,6 +325,10 @@ body {
   height: 100vh;
 }
 
+#webpage {
+  background-color: transparent !important;
+}
+
 #sidebar {
   background-color: #1f1f1f;
   gap: 5%;

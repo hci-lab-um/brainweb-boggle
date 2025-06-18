@@ -77,7 +77,7 @@ function createPopup({
 
         overlay.classList.remove('fadeIn');
         overlay.classList.add('fadeOut');
-        
+
         // Removes the overlay and popup after the animation ends
         const removePopup = () => {
             overlay.remove();
@@ -181,5 +181,5 @@ module.exports = {
     createNavigationButton,
     updatePaginationIndicators,
     paginate,
-    slideInView,
+    slideInView
 };

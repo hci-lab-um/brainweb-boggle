@@ -47,7 +47,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 
         console.log('visibleElements: ', visibleElements);
 
-        const serializedElements = visibleElements.map(el => serializeElement(el, elementIframeMap.get(el)));
+        const serializedElements = visibleElements.map(el => serialiseElement(el, elementIframeMap.get(el)));
         ipcRenderer.send('interactiveElements-response', serializedElements);
 
         // setInterval(checkAllInteractiveElementPositions, 4000);
@@ -69,9 +69,9 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
                 const matchingIframe = iframes.find(iframe => {
                     const rect = iframe.getBoundingClientRect();
                     return rect.x === element.iframeBounds.x &&
-                           rect.y === element.iframeBounds.y &&
-                           rect.width === element.iframeBounds.width &&
-                           rect.height === element.iframeBounds.height;
+                        rect.y === element.iframeBounds.y &&
+                        rect.width === element.iframeBounds.width &&
+                        rect.height === element.iframeBounds.height;
                 });
 
                 if (matchingIframe) {
@@ -173,13 +173,58 @@ ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
     }
 });
 
+ipcRenderer.on('scrollableElements-get', async (event) => {
+    try {
+        const scrollableElements = [];
+        let scrollableElementsIframeMap = new Map(); // Track each scrollable element in iframe
+
+        let allElements = Array.from(document.querySelectorAll('*'));
+        for (const el of allElements) {
+            scrollableElementsIframeMap.set(el, null);
+        }
+
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc) {
+                    const scrollableIframeElements = Array.from(iframeDoc.querySelectorAll('*'));
+                    for (const el of scrollableIframeElements) {
+                        allElements.push(el);
+                        scrollableElementsIframeMap.set(el, iframe);
+                    }
+                }
+            } catch (err) {
+                console.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
+            }
+        }
+
+        allElements.forEach(element => {
+            const style = window.getComputedStyle(element);
+            if (
+                (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
+                element.scrollHeight >= element.clientHeight &&
+                style.overflowY !== 'visible'
+            ) {
+                scrollableElements.push(element);
+            }
+        });
+
+        const serializedElements = scrollableElements.map(el => serialiseElement(el, scrollableElementsIframeMap.get(el)));
+        ipcRenderer.send('scrollableElements-response', serializedElements);
+    }
+    catch (error) {
+        console.error('Error in scrollableElements-get handler:', error);
+    }
+});
 
 ipcRenderer.on('body-animate-fadeInUp', (event) => {
     stretchBodyFromBottomCenter();
 });
 
 ipcRenderer.on('navigate-back', (event) => {
-    try{
+    try {
         console.log('Navigating back');
         window.history.back();
     } catch (error) {
@@ -293,7 +338,7 @@ function isElementFullyOccluded(element) {
     }
 }
 
-function serializeElement(element, iframe) {
+function serialiseElement(element, iframe) {
     try {
         const rect = element.getBoundingClientRect();
         let x = rect.x;

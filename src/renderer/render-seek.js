@@ -4,7 +4,7 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon } = require('../utils/utilityFunctions');
 
-const scrollDistance = 100; // Distance to scroll in pixels
+const scrollDistance = 400; // Distance to scroll in pixels
 
 let buttons = [];
 let webpageBounds = null;
@@ -45,9 +45,10 @@ async function initSeekOverlay() {
     scrollButtonsContainer.classList.add('scroll-buttons-container');
 
     // Getting the scrollable mainBody element with tagName 'html' or 'body'
-    const mainBody = scrollableElements.find(element => {
-        return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
+    const mainBody = scrollableElements.find(async element => {
+        return await element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
     });
+    console.log('Main Body Element:', mainBody);
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
@@ -124,28 +125,28 @@ function attachEventListeners() {
 
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
-        let domElementToScroll;
-
-        if (currentScrollableElement) {
-            // Getting the current scrollable element from the DOM by its scrollableBoggleId
-            domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${currentScrollableElement.scrollableBoggleId}"]`);
-            console.log('currentScrollableElement:', currentScrollableElement);
-            console.log('Current Scrollable Element:', domElementToScroll);
-        }
-
+        
         setTimeout(async () => {
             switch (buttonId) {
                 case "selectScrollableElementBtn":
                     await stopManager();
                     break;
                 case "scrollUpBtn":
-                    if (domElementToScroll) {
-                        domElementToScroll.scrollBy({ top: -scrollDistance, behavior: 'smooth' });
+                    if (currentScrollableElement) {
+                        ipcRenderer.send('scrollableElement-scroll', {
+                            scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
+                            top: -scrollDistance,
+                            behavior: 'smooth'
+                        });
                     }
                     break;
                 case "scrollDownBtn":
-                    if (domElementToScroll) {
-                        domElementToScroll.scrollBy({ top: scrollDistance, behavior: 'smooth' });
+                    if (currentScrollableElement) {
+                        ipcRenderer.send('scrollableElement-scroll', {
+                            scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
+                            top: scrollDistance,
+                            behavior: 'smooth'
+                        });
                     }
                     break;
                 case "findBtn":

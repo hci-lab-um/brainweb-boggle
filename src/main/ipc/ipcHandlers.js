@@ -315,7 +315,7 @@ function registerIpcHandlers(context) {
             console.error('Error handling interactive elements moved:', err.message);
         }
     });
-    
+
     ipcMain.handle('scrollableElements-get', (event) => {
         return new Promise((resolve, reject) => {
             try {
@@ -332,6 +332,15 @@ function registerIpcHandlers(context) {
                 reject(err);
             }
         });
+    });
+
+    ipcMain.on('scrollableElement-scroll', (event, scrollObject) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('scrollableElement-scroll', scrollObject);
+        } catch (err) {
+            console.error('Error scrolling scrollable element:', err.message);
+        }
     });
 
     ipcMain.handle('bookmark-add', async (event) => {

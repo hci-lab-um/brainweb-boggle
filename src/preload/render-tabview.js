@@ -202,10 +202,21 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
 
         allElements.forEach((element, idx) => {
             const style = window.getComputedStyle(element);
+            const isBodyOrHtml = element.tagName && (
+                element.tagName.toLowerCase() === 'body' ||
+                element.tagName.toLowerCase() === 'html'
+            );
             if (
-                (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
-                element.scrollHeight >= element.clientHeight &&
-                style.overflowY !== 'visible'
+                (
+                    (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
+                    element.scrollHeight >= element.clientHeight &&
+                    style.overflowY !== 'visible'
+                )
+                ||
+                (
+                    isBodyOrHtml &&
+                    element.scrollHeight > element.clientHeight
+                )
             ) {
                 scrollableElements.push(element);
                 element.setAttribute('data-scrollable-boggle-id', idx + 1);
@@ -427,3 +438,19 @@ function checkAllInteractiveElementPositions() {
         }
     }
 }
+
+ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, behavior }) => {
+    try {
+        console.log('HELLLLLLLLLOOOOOOOO')
+        const domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+        if (!domElementToScroll) {
+            console.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
+            return;
+        }
+
+        console.log('Scrolling element:', domElementToScroll, 'by distance:', top, 'with behavior:', behavior);
+        domElementToScroll.scrollBy({ top, behavior });
+    } catch (error) {
+        console.error('Error in scrollableElement-scroll handler:', error);
+    }
+});

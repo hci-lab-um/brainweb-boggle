@@ -4,6 +4,8 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon } = require('../utils/utilityFunctions');
 
+const scrollDistance = 100; // Distance to scroll in pixels
+
 let buttons = [];
 let webpageBounds = null;
 let zoomFactor;
@@ -42,7 +44,7 @@ async function initSeekOverlay() {
     scrollButtonsContainer.classList.add('scroll-buttons-container');
 
     // Choose layout strategy based on number of elements
-    if (scrollableElements) {
+    if (scrollableElements && scrollableElements.length > 0) {
         // Getting the scrollable mainBody element with tagName 'html' or 'body'
         const mainBody = scrollableElements.find(element => {
             return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
@@ -106,6 +108,11 @@ async function initSeekOverlay() {
     findContainer.appendChild(findButton);
     navbar.appendChild(findContainer);
 
+
+    buttons = document.querySelectorAll('button');
+    if (mainBody) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
+    else await updateScenarioId(11, buttons, ViewNames.SEEK, false);
+    
     attachEventListeners();
 }
 
@@ -131,8 +138,18 @@ function attachEventListeners() {
                 case "selectScrollableElementBtn":
                     break;
                 case "scrollUpBtn":
+                    if (currentScrollableElement && currentScrollableElement.scrollBy) {
+                        currentScrollableElement.scrollBy({ top: -scrollDistance, behavior: 'smooth' });
+                    } else if (currentScrollableElement && currentScrollableElement.scrollTop !== undefined) {
+                        currentScrollableElement.scrollTop -= scrollDistance;
+                    }
                     break;
                 case "scrollDownBtn":
+                    if (currentScrollableElement && currentScrollableElement.scrollBy) {
+                        currentScrollableElement.scrollBy({ top: scrollDistance, behavior: 'smooth' });
+                    } else if (currentScrollableElement && currentScrollableElement.scrollTop !== undefined) {
+                        currentScrollableElement.scrollTop += scrollDistance;
+                    }
                     break;
                 case "findBtn":
                     break;

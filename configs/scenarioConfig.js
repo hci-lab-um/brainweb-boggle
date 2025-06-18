@@ -42,6 +42,81 @@ const scenarioConfig = {
         phases: [0.5]
     },
 
+
+    // SEEK
+    scenario_10: {
+        name: ViewNames.SEEK,
+        description: 'Seek overlay with scroll buttons, find button, select scrollable element button and close button',
+        buttonIds: ['scrollUpBtn', 'scrollDownBtn', 'selectScrollableElementBtn', 'findBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 9.5, 10.5, 8],
+        phases: [1, 0.5, 0, 1.5, 1.5]
+    },
+
+    scenario_11: {
+        name: ViewNames.SEEK,
+        description: 'Seek overlay with find button and close button',
+        buttonIds: ['findBtn', 'closeSeekBtn'],
+        frequencies: [10.5, 8],
+        phases: [1.5, 1.5]
+    },
+
+    scenario_12: {
+        name: ViewNames.SEEK,
+        description: 'Find in page with scroll buttons and close button',
+        buttonIds: ['scrollUpBtn', 'scrollDownBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 8],
+        phases: [1, 0.5, 1.5]
+    },
+
+    scenario_13: {
+        name: ViewNames.SEEK,
+        description: 'Select scrollable element with 1 button and close button',
+        buttonIds: ['firstScrollableElementBtn', 'closeSeekBtn'],
+        frequencies: [6, 8],
+        phases: [1, 1.5]
+    },
+
+    scenario_14: {
+        name: ViewNames.SEEK,
+        description: 'Select scrollable element with 2 buttons and close button',
+        buttonIds: ['firstScrollableElementBtn', 'secondScrollableElementBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 8],
+        phases: [1, 0.5, 1.5]
+    },
+
+    scenario_15: {
+        name: ViewNames.SEEK,
+        description: 'Select scrollable element with 3 buttons and close button',
+        buttonIds: ['firstScrollableElementBtn', 'secondScrollableElementBtn', 'thirdScrollableElementBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 12.5, 8],
+        phases: [1, 0.5, 0, 1.5]
+    },
+
+    scenario_16: {
+        name: ViewNames.SEEK,
+        description: 'Select scrollable element with 4 buttons and close button',
+        buttonIds: ['firstScrollableElementBtn', 'secondScrollableElementBtn', 'thirdScrollableElementBtn', 'fourthScrollableElementBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 12.5, 10.5, 8],
+        phases: [1, 0.5, 0, 1.5, 1.5]
+    },
+
+    scenario_17: {
+        name: ViewNames.SEEK,
+        description: 'Select scrollable element with 5 buttons and close button',
+        buttonIds: ['firstScrollableElementBtn', 'secondScrollableElementBtn', 'thirdScrollableElementBtn', 'fourthScrollableElementBtn', 'fifthScrollableElementBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 12.5, 10.5, 7, 8],
+        phases: [1, 0.5, 0, 1.5, 0, 1.5]
+    },
+
+    scenario_18: {
+        name: ViewNames.SEEK,
+        description: 'Select scrollable element with 6 buttons and close button',
+        buttonIds: ['firstScrollableElementBtn', 'secondScrollableElementBtn', 'thirdScrollableElementBtn', 'fourthScrollableElementBtn', 'fifthScrollableElementBtn', 'sixthScrollableElementBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 12.5, 10.5, 7, 12, 8],
+        phases: [1, 0.5, 0, 1.5, 0, 0.5, 1.5]
+    },
+
+    
     // MORE
     scenario_20: {
         name: ViewNames.MORE,
@@ -253,7 +328,7 @@ const scenarioConfig = {
         frequencies: [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 12.5],
         phases: [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0]
     },
-    
+
 
     // KEYBOARD KEYS
     scenario_90: {

@@ -10,7 +10,8 @@ let zoomFactor;
 let sidebar;
 let navbar;
 let webpage;
-let scrollableElements = [];        // These are all the scrollable elements visible in the current tab
+let scrollableElements = [];         // These are all the scrollable elements visible in the current tab
+let currentScrollableElement = null; // This is the currently selected scrollable element
 
 ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     try {
@@ -42,32 +43,36 @@ async function initSeekOverlay() {
 
     // Choose layout strategy based on number of elements
     if (scrollableElements) {
-        // check whether the scrollableElements contains an element with tagNAme 'html' or 'body'
-        const isMainBodyScrollable = scrollableElements.some(element => {
+        // Getting the scrollable mainBody element with tagName 'html' or 'body'
+        const mainBody = scrollableElements.find(element => {
             return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
         });
 
-        if (isMainBodyScrollable) {
+        if (mainBody) {
+            currentScrollableElement = mainBody;
+
             const title = document.createElement('h1');
             title.textContent = 'Main Body';
             title.classList.add('scroll-title');
 
             scrollButtonsContainer.appendChild(title);
+
+            // Render top and bottom scroll buttons
+            const scrollUpButton = document.createElement('button');
+            scrollUpButton.classList.add('scroll-button', 'scroll-up');
+            scrollUpButton.innerHTML = createMaterialIcon('sm', 'keyboard_arrow_up');
+            scrollUpButton.setAttribute('id', 'scrollUpBtn');
+
+            const scrollDownButton = document.createElement('button');
+            scrollDownButton.classList.add('scroll-button', 'scroll-down');
+            scrollDownButton.innerHTML = createMaterialIcon('sm', 'keyboard_arrow_down');
+            scrollDownButton.setAttribute('id', 'scrollDownBtn');
+
+            scrollButtonsContainer.appendChild(scrollUpButton);
+            scrollButtonsContainer.appendChild(scrollDownButton);
+            sidebar.appendChild(scrollButtonsContainer);
         }
 
-        // Render top and bottom scroll buttons
-        const scrollUpButton = document.createElement('button');
-        scrollUpButton.classList.add('scroll-button', 'scroll-up');
-        scrollUpButton.innerHTML = createMaterialIcon('sm', 'keyboard_arrow_up');
-
-        const scrollDownButton = document.createElement('button');
-        scrollDownButton.classList.add('scroll-button', 'scroll-down');
-        scrollDownButton.innerHTML = createMaterialIcon('sm', 'keyboard_arrow_down');
-
-        scrollButtonsContainer.appendChild(scrollUpButton);
-        scrollButtonsContainer.appendChild(scrollDownButton);
-        sidebar.appendChild(scrollButtonsContainer);
-        
         // Add button to select scrollable elements
         const selectScrollableElementContainer = document.createElement('div');
         selectScrollableElementContainer.classList.add('select-scrollable-container');
@@ -100,4 +105,42 @@ async function initSeekOverlay() {
     findButton.insertBefore(findSpan, findButton.firstChild);
     findContainer.appendChild(findButton);
     navbar.appendChild(findContainer);
+
+    attachEventListeners();
 }
+
+function attachEventListeners() {
+    const overlay = document.getElementById('seekOverlay');
+    if (!overlay) return;
+
+    // Avoids attaching multiple listeners
+    if (overlay.dataset.listenerAttached === 'true') return;
+    overlay.dataset.listenerAttached = 'true';
+
+    overlay.addEventListener('click', async (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+
+        addButtonSelectionAnimation(button);
+        const buttonId = button.getAttribute('id');
+
+        setTimeout(async () => {
+            await stopManager();
+
+            switch (buttonId) {
+                case "selectScrollableElementBtn":
+                    break;
+                case "scrollUpBtn":
+                    break;
+                case "scrollDownBtn":
+                    break;
+                case "findBtn":
+                    break;
+                case "closeSeekBtn":
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
+                    break;
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+}
+

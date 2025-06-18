@@ -200,7 +200,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
             }
         }
 
-        allElements.forEach(element => {
+        allElements.forEach((element, idx) => {
             const style = window.getComputedStyle(element);
             if (
                 (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
@@ -208,8 +208,10 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
                 style.overflowY !== 'visible'
             ) {
                 scrollableElements.push(element);
+                element.setAttribute('data-scrollable-boggle-id', idx + 1);
             }
         });
+        console.log('Scrollable Elements:', scrollableElements);
 
         const serializedElements = scrollableElements.map(el => serialiseElement(el, scrollableElementsIframeMap.get(el)));
         ipcRenderer.send('scrollableElements-response', serializedElements);
@@ -363,6 +365,7 @@ function serialiseElement(element, iframe) {
         return {
             id: element.id,
             boggleId: element.getAttribute('data-boggle-id'),
+            scrollableBoggleId: element.getAttribute('data-scrollable-boggle-id'),
             value: element.value,
             title: element.title,
             tagName: element.tagName,

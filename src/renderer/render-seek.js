@@ -39,35 +39,36 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
 
 async function initSeekOverlay() {
     scrollableElements = await ipcRenderer.invoke('scrollableElements-get'); // Fetching scrollable elements from the tabView
+    console.log('Scrollable Elements:', scrollableElements);
 
     const scrollButtonsContainer = document.createElement('div');
     scrollButtonsContainer.classList.add('scroll-buttons-container');
 
+    // Getting the scrollable mainBody element with tagName 'html' or 'body'
+    const mainBody = scrollableElements.find(element => {
+        return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
+    });
+
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
-        // Getting the scrollable mainBody element with tagName 'html' or 'body'
-        const mainBody = scrollableElements.find(element => {
-            return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
-        });
-
         if (mainBody) {
             currentScrollableElement = mainBody;
 
-            const title = document.createElement('h1');
+            const title = document.createElement('div');
             title.textContent = 'Main Body';
             title.classList.add('scroll-title');
 
-            scrollButtonsContainer.appendChild(title);
+            sidebar.appendChild(title);
 
             // Render top and bottom scroll buttons
             const scrollUpButton = document.createElement('button');
-            scrollUpButton.classList.add('scroll-button', 'scroll-up');
-            scrollUpButton.innerHTML = createMaterialIcon('sm', 'keyboard_arrow_up');
+            scrollUpButton.classList.add('button', 'scroll-button', 'scroll-up');
+            scrollUpButton.innerHTML = createMaterialIcon('xl', 'keyboard_arrow_up');
             scrollUpButton.setAttribute('id', 'scrollUpBtn');
 
             const scrollDownButton = document.createElement('button');
-            scrollDownButton.classList.add('scroll-button', 'scroll-down');
-            scrollDownButton.innerHTML = createMaterialIcon('sm', 'keyboard_arrow_down');
+            scrollDownButton.classList.add('button', 'scroll-button', 'scroll-down');
+            scrollDownButton.innerHTML = createMaterialIcon('xl', 'keyboard_arrow_down');
             scrollDownButton.setAttribute('id', 'scrollDownBtn');
 
             scrollButtonsContainer.appendChild(scrollUpButton);
@@ -76,43 +77,36 @@ async function initSeekOverlay() {
         }
 
         // Add button to select scrollable elements
-        const selectScrollableElementContainer = document.createElement('div');
-        selectScrollableElementContainer.classList.add('select-scrollable-container');
-
         const selectScrollableElementButton = document.createElement('button');
         selectScrollableElementButton.classList.add('button');
         selectScrollableElementButton.setAttribute('id', 'selectScrollableElementBtn');
-        // selectScrollableElementButton.innerHTML = createMaterialIcon('sm', 'ads_click');
+        selectScrollableElementButton.innerHTML = createMaterialIcon('sm', 'swap_vert');
 
         const scrollableSpan = document.createElement('span');
         scrollableSpan.textContent = 'Select Scrollable Element';
 
         selectScrollableElementButton.insertBefore(scrollableSpan, selectScrollableElementButton.firstChild);
-        selectScrollableElementContainer.appendChild(selectScrollableElementButton);
-        navbar.appendChild(selectScrollableElementContainer);
+        navbar.appendChild(selectScrollableElementButton);
+        navbar.classList.add('navbar');
     }
 
     // Add button to find
-    const findContainer = document.createElement('div');
-    findContainer.classList.add('find-container');
-
     const findButton = document.createElement('button');
     findButton.classList.add('button');
     findButton.setAttribute('id', 'findBtn');
     findButton.innerHTML = createMaterialIcon('sm', 'manage_search');
 
     const findSpan = document.createElement('span');
-    findSpan.textContent = 'Find';
+    findSpan.textContent = 'Find in Page';
 
     findButton.insertBefore(findSpan, findButton.firstChild);
-    findContainer.appendChild(findButton);
-    navbar.appendChild(findContainer);
+    navbar.appendChild(findButton);
 
 
     buttons = document.querySelectorAll('button');
     if (mainBody) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
     else await updateScenarioId(11, buttons, ViewNames.SEEK, false);
-    
+
     attachEventListeners();
 }
 
@@ -130,30 +124,35 @@ function attachEventListeners() {
 
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
+        let domElementToScroll;
+
+        if (currentScrollableElement) {
+            // Getting the current scrollable element from the DOM by its scrollableBoggleId
+            domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${currentScrollableElement.scrollableBoggleId}"]`);
+            console.log('currentScrollableElement:', currentScrollableElement);
+            console.log('Current Scrollable Element:', domElementToScroll);
+        }
 
         setTimeout(async () => {
-            await stopManager();
-
             switch (buttonId) {
                 case "selectScrollableElementBtn":
+                    await stopManager();
                     break;
                 case "scrollUpBtn":
-                    if (currentScrollableElement && currentScrollableElement.scrollBy) {
-                        currentScrollableElement.scrollBy({ top: -scrollDistance, behavior: 'smooth' });
-                    } else if (currentScrollableElement && currentScrollableElement.scrollTop !== undefined) {
-                        currentScrollableElement.scrollTop -= scrollDistance;
+                    if (domElementToScroll) {
+                        domElementToScroll.scrollBy({ top: -scrollDistance, behavior: 'smooth' });
                     }
                     break;
                 case "scrollDownBtn":
-                    if (currentScrollableElement && currentScrollableElement.scrollBy) {
-                        currentScrollableElement.scrollBy({ top: scrollDistance, behavior: 'smooth' });
-                    } else if (currentScrollableElement && currentScrollableElement.scrollTop !== undefined) {
-                        currentScrollableElement.scrollTop += scrollDistance;
+                    if (domElementToScroll) {
+                        domElementToScroll.scrollBy({ top: scrollDistance, behavior: 'smooth' });
                     }
                     break;
                 case "findBtn":
+                    await stopManager();
                     break;
                 case "closeSeekBtn":
+                    await stopManager();
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
                     break;
             }

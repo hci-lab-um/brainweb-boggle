@@ -94,7 +94,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
 // Removes element labels and highlights
 function removeLabelsAndHighlightFromElements(elements) {
     try {
-        ipcRenderer.send('interactiveElements-removeHighlight', elements);
+        ipcRenderer.send('interactiveElements-removeHighlight');
 
         const labels = webpage.querySelectorAll('.element-number');
         if (labels) labels.forEach(async label => await label.remove());

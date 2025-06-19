@@ -259,8 +259,29 @@ ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, be
     }
 });
 
-ipcRenderer.on('scrollableElements-addHighlight', (event, scrollableElements) => {
+ipcRenderer.on('scrollableElement-addHighlight', (event, currentElement) => {
     try {
+        const elementInDom = document.querySelector(`[data-scrollable-boggle-id="${currentElement.scrollableBoggleId}"]`);
+        if (!elementInDom) {
+            console.warn(`Element with scrollableBoggleId ${currentElement.scrollableBoggleId} not found in the DOM.`);
+            return;
+        }
+
+        // Store original styles in data attributes if not already stored
+        if (!elementInDom.hasAttribute('data-original-border')) {
+            elementInDom.setAttribute('data-original-border', elementInDom.style.border || '');
+        }
+
+        elementInDom.style.border = '3px solid rgba(183, 255, 0, 0.50)';
+    } catch (error) {
+        console.error('Error in scrollableElement-addHighlight handler:', error);
+    }
+});
+
+ipcRenderer.on('allScrollableElements-addHighlight', (event, scrollableElements) => {
+    try {
+        debugger;
+        console.log('Adding highlights to scrollable elements:', scrollableElements);
         scrollableElements.forEach((element) => {
             let elementInDom = null;
 
@@ -306,6 +327,37 @@ ipcRenderer.on('scrollableElements-addHighlight', (event, scrollableElements) =>
         });
     } catch (error) {
         console.error('Error in interactiveElements-addHighlight handler:', error);
+    }
+});
+
+ipcRenderer.on('scrollableElements-removeHighlight', (event) => {
+    try {
+        // Remove highlights from top-level elements
+        const elementsInDom = document.querySelectorAll('[data-scrollable-boggle-id]');
+
+        elementsInDom.forEach((elementInDom) => {
+            elementInDom.style.border = elementInDom.getAttribute('data-original-border') || '';
+            elementInDom.removeAttribute('data-original-border');
+        });
+
+        // Remove highlights from same-origin iframes
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!iframeDoc) continue;
+
+                const iframeElements = iframeDoc.querySelectorAll('[data-scrollable-boggle-id]');
+                iframeElements.forEach((elementInDom) => {
+                    elementInDom.style.border = elementInDom.getAttribute('data-original-border') || '';
+                    elementInDom.removeAttribute('data-original-border');
+                });
+            } catch (err) {
+                console.warn('Skipping iframe during removeHighlight for scrollable elements due to cross-origin restriction:', iframe.src);
+            }
+        }
+    } catch (error) {
+        console.error('Error in scrollableElements-removeHighlight handler:', error);
     }
 });
 

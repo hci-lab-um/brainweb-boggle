@@ -289,10 +289,10 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('interactiveElements-removeHighlight', (event, elements) => {
+    ipcMain.on('interactiveElements-removeHighlight', (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight', elements);
+            activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight');
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
         }
@@ -342,13 +342,32 @@ function registerIpcHandlers(context) {
             console.error('Error scrolling scrollable element:', err.message);
         }
     });
+    
 
-    ipcMain.on('scrollableElements-addHighlight', (event, elements) => {
+    ipcMain.on('scrollableElement-addHighlight', (event, element) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('scrollableElements-addHighlight', elements);
+            activeTab.webContentsView.webContents.send('scrollableElement-addHighlight', element);
         } catch (err) {
             console.error('Error adding highlight to scrollable elements:', err.message);
+        }
+    });
+
+    ipcMain.on('allScrollableElements-addHighlight', (event, elements) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('allScrollableElements-addHighlight', elements);
+        } catch (err) {
+            console.error('Error adding highlight to scrollable elements:', err.message);
+        }
+    });
+
+    ipcMain.on('scrollableElements-removeHighlight', (event) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('scrollableElements-removeHighlight');
+        } catch (err) {
+            console.error('Error removing highlight from scrollable elements:', err.message);
         }
     });
 

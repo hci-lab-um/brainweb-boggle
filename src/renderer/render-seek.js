@@ -55,10 +55,11 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
         return await element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
     });
 
+    if (mainBody && !selectedScrollableElement) currentScrollableElement = mainBody;
+
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
-        if (mainBody && !selectedScrollableElement) {
-            currentScrollableElement = mainBody;
+        if (currentScrollableElement) {
 
             const title = document.createElement('div');
             title.textContent = titleContent;
@@ -80,8 +81,6 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
             scrollButtonsContainer.appendChild(scrollUpButton);
             scrollButtonsContainer.appendChild(scrollDownButton);
             sidebar.appendChild(scrollButtonsContainer);
-        } else {
-            currentScrollableElement = selectedScrollableElement;
         }
 
         if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) {
@@ -117,11 +116,13 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
     else if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
     else await updateScenarioId(12, buttons, ViewNames.SEEK, false);
 
+    // ipcRenderer.send('scrollableElements-removeHighlight');
+    ipcRenderer.send('scrollableElement-addHighlight', currentScrollableElement);
     attachEventListeners();
 }
 
-function displayScrollableElements() {
-    ipcRenderer.send('scrollableElements-addHighlight', scrollableElements);
+async function displayScrollableElements() {
+    ipcRenderer.send('allScrollableElements-addHighlight', scrollableElements);
     
     const scrollButtonsContainer = document.querySelector('.scroll-buttons-container');
     scrollButtonsContainer.innerHTML = ''; // Clear existing buttons
@@ -131,7 +132,7 @@ function displayScrollableElements() {
 
     const navbarTitle = document.createElement('div');
     navbarTitle.classList.add('navbar-title');
-    navbarTitle.textContent = 'Select Scrollable Elements';
+    navbarTitle.textContent = 'Select Scrollable Element';
     navbar.appendChild(navbarTitle);
 
     // get the first 6 scrollable elements
@@ -139,22 +140,30 @@ function displayScrollableElements() {
     elementsToDisplay.forEach((_, idx) => {
         const button = document.createElement('button');
         button.classList.add('button');
-        button.setAttribute('id', `${idPrefix[idx + 1]}ScrollableBtn`);
+        button.setAttribute('id', `${idPrefix[idx]}ScrollableElementBtn`);
         button.textContent = `${idx + 1}`;
         scrollButtonsContainer.appendChild(button);
     });
 
     attachEventListeners();
+    switch (elementsToDisplay.length) {
+        case 1: await updateScenarioId(14, buttons, ViewNames.SEEK, false); break;
+        case 2: await updateScenarioId(15, buttons, ViewNames.SEEK, false); break;
+        case 3: await updateScenarioId(16, buttons, ViewNames.SEEK, false); break;
+        case 4: await updateScenarioId(17, buttons, ViewNames.SEEK, false); break;
+        case 5: await updateScenarioId(18, buttons, ViewNames.SEEK, false); break;
+        case 6: await updateScenarioId(19, buttons, ViewNames.SEEK, false); break;
+    }
 }
 
 function attachEventListeners() {
     const idMap = {
-        firstScrollableBtn: 1,
-        secondScrollableBtn: 2,
-        thirdScrollableBtn: 3,
-        fourthScrollableBtn: 4,
-        fifthScrollableBtn: 5,
-        sixthScrollableBtn: 6
+        firstScrollableElementBtn: 1,
+        secondScrollableElementBtn: 2,
+        thirdScrollableElementBtn: 3,
+        fourthScrollableElementBtn: 4,
+        fifthScrollableElementBtn: 5,
+        sixthScrollableElementBtn: 6
     };
 
     const overlay = document.getElementById('seekOverlay');
@@ -202,13 +211,15 @@ function attachEventListeners() {
                     await stopManager();
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
                     break;
-                case "firstScrollableBtn":
-                case "secondScrollableBtn":
-                case "thirdScrollableBtn":
-                case "fourthScrollableBtn":
-                case "fifthScrollableBtn":
-                case "sixthScrollableBtn":
-                    initSeekOverlay(`Element ${idMap[buttonId]}`, scrollableElements[idMap[buttonId]]);
+                case "firstScrollableElementBtn":
+                case "secondScrollableElementBtn":
+                case "thirdScrollableElementBtn":
+                case "fourthScrollableElementBtn":
+                case "fifthScrollableElementBtn":
+                case "sixthScrollableElementBtn":
+                    const chosenElement = scrollableElements[idMap[buttonId] - 1];
+                    console.log(`Chosen Element: ${chosenElement}`);
+                    initSeekOverlay(`Element ${idMap[buttonId]}`, chosenElement);
                     break;
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);

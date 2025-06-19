@@ -343,6 +343,15 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('scrollableElements-addHighlight', (event, elements) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('scrollableElements-addHighlight', elements);
+        } catch (err) {
+            console.error('Error adding highlight to scrollable elements:', err.message);
+        }
+    });
+
     ipcMain.handle('bookmark-add', async (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

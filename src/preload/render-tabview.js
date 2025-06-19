@@ -245,6 +245,70 @@ ipcRenderer.on('navigate-forward', (event) => {
     }
 });
 
+ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, behavior }) => {
+    try {
+        const domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+        if (!domElementToScroll) {
+            console.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
+            return;
+        }
+
+        domElementToScroll.scrollBy({ top, behavior });
+    } catch (error) {
+        console.error('Error in scrollableElement-scroll handler:', error);
+    }
+});
+
+ipcRenderer.on('scrollableElements-addHighlight', (event, scrollableElements) => {
+    try {
+        scrollableElements.forEach((element) => {
+            let elementInDom = null;
+
+            if (element.inIframe && element.iframeBounds) {
+                // Handle iframe elements
+                const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+                // Find iframe matching the coordinates
+                const matchingIframe = iframes.find(iframe => {
+                    const rect = iframe.getBoundingClientRect();
+                    return rect.x === element.iframeBounds.x &&
+                        rect.y === element.iframeBounds.y &&
+                        rect.width === element.iframeBounds.width &&
+                        rect.height === element.iframeBounds.height;
+                });
+
+                if (matchingIframe) {
+                    try {
+                        const iframeDoc = matchingIframe.contentDocument || matchingIframe.contentWindow.document;
+                        if (iframeDoc) {
+                            elementInDom = iframeDoc.querySelector(`[data-scrollable-boggle-id="${element.scrollableBoggleId}"]`);
+                        }
+                    } catch (err) {
+                        console.warn('Cannot access iframe due to cross-origin restriction:', err);
+                    }
+                }
+            } else {
+                // Top-level element
+                elementInDom = document.querySelector(`[data-scrollable-boggle-id="${element.scrollableBoggleId}"]`);
+            }
+
+            if (!elementInDom) {
+                console.warn(`Element with scrollableBoggleId ${element.scrollableBoggleId} not found in the DOM.`);
+                return;
+            }
+
+            // Store original styles in data attributes if not already stored
+            if (!elementInDom.hasAttribute('data-original-border')) {
+                elementInDom.setAttribute('data-original-border', elementInDom.style.border || '');
+            }
+
+            elementInDom.style.border = '3px solid rgba(183, 255, 0, 0.50)';
+        });
+    } catch (error) {
+        console.error('Error in interactiveElements-addHighlight handler:', error);
+    }
+});
+
 function stretchBodyFromBottomCenter(duration = 500) {
     const body = document.body;
     body.style.overflow = 'hidden'; // prevents scrolling during animation
@@ -429,17 +493,3 @@ function checkAllInteractiveElementPositions() {
         }
     }
 }
-
-ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, behavior }) => {
-    try {
-        const domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
-        if (!domElementToScroll) {
-            console.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
-            return;
-        }
-
-        domElementToScroll.scrollBy({ top, behavior });
-    } catch (error) {
-        console.error('Error in scrollableElement-scroll handler:', error);
-    }
-});

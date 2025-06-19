@@ -48,7 +48,6 @@ async function initSeekOverlay() {
     const mainBody = scrollableElements.find(async element => {
         return await element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
     });
-    console.log('Main Body Element:', mainBody);
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
@@ -77,18 +76,19 @@ async function initSeekOverlay() {
             sidebar.appendChild(scrollButtonsContainer);
         }
 
-        // Add button to select scrollable elements
-        const selectScrollableElementButton = document.createElement('button');
-        selectScrollableElementButton.classList.add('button');
-        selectScrollableElementButton.setAttribute('id', 'selectScrollableElementBtn');
-        selectScrollableElementButton.innerHTML = createMaterialIcon('sm', 'swap_vert');
+        if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) {
+            // Add button to select scrollable elements
+            const selectScrollableElementButton = document.createElement('button');
+            selectScrollableElementButton.classList.add('button');
+            selectScrollableElementButton.setAttribute('id', 'selectScrollableElementBtn');
+            selectScrollableElementButton.innerHTML = createMaterialIcon('sm', 'swap_vert');
 
-        const scrollableSpan = document.createElement('span');
-        scrollableSpan.textContent = 'Select Scrollable Element';
+            const scrollableSpan = document.createElement('span');
+            scrollableSpan.textContent = 'Select Scrollable Element';
 
-        selectScrollableElementButton.insertBefore(scrollableSpan, selectScrollableElementButton.firstChild);
-        navbar.appendChild(selectScrollableElementButton);
-        navbar.classList.add('navbar');
+            selectScrollableElementButton.insertBefore(scrollableSpan, selectScrollableElementButton.firstChild);
+            navbar.appendChild(selectScrollableElementButton);            
+        }
     }
 
     // Add button to find
@@ -102,11 +102,13 @@ async function initSeekOverlay() {
 
     findButton.insertBefore(findSpan, findButton.firstChild);
     navbar.appendChild(findButton);
+    navbar.classList.add('navbar');
 
 
     buttons = document.querySelectorAll('button');
-    if (mainBody) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
-    else await updateScenarioId(11, buttons, ViewNames.SEEK, false);
+    if (mainBody && scrollableElements.length > 0) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
+    else if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
+    else await updateScenarioId(12, buttons, ViewNames.SEEK, false);
 
     attachEventListeners();
 }
@@ -125,7 +127,7 @@ function attachEventListeners() {
 
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
-        
+
         setTimeout(async () => {
             switch (buttonId) {
                 case "selectScrollableElementBtn":

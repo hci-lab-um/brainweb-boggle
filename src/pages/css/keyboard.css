@@ -398,6 +398,7 @@ body {
   font-size: 40px;
   font-family: monospace;
   white-space: pre-wrap;
+  word-break: break-word;
   padding: 2px;
   max-height: 100%;
   width: 100%;

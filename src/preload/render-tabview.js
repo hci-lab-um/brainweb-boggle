@@ -205,7 +205,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
             if (
                 (
                     (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
-                    element.scrollHeight > element.clientHeight &&
+                    element.scrollHeight >= element.clientHeight &&
                     style.overflowY !== 'visible'
                 )
             ) {

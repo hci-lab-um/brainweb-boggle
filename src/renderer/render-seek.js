@@ -40,7 +40,7 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
 //     await reInitialiseSelectOverlay();
 // });
 
-async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableElement = null) {
+async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableElement = null) {
     scrollableElements = await ipcRenderer.invoke('scrollableElements-get'); // Fetching scrollable elements from the tabView
     console.log('Scrollable Elements:', scrollableElements);
 
@@ -57,13 +57,21 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
         return await element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
     });
 
-    if (mainBody && !selectedScrollableElement) currentScrollableElement = mainBody;
-    else if (selectedScrollableElement) currentScrollableElement = selectedScrollableElement;
+    if (mainBody && !selectedScrollableElement) {
+        currentScrollableElement = mainBody;   
+        const mainBodyIndex = scrollableElements.indexOf(mainBody);
+        titleContent = `Element ${mainBodyIndex + 1}`; // Set title for main body  
+    } else if (!mainBody && !selectedScrollableElement) {
+        // Fallback to the first scrollable element if no main body is found
+        currentScrollableElement = scrollableElements[0]; 
+        titleContent = 'Element 1';
+    } else if (selectedScrollableElement) {
+        currentScrollableElement = selectedScrollableElement;
+    }
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
         if (currentScrollableElement) {
-
             const title = document.createElement('div');
             title.textContent = titleContent;
             title.classList.add('scroll-title');
@@ -165,7 +173,6 @@ async function addHighlightToScrollableElements(elements) {
     webpageBounds = await webpage.getBoundingClientRect();
 
     elements.forEach((element, idx) => {
-        // use the x, y, width, height properties to create a border highlight
         const highlight = document.createElement('div');
         highlight.classList.add('scrollable-element-highlight');
         highlight.style.position = 'absolute';
@@ -173,12 +180,11 @@ async function addHighlightToScrollableElements(elements) {
         highlight.style.top = `${element.y + webpageBounds.y}px`;
         highlight.style.width = `${element.width}px`;
         highlight.style.height = `${element.height}px`;
-        highlight.style.zIndex = '1000'; // Ensure it is above other elements
-        highlight.style.pointerEvents = 'none'; // Allow clicks to pass through
-        highlight.style.border = '3px solid rgba(183, 255, 0, 0.50)'; // Semi-transparent using accent
-        highlight.style.borderRadius = '8px'; // Optional: rounded corners
-        highlight.style.boxSizing = 'border-box'; // Ensure border is included in dimensions
-        highlight.style.transition = 'border-color 0.3s ease'; // Smooth transition for border color
+        highlight.style.zIndex = '1000'; 
+        highlight.style.border = '3px solid rgba(183, 255, 0, 0.50)';
+        highlight.style.borderRadius = '8px';
+        highlight.style.boxSizing = 'border-box';
+        highlight.style.transition = 'border-color 0.3s ease';
 
         const label = document.createElement('span');
         label.classList.add('element-number');
@@ -273,7 +279,7 @@ function attachEventListeners() {
                 case "fifthScrollableElementBtn":
                 case "sixthScrollableElementBtn":
                     const chosenElement = scrollableElements[idMap[buttonId] - 1];
-                    console.log(scrollableElements[idMap[buttonId] - 1]);
+                    console.log(`Element ${idMap[buttonId]}`)
                     console.log(`Chosen Element: ${chosenElement}`);
                     initSeekOverlay(`Element ${idMap[buttonId]}`, chosenElement);
                     break;

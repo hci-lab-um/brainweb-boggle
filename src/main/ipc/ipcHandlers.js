@@ -343,34 +343,6 @@ function registerIpcHandlers(context) {
         }
     });
     
-
-    ipcMain.on('scrollableElement-addHighlight', (event, element) => {
-        try {
-            let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('scrollableElement-addHighlight', element);
-        } catch (err) {
-            console.error('Error adding highlight to scrollable elements:', err.message);
-        }
-    });
-
-    ipcMain.on('allScrollableElements-addHighlight', (event, elements) => {
-        try {
-            let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('allScrollableElements-addHighlight', elements);
-        } catch (err) {
-            console.error('Error adding highlight to scrollable elements:', err.message);
-        }
-    });
-
-    ipcMain.on('scrollableElements-removeHighlight', (event) => {
-        try {
-            let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('scrollableElements-removeHighlight');
-        } catch (err) {
-            console.error('Error removing highlight from scrollable elements:', err.message);
-        }
-    });
-
     ipcMain.handle('bookmark-add', async (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

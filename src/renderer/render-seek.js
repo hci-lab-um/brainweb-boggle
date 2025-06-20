@@ -44,6 +44,8 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
     scrollableElements = await ipcRenderer.invoke('scrollableElements-get'); // Fetching scrollable elements from the tabView
     console.log('Scrollable Elements:', scrollableElements);
 
+    removeHighlightFromScrollableElements(); // Remove any existing highlights
+
     navbar.innerHTML = '';  // Clear existing navbar content
     sidebar.innerHTML = ''; // Clear existing sidebar content
 
@@ -56,6 +58,7 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
     });
 
     if (mainBody && !selectedScrollableElement) currentScrollableElement = mainBody;
+    else if (selectedScrollableElement) currentScrollableElement = selectedScrollableElement;
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
@@ -116,14 +119,14 @@ async function initSeekOverlay(titleContent = 'Main Body', selectedScrollableEle
     else if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
     else await updateScenarioId(12, buttons, ViewNames.SEEK, false);
 
-    // ipcRenderer.send('scrollableElements-removeHighlight');
-    ipcRenderer.send('scrollableElement-addHighlight', currentScrollableElement);
+    addHighlightToScrollableElements([currentScrollableElement]);
     attachEventListeners();
 }
 
 async function displayScrollableElements() {
-    ipcRenderer.send('allScrollableElements-addHighlight', scrollableElements);
-    
+    removeHighlightFromScrollableElements(); // Remove any existing highlights
+    addHighlightToScrollableElements(scrollableElements);
+
     const scrollButtonsContainer = document.querySelector('.scroll-buttons-container');
     scrollButtonsContainer.innerHTML = ''; // Clear existing buttons
     const title = document.querySelector('.scroll-title');
@@ -154,6 +157,58 @@ async function displayScrollableElements() {
         case 5: await updateScenarioId(18, buttons, ViewNames.SEEK, false); break;
         case 6: await updateScenarioId(19, buttons, ViewNames.SEEK, false); break;
     }
+}
+
+async function addHighlightToScrollableElements(elements) {
+    if (!elements || elements.length === 0) return;
+
+    webpageBounds = await webpage.getBoundingClientRect();
+
+    elements.forEach((element, idx) => {
+        // use the x, y, width, height properties to create a border highlight
+        const highlight = document.createElement('div');
+        highlight.classList.add('scrollable-element-highlight');
+        highlight.style.position = 'absolute';
+        highlight.style.left = `${element.x + webpageBounds.x}px`;
+        highlight.style.top = `${element.y + webpageBounds.y}px`;
+        highlight.style.width = `${element.width}px`;
+        highlight.style.height = `${element.height}px`;
+        highlight.style.zIndex = '1000'; // Ensure it is above other elements
+        highlight.style.pointerEvents = 'none'; // Allow clicks to pass through
+        highlight.style.border = '3px solid rgba(183, 255, 0, 0.50)'; // Semi-transparent using accent
+        highlight.style.borderRadius = '8px'; // Optional: rounded corners
+        highlight.style.boxSizing = 'border-box'; // Ensure border is included in dimensions
+        highlight.style.transition = 'border-color 0.3s ease'; // Smooth transition for border color
+
+        const label = document.createElement('span');
+        label.classList.add('element-number');
+
+        // If the element does not have a labelNumber already set, then set it and the label's text content to idx + 1
+        if (!elements[idx].labelNumber) {
+            label.textContent = idx + 1;
+            elements[idx].labelNumber = idx + 1;
+        } else {
+            // If it already has a labelNumber, use that
+            label.textContent = elements[idx].labelNumber;
+        }
+
+        let left = (element.x * zoomFactor) + webpageBounds.x;
+        let top = (element.y * zoomFactor) + webpageBounds.y;
+
+        // Placing label position at the edges of the visible bounds
+        left = Math.max(webpageBounds.x, Math.min(left, webpageBounds.x + webpageBounds.width - label.offsetWidth));
+        top = Math.max(webpageBounds.y, Math.min(top, webpageBounds.y + webpageBounds.height - label.offsetHeight));
+
+        label.style.left = `${left}px`;
+        label.style.top = `${top}px`;
+
+        document.body.appendChild(highlight);
+        document.body.appendChild(label);
+    });
+}
+
+function removeHighlightFromScrollableElements() {
+    document.querySelectorAll('.scrollable-element-highlight, .element-number').forEach(el => el.remove());
 }
 
 function attachEventListeners() {
@@ -218,6 +273,7 @@ function attachEventListeners() {
                 case "fifthScrollableElementBtn":
                 case "sixthScrollableElementBtn":
                     const chosenElement = scrollableElements[idMap[buttonId] - 1];
+                    console.log(scrollableElements[idMap[buttonId] - 1]);
                     console.log(`Chosen Element: ${chosenElement}`);
                     initSeekOverlay(`Element ${idMap[buttonId]}`, chosenElement);
                     break;

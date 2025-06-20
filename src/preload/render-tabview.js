@@ -201,15 +201,29 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
         }
 
         allElements.forEach((element, idx) => {
+            const isHtml = element.tagName.toLowerCase() == 'html';
+            const isBody = element.tagName.toLowerCase() == 'body';
+
             const style = window.getComputedStyle(element);
-            if (element.tagName.toLowerCase() == 'html' || element.tagName.toLowerCase() == 'body') {
+            if (isHtml || isBody) {
                 if (element.scrollHeight > element.clientHeight) {
-                    scrollableElements.push(element);
-                    element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                    // Only adding html to the scrollable elements. If there is no html we add the body as a fallback
+                    if (isBody && scrollableElements.some(el => el.tagName.toLowerCase() === 'html')) {
+                        return;
+                    }
+                    else if (isHtml && scrollableElements.some(el => el.tagName.toLowerCase() === 'body')) {
+                        scrollableElements.push(element);
+                        element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                        scrollableElements = scrollableElements.filter(el => el.tagName.toLowerCase() !== 'body');
+                        return;
+                    }
+                    else {
+                        scrollableElements.push(element);
+                        element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                    }
                 }
-            }
-            else
-                //Any internal element within the page
+            } else
+                // Getting any internal element within the page
                 if (
                     element.scrollHeight > element.clientHeight &&
                     (style.overflowY === 'scroll' || style.overflowY === 'auto') &&

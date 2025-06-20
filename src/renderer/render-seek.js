@@ -48,51 +48,39 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
     navbar.innerHTML = '';  // Clear existing navbar content
     sidebar.innerHTML = ''; // Clear existing sidebar content
+    let title;
 
     const scrollButtonsContainer = document.createElement('div');
     scrollButtonsContainer.classList.add('scroll-buttons-container');
 
     // Getting the scrollable mainBody element with tagName 'html' or 'body'
-    const mainBody = scrollableElements.find(async element => {
-        return await element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
+    const mainBody = await scrollableElements.find(element => {
+        console.log(`Checking element: ${element.tagName}`);
+        return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
     });
-
-    if (mainBody && !selectedScrollableElement) {
-        currentScrollableElement = mainBody;   
-        const mainBodyIndex = scrollableElements.indexOf(mainBody);
-        titleContent = `Element ${mainBodyIndex + 1}`; // Set title for main body  
-    } else if (!mainBody && !selectedScrollableElement) {
-        // Fallback to the first scrollable element if no main body is found
-        currentScrollableElement = scrollableElements[0]; 
-        titleContent = 'Element 1';
-    } else if (selectedScrollableElement) {
-        currentScrollableElement = selectedScrollableElement;
-    }
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
-        if (currentScrollableElement) {
-            const title = document.createElement('div');
-            title.textContent = titleContent;
-            title.classList.add('scroll-title');
+        title = document.createElement('div');
+        title.textContent = titleContent;
+        title.classList.add('scroll-title');
 
-            sidebar.appendChild(title);
+        sidebar.appendChild(title);
 
-            // Render top and bottom scroll buttons
-            const scrollUpButton = document.createElement('button');
-            scrollUpButton.classList.add('button', 'scroll-button', 'scroll-up');
-            scrollUpButton.innerHTML = createMaterialIcon('xl', 'keyboard_arrow_up');
-            scrollUpButton.setAttribute('id', 'scrollUpBtn');
+        // Render top and bottom scroll buttons
+        const scrollUpButton = document.createElement('button');
+        scrollUpButton.classList.add('button', 'scroll-button', 'scroll-up');
+        scrollUpButton.innerHTML = createMaterialIcon('xl', 'keyboard_arrow_up');
+        scrollUpButton.setAttribute('id', 'scrollUpBtn');
 
-            const scrollDownButton = document.createElement('button');
-            scrollDownButton.classList.add('button', 'scroll-button', 'scroll-down');
-            scrollDownButton.innerHTML = createMaterialIcon('xl', 'keyboard_arrow_down');
-            scrollDownButton.setAttribute('id', 'scrollDownBtn');
+        const scrollDownButton = document.createElement('button');
+        scrollDownButton.classList.add('button', 'scroll-button', 'scroll-down');
+        scrollDownButton.innerHTML = createMaterialIcon('xl', 'keyboard_arrow_down');
+        scrollDownButton.setAttribute('id', 'scrollDownBtn');
 
-            scrollButtonsContainer.appendChild(scrollUpButton);
-            scrollButtonsContainer.appendChild(scrollDownButton);
-            sidebar.appendChild(scrollButtonsContainer);
-        }
+        scrollButtonsContainer.appendChild(scrollUpButton);
+        scrollButtonsContainer.appendChild(scrollDownButton);
+        sidebar.appendChild(scrollButtonsContainer);
 
         if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) {
             // Add button to select scrollable elements
@@ -122,10 +110,30 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
     navbar.appendChild(findButton);
     navbar.classList.add('navbar');
 
+    if (mainBody && !selectedScrollableElement) {
+        // If the main body is found, set it as the current scrollable element
+        currentScrollableElement = mainBody;
+        const mainBodyIndex = scrollableElements.indexOf(mainBody);
+        title.textContent = `Element ${mainBodyIndex + 1}`; // Set title for main body  
+    } else if (!mainBody && !selectedScrollableElement && scrollableElements.length > 1) {
+        // Display a selectable list of scrollable elements if no main body is found and multiple scrollable elements exist
+        await displayScrollableElements();
+    } else if (selectedScrollableElement) {
+        // If a specific scrollable element is selected, set it as the current scrollable element
+        currentScrollableElement = selectedScrollableElement;
+    }
+
     buttons = document.querySelectorAll('button');
-    if (mainBody && scrollableElements.length > 0) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
-    else if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
-    else await updateScenarioId(12, buttons, ViewNames.SEEK, false);
+    // When the only scrollable element is the main body, we set the scenarioId to 11
+    if (mainBody && scrollableElements.length === 1 && !selectedScrollableElement) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
+    // When there is a main body with multiple scrollable elements, we set the scenarioId to 10
+    else if (mainBody && scrollableElements.length > 1 && !selectedScrollableElement) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
+    // When there are no scrollable elements, we set the scenarioId to 12
+    else if (scrollableElements.length === 0) await updateScenarioId(12, buttons, ViewNames.SEEK, false);
+    // When there is a selected scrollable element with other scrollable elements, we set the scenarioId to 10
+    else if (selectedScrollableElement && scrollableElements.length > 1) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
+    // When there is a selected scrollable element and no other scrollable elements, we set the scenarioId to 11
+    else if (selectedScrollableElement && scrollableElements.length === 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
 
     addHighlightToScrollableElements([currentScrollableElement]);
     attachEventListeners();
@@ -180,7 +188,7 @@ async function addHighlightToScrollableElements(elements) {
         highlight.style.top = `${element.y + webpageBounds.y}px`;
         highlight.style.width = `${element.width}px`;
         highlight.style.height = `${element.height}px`;
-        highlight.style.zIndex = '1000'; 
+        highlight.style.zIndex = '1000';
         highlight.style.border = '3px solid rgba(183, 255, 0, 0.50)';
         highlight.style.borderRadius = '8px';
         highlight.style.boxSizing = 'border-box';
@@ -278,6 +286,7 @@ function attachEventListeners() {
                 case "fourthScrollableElementBtn":
                 case "fifthScrollableElementBtn":
                 case "sixthScrollableElementBtn":
+                    await stopManager();
                     const chosenElement = scrollableElements[idMap[buttonId] - 1];
                     console.log(`Element ${idMap[buttonId]}`)
                     console.log(`Chosen Element: ${chosenElement}`);

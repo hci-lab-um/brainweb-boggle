@@ -202,16 +202,23 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
 
         allElements.forEach((element, idx) => {
             const style = window.getComputedStyle(element);
-            if (
-                (
-                    (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
-                    element.scrollHeight >= element.clientHeight &&
-                    style.overflowY !== 'visible'
-                )
-            ) {
-                scrollableElements.push(element);
-                element.setAttribute('data-scrollable-boggle-id', idx + 1);
+            if (element.tagName.toLowerCase() == 'html' || element.tagName.toLowerCase() == 'body') {
+                if (element.scrollHeight > element.clientHeight) {
+                    scrollableElements.push(element);
+                    element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                }
             }
+            else
+                //Any internal element within the page
+                if (
+                    element.scrollHeight > element.clientHeight &&
+                    (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
+                    style.overflowY !== 'visible' &&
+                    style.visibility !== 'hidden'
+                ) {
+                    scrollableElements.push(element);
+                    element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                }
         });
         console.log('Scrollable Elements:', scrollableElements);
 

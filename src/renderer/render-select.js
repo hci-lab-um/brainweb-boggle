@@ -439,7 +439,7 @@ function attachEventListeners() {
                         }
 
                         ipcRenderer.send('mouse-click-nutjs', coordinates);
-                        ipcRenderer.send('interactiveElements-removeBoggleId');
+                        ipcRenderer.send('elementsInDom-removeBoggleId');
                     } catch (error) {
                         console.error('Error calculating the coordinates of the element', error);
                     }
@@ -462,7 +462,7 @@ function attachEventListeners() {
                 } else {
                     // No previous state, exit overlay
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
-                    ipcRenderer.send('interactiveElements-removeBoggleId');
+                    ipcRenderer.send('elementsInDom-removeBoggleId');
                 }
                 return;
             }

@@ -145,12 +145,13 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
     }
 });
 
-ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
+ipcRenderer.on('elementsInDom-removeBoggleId', (event) => {
     try {
         // Remove boggle IDs from top-level elements
-        const elementsInDom = document.querySelectorAll('[data-boggle-id]');
+        const elementsInDom = document.querySelectorAll('[data-boggle-id], [data-scrollable-boggle-id]');
         elementsInDom.forEach((elementInDom) => {
             elementInDom.removeAttribute('data-boggle-id');
+            elementInDom.removeAttribute('data-scrollable-boggle-id');
         });
 
         // Remove boggle IDs from same-origin iframes
@@ -160,16 +161,17 @@ ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 if (!iframeDoc) continue;
 
-                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id]');
+                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id], [data-scrollable-boggle-id]');
                 iframeElements.forEach((elementInDom) => {
                     elementInDom.removeAttribute('data-boggle-id');
+                    elementInDom.removeAttribute('data-scrollable-boggle-id');
                 });
             } catch (err) {
                 console.warn('Skipping iframe during removeBoggleId due to cross-origin restriction:', iframe.src);
             }
         }
     } catch (error) {
-        console.error('Error in interactiveElements-removeBoggleId handler:', error);
+        console.error('Error in elementsInDom-removeBoggleId handler:', error);
     }
 });
 
@@ -200,7 +202,8 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
             }
         }
 
-        allElements.forEach((element, idx) => {
+        let scrollableId = 1;
+        allElements.forEach((element) => {
             const isHtml = element.tagName.toLowerCase() == 'html';
             const isBody = element.tagName.toLowerCase() == 'body';
 
@@ -213,13 +216,13 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
                     }
                     else if (isHtml && scrollableElements.some(el => el.tagName.toLowerCase() === 'body')) {
                         scrollableElements.push(element);
-                        element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                        element.setAttribute('data-scrollable-boggle-id', scrollableId++);
                         scrollableElements = scrollableElements.filter(el => el.tagName.toLowerCase() !== 'body');
                         return;
                     }
                     else {
                         scrollableElements.push(element);
-                        element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                        element.setAttribute('data-scrollable-boggle-id', scrollableId++);
                     }
                 }
             } else
@@ -231,7 +234,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
                     style.visibility !== 'hidden'
                 ) {
                     scrollableElements.push(element);
-                    element.setAttribute('data-scrollable-boggle-id', idx + 1);
+                    element.setAttribute('data-scrollable-boggle-id', scrollableId++);
                 }
         });
         console.log('Scrollable Elements:', scrollableElements);
@@ -274,6 +277,7 @@ ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, be
             return;
         }
 
+        console.log(`Scrolling element ${domElementToScroll} with boggleId ${scrollableBoggleId}`);
         domElementToScroll.scrollBy({ top, behavior });
     } catch (error) {
         console.error('Error in scrollableElement-scroll handler:', error);

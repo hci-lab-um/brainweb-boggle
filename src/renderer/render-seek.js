@@ -82,7 +82,7 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
         scrollButtonsContainer.appendChild(scrollDownButton);
         sidebar.appendChild(scrollButtonsContainer);
 
-        if ((scrollableElements.length === 1 && !mainBody) || scrollableElements.length > 1) {
+        if (scrollableElements.length > 1) {
             // Add button to select scrollable elements
             const selectScrollableElementButton = document.createElement('button');
             selectScrollableElementButton.classList.add('button');
@@ -114,28 +114,29 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
         // If the main body is found, set it as the current scrollable element
         currentScrollableElement = mainBody;
         const mainBodyIndex = scrollableElements.indexOf(mainBody);
-        title.textContent = `Element ${mainBodyIndex + 1}`; // Set title for main body  
+        title.textContent = `Element ${mainBodyIndex + 1}`; // Set title for main body 
+        addHighlightToScrollableElements([currentScrollableElement]);
+    } else if (!mainBody && !selectedScrollableElement && scrollableElements.length === 1) {
+        currentScrollableElement = scrollableElements[0];
+        addHighlightToScrollableElements([currentScrollableElement]);
     } else if (!mainBody && !selectedScrollableElement && scrollableElements.length > 1) {
         // Display a selectable list of scrollable elements if no main body is found and multiple scrollable elements exist
         await displayScrollableElements();
     } else if (selectedScrollableElement) {
         // If a specific scrollable element is selected, set it as the current scrollable element
         currentScrollableElement = selectedScrollableElement;
+        addHighlightToScrollableElements([currentScrollableElement]);
     }
 
     buttons = document.querySelectorAll('button');
-    // When the only scrollable element is the main body, we set the scenarioId to 11
-    if (mainBody && scrollableElements.length === 1 && !selectedScrollableElement) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
-    // When there is a main body with multiple scrollable elements, we set the scenarioId to 10
-    else if (mainBody && scrollableElements.length > 1 && !selectedScrollableElement) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
+
+    // When there is only 1 scrollable element, we set the scenarioId to 11
+    if (scrollableElements.length === 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
+    // When there are multiple scrollable elements, we set the scenarioId to 10
+    else if (scrollableElements.length > 1) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
     // When there are no scrollable elements, we set the scenarioId to 12
     else if (scrollableElements.length === 0) await updateScenarioId(12, buttons, ViewNames.SEEK, false);
-    // When there is a selected scrollable element with other scrollable elements, we set the scenarioId to 10
-    else if (selectedScrollableElement && scrollableElements.length > 1) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
-    // When there is a selected scrollable element and no other scrollable elements, we set the scenarioId to 11
-    else if (selectedScrollableElement && scrollableElements.length === 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
 
-    addHighlightToScrollableElements([currentScrollableElement]);
     attachEventListeners();
 }
 
@@ -176,9 +177,11 @@ async function displayScrollableElements() {
 }
 
 async function addHighlightToScrollableElements(elements) {
+    console.log('Adding highlight to scrollable elements:', elements);
     if (!elements || elements.length === 0) return;
 
     webpageBounds = await webpage.getBoundingClientRect();
+    console.log('Webpage bounds:', webpageBounds);
 
     elements.forEach((element, idx) => {
         const highlight = document.createElement('div');
@@ -279,6 +282,7 @@ function attachEventListeners() {
                 case "closeSeekBtn":
                     await stopManager();
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
+                    ipcRenderer.on('elementsInDom-removeBoggleId', ViewNames.SEEK);
                     break;
                 case "firstScrollableElementBtn":
                 case "secondScrollableElementBtn":

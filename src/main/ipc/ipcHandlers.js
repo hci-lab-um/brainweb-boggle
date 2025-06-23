@@ -298,10 +298,10 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('interactiveElements-removeBoggleId', (event, elements) => {
+    ipcMain.on('elementsInDom-removeBoggleId', (event, elements) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('interactiveElements-removeBoggleId', elements);
+            activeTab.webContentsView.webContents.send('elementsInDom-removeBoggleId', elements);
         } catch (err) {
             console.error('Error removing Boggle IDs from interactive elements:', err.message);
         }

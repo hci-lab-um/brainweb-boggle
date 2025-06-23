@@ -6,7 +6,11 @@ function createMaterialIcon(size, icon_name) {
 // Utility function to capture a snapshot of the active tab - used for the bookmark and tabs feature
 async function captureSnapshot(activeTab) {
     try {
-        if (activeTab && activeTab.webContentsView && activeTab.webContentsView.webContents) {
+        if (activeTab && 
+            activeTab.webContentsView && 
+            activeTab.webContentsView.webContents && 
+            !activeTab.webContentsView.webContents.isDestroyed()
+        ) {
             const snapshot = await activeTab.webContentsView.webContents.capturePage();
             activeTab.snapshot = snapshot.toDataURL();
             return activeTab.snapshot;

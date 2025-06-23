@@ -275,15 +275,16 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
-                // Active tab was chosen because when any tab is created, it is set as active.
-                // The tabs loaded from the database will already have a snapshot.
-                // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
-                captureSnapshot(activeTab);
 
                 // When loading the tabs from the database, each tab will start and stop loading,
                 // but the first tab might not be the active one, and so there might not be an 
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
+                    // Active tab was chosen because when any tab is created, it is set as active.
+                    // The tabs loaded from the database will already have a snapshot.
+                    // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
+                    captureSnapshot(activeTab);
+                    
                     let title = activeTab.webContentsView.webContents.getTitle();
 
                     // Fallback to URL if there is no title

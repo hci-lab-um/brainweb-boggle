@@ -110,6 +110,9 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
     navbar.appendChild(findButton);
     navbar.classList.add('navbar');
 
+    const closeButton = document.getElementById('closeSeekBtn');
+    closeButton.innerHTML = createMaterialIcon('s', 'close');
+
     if (mainBody && !selectedScrollableElement) {
         // If the main body is found, set it as the current scrollable element
         currentScrollableElement = mainBody;
@@ -142,6 +145,8 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
 async function displayScrollableElements() {
     removeHighlightFromScrollableElements(); // Remove any existing highlights
+    scrollableElements = await ipcRenderer.invoke('scrollableElements-get'); // Fetching scrollable elements from the tabView
+    console.log('Scrollable Elements after pressing the button:', scrollableElements);
     addHighlightToScrollableElements(scrollableElements);
 
     const scrollButtonsContainer = document.querySelector('.scroll-buttons-container');
@@ -154,6 +159,9 @@ async function displayScrollableElements() {
     navbarTitle.classList.add('navbar-title');
     navbarTitle.textContent = 'Select Scrollable Element';
     navbar.appendChild(navbarTitle);
+
+    const closeButton = document.getElementById('closeSeekBtn');
+    closeButton.innerHTML = createMaterialIcon('s', 'arrow_back');
 
     // get the first 6 scrollable elements
     const elementsToDisplay = scrollableElements.slice(0, 6);
@@ -184,13 +192,49 @@ async function addHighlightToScrollableElements(elements) {
     console.log('Webpage bounds:', webpageBounds);
 
     elements.forEach((element, idx) => {
+        const zoomedX = element.x * zoomFactor;
+        const zoomedY = element.y * zoomFactor;
+        const zoomedWidth = element.width * zoomFactor;
+        const zoomedHeight = element.height * zoomFactor;
+
+        // Absolute position of element in the browser overlay (relative to browser, not webpage)
+        const absoluteX = zoomedX + webpageBounds.x;
+        const absoluteY = zoomedY + webpageBounds.y;
+
+        // Clamp left and top position if part of element is outside the visible webpage area
+        const visibleLeft = Math.max(absoluteX, webpageBounds.x);
+        const visibleTop = Math.max(absoluteY, webpageBounds.y);
+
+        // Clamp right and bottom to ensure highlight doesn't overflow outside the webpage bounds
+        const visibleRight = Math.min(absoluteX + zoomedWidth, webpageBounds.x + webpageBounds.width);
+        const visibleBottom = Math.min(absoluteY + zoomedHeight, webpageBounds.y + webpageBounds.height);
+
+        // Compute visible dimensions
+        const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+        // Set highlight box styles
+        let elementLeft = `${visibleLeft}px`;
+        let elementTop = `${visibleTop}px`;
+        let elementWidth = `${visibleWidth}px`;
+        let elementHeight = `${visibleHeight}px`;
+
+        // If the element is the main body (html or body), adjust its position and size
+        if (element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body')) {
+            elementLeft = `${Math.max(webpageBounds.x, Math.min(zoomedX + webpageBounds.x, webpageBounds.x + webpageBounds.width - element.width))}px`;
+            elementTop = `${Math.max(webpageBounds.y, Math.min(zoomedY + webpageBounds.y, webpageBounds.y + webpageBounds.height - element.height))}px`;
+            elementWidth = `${zoomedWidth}px`;
+            elementHeight = `${zoomedHeight}px`;
+        }
+
         const highlight = document.createElement('div');
         highlight.classList.add('scrollable-element-highlight');
         highlight.style.position = 'absolute';
-        highlight.style.left = `${element.x + webpageBounds.x}px`;
-        highlight.style.top = `${element.y + webpageBounds.y}px`;
-        highlight.style.width = `${element.width}px`;
-        highlight.style.height = `${element.height}px`;
+        // Calculates the left and top positions, clamped to the visible bounds of the webpage
+        highlight.style.left = elementLeft;
+        highlight.style.top = elementTop;
+        highlight.style.width = elementWidth;
+        highlight.style.height = elementHeight;
         highlight.style.zIndex = '1000';
         highlight.style.border = '3px solid rgba(183, 255, 0, 0.50)';
         highlight.style.borderRadius = '8px';
@@ -281,8 +325,15 @@ function attachEventListeners() {
                     break;
                 case "closeSeekBtn":
                     await stopManager();
+
+                    // If the button is a back button, we intialise the seek overlay with the current scrollable element
+                    if (button.innerHTML.includes('arrow_back')) { 
+                        initSeekOverlay(`Element ${currentScrollableElement.labelNumber}`, currentScrollableElement);
+                        break;
+                    }
+
+                    ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
-                    ipcRenderer.on('elementsInDom-removeBoggleId', ViewNames.SEEK);
                     break;
                 case "firstScrollableElementBtn":
                 case "secondScrollableElementBtn":

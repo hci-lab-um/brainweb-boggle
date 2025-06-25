@@ -239,7 +239,8 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
         });
         console.log('Scrollable Elements:', scrollableElements);
 
-        const serializedElements = scrollableElements.map(el => serialiseElement(el, scrollableElementsIframeMap.get(el)));
+        const visibleScrollableElements = filterVisibleElements(scrollableElements);
+        const serializedElements = visibleScrollableElements.map(el => serialiseElement(el, scrollableElementsIframeMap.get(el)));
         ipcRenderer.send('scrollableElements-response', serializedElements);
     }
     catch (error) {
@@ -324,6 +325,10 @@ function stretchBodyFromBottomCenter(duration = 500) {
 function filterVisibleElements(elements) {
     try {
         return elements.filter(element => {
+            // if the element is the html or body tag, we always consider it visible
+            if (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body') {
+                return true;
+            }
             const style = window.getComputedStyle(element);
             const rect = element.getBoundingClientRect();
             return (

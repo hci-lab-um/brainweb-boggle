@@ -461,8 +461,8 @@ function attachEventListeners() {
                     }
                 } else {
                     // No previous state, exit overlay
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                     ipcRenderer.send('elementsInDom-removeBoggleId');
+                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                 }
                 return;
             }

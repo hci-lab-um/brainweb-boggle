@@ -34,10 +34,6 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     }
 });
 
-ipcRenderer.on('select-reInitialise', async () => {
-    await reInitialiseSelectOverlay();
-});
-
 window.addEventListener('resize', async () => {
     await reInitialiseSelectOverlay();
 });

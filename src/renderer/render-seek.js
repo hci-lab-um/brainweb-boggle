@@ -32,13 +32,9 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     }
 });
 
-// ipcRenderer.on('select-reInitialise', async () => {
-//     await reInitialiseSelectOverlay();
-// });
-
-// window.addEventListener('resize', async () => {
-//     await reInitialiseSelectOverlay();
-// });
+window.addEventListener('resize', async () => {
+    initSeekOverlay(`Element ${currentScrollableElement.labelNumber}`, currentScrollableElement);
+});
 
 async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableElement = null) {
     scrollableElements = await ipcRenderer.invoke('scrollableElements-get'); // Fetching scrollable elements from the tabView
@@ -327,13 +323,12 @@ function attachEventListeners() {
                     await stopManager();
 
                     // If the button is a back button, we intialise the seek overlay with the current scrollable element
-                    if (button.innerHTML.includes('arrow_back')) { 
+                    if (button.innerHTML.includes('arrow_back')) {
                         initSeekOverlay(`Element ${currentScrollableElement.labelNumber}`, currentScrollableElement);
-                        break;
+                    } else {
+                        ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
                     }
-
-                    ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
                     break;
                 case "firstScrollableElementBtn":
                 case "secondScrollableElementBtn":

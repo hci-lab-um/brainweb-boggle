@@ -307,15 +307,6 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('interactiveElements-moved', (event) => {
-        try {
-            let selectOverlay = viewsList.find(view => view.name === ViewNames.SELECT);
-            selectOverlay.webContentsView.webContents.send('select-reInitialise');
-        } catch (err) {
-            console.error('Error handling interactive elements moved:', err.message);
-        }
-    });
-
     ipcMain.handle('scrollableElements-get', (event) => {
         return new Promise((resolve, reject) => {
             try {

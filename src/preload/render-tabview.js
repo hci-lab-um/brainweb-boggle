@@ -272,7 +272,30 @@ ipcRenderer.on('navigate-forward', (event) => {
 
 ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, behavior }) => {
     try {
-        const domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+        let domElementToScroll = null;
+
+        // First check top-level elements
+        domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+
+        // If not found in top-level, check same-origin iframes
+        if (!domElementToScroll) {
+            const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+            for (const iframe of iframes) {
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (iframeDoc) {
+                        domElementToScroll = iframeDoc.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+                        if (domElementToScroll) {
+                            break; // Found it, exit the loop
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Skipping iframe during scroll due to cross-origin restriction:', iframe.src);
+                }
+            }
+        }
+
         if (!domElementToScroll) {
             console.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
             return;

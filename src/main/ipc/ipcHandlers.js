@@ -208,6 +208,41 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('text-findInPage', (event, searchText) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            if (activeTab) {
+                activeTab.webContentsView.webContents.send('text-findInPage', searchText);
+            }
+        } catch (err) {
+            console.error('Error finding text in page:', err.message);
+        }
+    });
+
+    ipcMain.on('text-findInPage-response', (event, { searchText, count }) => {
+        try {
+            let seekOverlay = viewsList.find(view => view.name === ViewNames.SEEK);
+            if (seekOverlay) {
+                seekOverlay.webContentsView.webContents.send('text-findInPage-response', { searchText, count });
+            } else {
+                console.error('Seek overlay not found.');
+            }
+        } catch (err) {
+            console.error('Error handling text-findInPage-response:', err.message);
+        }
+    });
+
+    ipcMain.on('word-findNext', (event, { searchText, forward }) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            if (activeTab) {
+                activeTab.webContentsView.webContents.send('word-findNext', { searchText, forward });
+            } 
+        } catch (err) {
+            console.error('Error in word-findNext handler:', err.message);
+        }
+    });
+
     ipcMain.on('webpage-refresh', (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

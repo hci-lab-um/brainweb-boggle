@@ -21,8 +21,8 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         textarea = document.querySelector('#textarea');
         textareaAutocomplete = document.getElementById('textarea-autocomplete');
 
+        
         textarea.value = elementProperties.value;
-
         // Ensuring textarea stays focused by refocusing it if focus is lost
         textarea.addEventListener("focusout", (event) => {
             setTimeout(() => textarea.focus(), 0);
@@ -197,7 +197,7 @@ async function getScenarioNumber() {
     const textAreaPopulated = textarea.value.length > 0;
     const cursorAtStart = textarea.selectionStart === 0;
     const cursorAtEnd = textarea.selectionStart === textarea.value.length;
-
+ 
     if (!textAreaPopulated) {
         return 80; // Scenario: No text in search field
     }
@@ -390,6 +390,8 @@ function attachEventListeners() {
                         if (elementProperties.id === 'omnibox') {
                             let processedInput = await processUrlInput(input)
                             ipcRenderer.send('url-load', processedInput);
+                        } else if (elementProperties.id === 'findInPage') {
+                            ipcRenderer.send('text-findInPage', input);
                         } else {
                             const coordinates = {
                                 x: elementProperties.x + elementProperties.width / 2,

@@ -17,6 +17,7 @@ let navbar;
 let webpage;
 let scrollableElements = [];         // These are all the scrollable elements visible in the current tab
 let currentScrollableElement = null; // This is the currently selected scrollable element
+let currentSearchText = '';          // This is the text currently being searched in the page
 
 ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     try {
@@ -29,6 +30,21 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
         await initSeekOverlay(); // Begin initialisation
     } catch (error) {
         console.error('Error in select-loaded handler:', error);
+    }
+});
+
+ipcRenderer.on('text-findInPage-response', (event, { searchText, count }) => {
+    try {
+        currentSearchText = searchText; // Update the current search text
+        removeHighlightFromScrollableElements(); // Remove any existing highlights
+        console.log(`Find in page response: searchText="${searchText}", count=${count}`);
+        if (count > 0) {
+            displayFindInPage(searchText, count);
+        } else {
+            displayFindInPage(`No results found for "${searchText}"`, count);
+        }
+    } catch (err) {
+        console.error('Error finding text in page:', err.message);
     }
 });
 
@@ -180,6 +196,35 @@ async function displayScrollableElements() {
     }
 }
 
+function displayFindInPage(searchText, count = 0) {
+    const title = document.querySelector('.scroll-title');
+    title.innerHTML = searchText;
+
+    if (count > 0) {
+        let counter = document.querySelector('.scroll-counter');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.classList.add('scroll-counter');
+            counter.innerHTML = `1/${count}`;
+        } else {
+            counter.innerHTML = `1/${count}`;
+        }
+
+        // Append the counter after the title
+        title.parentNode.insertBefore(counter, title.nextSibling);
+
+        navbar.innerHTML = '';
+        const navbarTitle = document.createElement('div');
+        navbarTitle.classList.add('navbar-title');
+        navbarTitle.textContent = 'Find in Page';
+        navbarTitle.id = 'findInPageTitle';
+        navbar.appendChild(navbarTitle);
+    } else {
+        // Display not found message
+        console.log(`No occurrences of "${searchText}" found`);
+    }
+}
+
 async function addHighlightToScrollableElements(elements) {
     console.log('Adding highlight to scrollable elements:', elements);
     if (!elements || elements.length === 0) return;
@@ -232,7 +277,7 @@ async function addHighlightToScrollableElements(elements) {
                 if (visibleIframeHeight > 0) {
                     // Position the element within the visible iframe area
                     const clampedTop = Math.max(visibleIframeTop, Math.min(zoomedY + iframeAbsoluteY, visibleIframeBottom - element.height));
-    
+
                     elementTop = `${clampedTop}px`;
 
                     // Dimensions should be constrained to the visible iframe area
@@ -325,16 +370,26 @@ function attachEventListeners() {
                     displayScrollableElements();
                     break;
                 case "scrollUpBtn":
-                    if (currentScrollableElement) {
+                    if (document.getElementById('findInPageTitle')) {
+                        ipcRenderer.send('word-findNext', {
+                            searchText: currentSearchText,
+                            forward: false
+                        });
+                    } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
                             scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
                             top: -scrollDistance,
                             behavior: 'smooth'
                         });
-                    }
+                    } 
                     break;
                 case "scrollDownBtn":
-                    if (currentScrollableElement) {
+                    if (document.getElementById('findInPageTitle')) {
+                        ipcRenderer.send('word-findNext', {
+                            searchText: currentSearchText,
+                            forward: true
+                        });
+                    } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
                             scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
                             top: scrollDistance,
@@ -344,6 +399,12 @@ function attachEventListeners() {
                     break;
                 case "findBtn":
                     await stopManager();
+                    let keyboardObject = {
+                        id: 'findInPage',
+                        value: '',
+                    }
+                    ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, keyboardObject);
+
                     break;
                 case "closeSeekBtn":
                     await stopManager();

@@ -239,7 +239,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
         });
         console.log('Scrollable Elements:', scrollableElements);
 
-        const visibleScrollableElements = filterVisibleElements(scrollableElements);
+        const visibleScrollableElements = filterVisibleElements(scrollableElements, true);
         const serializedElements = visibleScrollableElements.map(el => serialiseElement(el, scrollableElementsIframeMap.get(el)));
         ipcRenderer.send('scrollableElements-response', serializedElements);
     }
@@ -345,13 +345,18 @@ function stretchBodyFromBottomCenter(duration = 500) {
     }, interval);
 }
 
-function filterVisibleElements(elements) {
+function filterVisibleElements(elements, areElementsScrollable = false) {
     try {
         return elements.filter(element => {
-            // if the element is the html or body tag, we always consider it visible
+            // if the element is the html or body tag, we always consider it visible, unless it is inside an iframe
             if (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body') {
-                return true;
+                if (element.ownerDocument !== document && areElementsScrollable) {
+                    element = element.ownerDocument.defaultView.frameElement;
+                } else {
+                    return true;
+                }
             }
+
             const style = window.getComputedStyle(element);
             const rect = element.getBoundingClientRect();
             return (

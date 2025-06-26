@@ -217,10 +217,39 @@ async function addHighlightToScrollableElements(elements) {
 
         // If the element is the main body (html or body), adjust its position and size
         if (element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body')) {
-            elementLeft = `${Math.max(webpageBounds.x, Math.min(zoomedX + webpageBounds.x, webpageBounds.x + webpageBounds.width - element.width))}px`;
-            elementTop = `${Math.max(webpageBounds.y, Math.min(zoomedY + webpageBounds.y, webpageBounds.y + webpageBounds.height - element.height))}px`;
-            elementWidth = `${zoomedWidth}px`;
-            elementHeight = `${zoomedHeight}px`;
+            if (element.inIframe && element.iframeBounds) {
+                // Calculate iframe's absolute position within the webpage
+                const iframeAbsoluteY = element.iframeBounds.y + webpageBounds.y;
+
+                // Calculate the visible portion of the iframe (intersection with webpage viewport)
+                const visibleIframeTop = Math.max(iframeAbsoluteY, webpageBounds.y);
+                const visibleIframeBottom = Math.min(iframeAbsoluteY + element.iframeBounds.height, webpageBounds.y + webpageBounds.height);
+
+                // Calculate visible iframe dimensions
+                const visibleIframeHeight = Math.max(0, visibleIframeBottom - visibleIframeTop);
+
+                // Only show highlight if iframe is actually visible
+                if (visibleIframeHeight > 0) {
+                    // Position the element within the visible iframe area
+                    const clampedTop = Math.max(visibleIframeTop, Math.min(zoomedY + iframeAbsoluteY, visibleIframeBottom - element.height));
+    
+                    elementTop = `${clampedTop}px`;
+
+                    // Dimensions should be constrained to the visible iframe area
+                    const maxHeight = Math.min(element.iframeBounds.height * zoomFactor, visibleIframeBottom - clampedTop);
+
+                    elementHeight = `${Math.max(0, maxHeight)}px`;
+                } else {
+                    // If iframe is completely out of view, hide the highlight
+                    elementWidth = '0px';
+                    elementHeight = '0px';
+                }
+            } else {
+                elementLeft = `${Math.max(webpageBounds.x, Math.min(zoomedX + webpageBounds.x, webpageBounds.x + webpageBounds.width - element.width))}px`;
+                elementTop = `${Math.max(webpageBounds.y, Math.min(zoomedY + webpageBounds.y, webpageBounds.y + webpageBounds.height - element.height))}px`;
+                elementWidth = `${zoomedWidth}px`;
+                elementHeight = `${zoomedHeight}px`;
+            }
         }
 
         const highlight = document.createElement('div');
@@ -249,15 +278,12 @@ async function addHighlightToScrollableElements(elements) {
             label.textContent = elements[idx].labelNumber;
         }
 
-        let left = (element.x * zoomFactor) + webpageBounds.x;
-        let top = (element.y * zoomFactor) + webpageBounds.y;
+        label.style.left = elementLeft;
+        label.style.top = elementTop;
 
-        // Placing label position at the edges of the visible bounds
-        left = Math.max(webpageBounds.x, Math.min(left, webpageBounds.x + webpageBounds.width - label.offsetWidth));
-        top = Math.max(webpageBounds.y, Math.min(top, webpageBounds.y + webpageBounds.height - label.offsetHeight));
-
-        label.style.left = `${left}px`;
-        label.style.top = `${top}px`;
+        if (elementWidth === '0px' && elementHeight === '0px') {
+            label.style.display = 'none';
+        }
 
         document.body.appendChild(highlight);
         document.body.appendChild(label);

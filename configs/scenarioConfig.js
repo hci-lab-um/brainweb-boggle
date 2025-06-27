@@ -44,6 +44,14 @@ const scenarioConfig = {
 
 
     // SEEK
+    scenario_9: {
+        name: ViewNames.SEEK,
+        description: 'Find in Page overlay with only the close button',
+        buttonIds: ['closeSeekBtn'],
+        frequencies: [8],
+        phases: [1.5]
+    },
+    
     scenario_10: {
         name: ViewNames.SEEK,
         description: 'Seek overlay with scroll buttons, find button, select scrollable element button and close button',
@@ -70,10 +78,10 @@ const scenarioConfig = {
 
     scenario_13: {
         name: ViewNames.SEEK,
-        description: 'Find in page with scroll buttons, find button and close button',
-        buttonIds: ['scrollUpBtn', 'scrollDownBtn', 'findBtn', 'closeSeekBtn'],
-        frequencies: [6, 14.5, 10.5, 8],
-        phases: [1, 0.5, 1.5, 1.5]
+        description: 'Find in page with scroll buttons, and close button',
+        buttonIds: ['scrollUpBtn', 'scrollDownBtn', 'closeSeekBtn'],
+        frequencies: [6, 14.5, 8],
+        phases: [1, 0.5, 1.5]
     },
 
     scenario_14: {

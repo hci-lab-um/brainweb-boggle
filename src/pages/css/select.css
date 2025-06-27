@@ -416,6 +416,7 @@ body {
   margin-top: 13px;
   text-wrap: nowrap;
   color: #ffffff;
+  text-wrap: auto;
 }
 
 .navbar-title {

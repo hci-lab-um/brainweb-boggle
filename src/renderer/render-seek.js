@@ -196,9 +196,19 @@ async function displayScrollableElements() {
     }
 }
 
-function displayFindInPage(searchText, count = 0) {  
+async function displayFindInPage(searchText, count = 0) {  
     const title = document.querySelector('.scroll-title');
     title.innerHTML = searchText;
+
+    const closeButton = document.getElementById('closeSeekBtn');
+    closeButton.innerHTML = createMaterialIcon('s', 'arrow_back');
+
+    navbar.innerHTML = '';
+    const navbarTitle = document.createElement('div');
+    navbarTitle.classList.add('navbar-title');
+    navbarTitle.textContent = 'Find in Page';
+    navbarTitle.id = 'findInPageTitle';
+    navbar.appendChild(navbarTitle);
 
     if (count > 0) {
         let counter = document.querySelector('.scroll-counter');
@@ -210,22 +220,16 @@ function displayFindInPage(searchText, count = 0) {
             counter.innerHTML = `1/${count}`;
         }
 
-        // Append the counter after the title
+        // Appending the counter after the title
         title.parentNode.insertBefore(counter, title.nextSibling);
 
-        navbar.innerHTML = '';
-        const navbarTitle = document.createElement('div');
-        navbarTitle.classList.add('navbar-title');
-        navbarTitle.textContent = 'Find in Page';
-        navbarTitle.id = 'findInPageTitle';
-        navbar.appendChild(navbarTitle);
+        await updateScenarioId(13, buttons, ViewNames.SEEK, false);
     } else {
-        // Display not found message
-        console.log(`No occurrences of "${searchText}" found`);
-        let scrollUpButton = document.getElementById('scrollUpBtn');
-        let scrollDownButton = document.getElementById('scrollDownBtn');
-        scrollUpButton.remove();
-        scrollDownButton.remove();
+        // Displaying not found message
+        const scrollButtonsContainer = document.querySelector('.scroll-buttons-container');
+        scrollButtonsContainer.remove();
+
+        await updateScenarioId(9, buttons, ViewNames.SEEK, false);
     }
 }
 

@@ -196,7 +196,10 @@ async function displayScrollableElements() {
     }
 }
 
-function displayFindInPage(searchText, count = 0) {
+function displayFindInPage(searchText, count = 0) {  
+    const title = document.querySelector('.scroll-title');
+    title.innerHTML = searchText;
+
     if (count > 0) {
         let counter = document.querySelector('.scroll-counter');
         if (!counter) {
@@ -224,9 +227,6 @@ function displayFindInPage(searchText, count = 0) {
         scrollUpButton.remove();
         scrollDownButton.remove();
     }
-
-    const title = document.querySelector('.scroll-title');
-    title.innerHTML = searchText;
 }
 
 async function addHighlightToScrollableElements(elements) {

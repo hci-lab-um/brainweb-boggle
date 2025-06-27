@@ -35,6 +35,14 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+    try {
+        await updateScenarioId(scenarioId, buttons, ViewNames.SEEK);
+    } catch (error) {
+        console.error('Error in scenarioId-update handler:', error);
+    }
+});
+
 ipcRenderer.on('text-findInPage-response', (event, searchText, result) => {
     try {
         currentFindCount = result.matches; // Update the total count of found texts
@@ -384,18 +392,37 @@ function attachEventListeners() {
                     break;
                 case "scrollUpBtn":
                     if (document.getElementById('findInPageTitle')) {
-                        ipcRenderer.send('word-findNext', {
-                            searchText: currentSearchText,
-                            forward: false
-                        });
-
                         let counter = document.getElementById('findInPageCounter');
-                        if (counter) {
-                            // Fixed: scroll up should go to previous result (decrement)
-                            let nextIndex = currentFindIndex - 1;
-                            if (nextIndex < 1) nextIndex = currentFindCount;
-                            currentFindIndex = nextIndex; // Update the global variable
-                            counter.innerHTML = `${nextIndex}/${currentFindCount}`;
+
+                        if (currentFindIndex === 1) {
+                            // Perform double click when at first result - DUE TO A LIMITATION IN ELECTRON'S findInPage API
+                            // findInPage API doesn't immediately wrap on the first call after the last match 
+                            ipcRenderer.send('word-findNext', {
+                                searchText: currentSearchText,
+                                forward: false
+                            });
+                            ipcRenderer.send('word-findNext', {
+                                searchText: currentSearchText,
+                                forward: false
+                            });
+
+                            // Update counter only once to show we're now at the last result
+                            currentFindIndex = currentFindCount;
+                            if (counter) {
+                                counter.innerHTML = `${currentFindCount}/${currentFindCount}`;
+                            }
+                        } else {
+                            // Normal single click behavior
+                            ipcRenderer.send('word-findNext', {
+                                searchText: currentSearchText,
+                                forward: false
+                            });
+
+                            if (counter) {
+                                let nextIndex = currentFindIndex - 1;
+                                currentFindIndex = nextIndex;
+                                counter.innerHTML = `${nextIndex}/${currentFindCount}`;
+                            }
                         }
                     } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
@@ -407,18 +434,37 @@ function attachEventListeners() {
                     break;
                 case "scrollDownBtn":
                     if (document.getElementById('findInPageTitle')) {
-                        ipcRenderer.send('word-findNext', {
-                            searchText: currentSearchText,
-                            forward: true
-                        });
-
                         let counter = document.getElementById('findInPageCounter');
-                        if (counter) {
-                            // Fixed: scroll down should go to next result (increment)
-                            let nextIndex = currentFindIndex + 1;
-                            if (nextIndex > currentFindCount) nextIndex = 1;
-                            currentFindIndex = nextIndex; // Update the global variable
-                            counter.innerHTML = `${nextIndex}/${currentFindCount}`;
+
+                        if (currentFindIndex === currentFindCount) {
+                            // Perform double click when at last result - DUE TO A LIMITATION IN ELECTRON'S findInPage API
+                            // findInPage API doesn't immediately wrap on the first call after the last match 
+                            ipcRenderer.send('word-findNext', {
+                                searchText: currentSearchText,
+                                forward: true
+                            });
+                            ipcRenderer.send('word-findNext', {
+                                searchText: currentSearchText,
+                                forward: true
+                            });
+
+                            // Update counter only once to show we're now at the first result
+                            currentFindIndex = 1;
+                            if (counter) {
+                                counter.innerHTML = `1/${currentFindCount}`;
+                            }
+                        } else {
+                            // Normal single click behavior
+                            ipcRenderer.send('word-findNext', {
+                                searchText: currentSearchText,
+                                forward: true
+                            });
+
+                            if (counter) {
+                                let nextIndex = currentFindIndex + 1;
+                                currentFindIndex = nextIndex;
+                                counter.innerHTML = `${nextIndex}/${currentFindCount}`;
+                            }
                         }
                     } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
@@ -442,6 +488,11 @@ function attachEventListeners() {
 
                     // If the button is a back button, we intialise the seek overlay with the current scrollable element
                     if (button.innerHTML.includes('arrow_back')) {
+                        // If we are in find mode, stop any ongoing find operation
+                        if (document.getElementById('findInPageTitle')) {
+                            ipcRenderer.send('find-stop');
+                        }
+
                         initSeekOverlay(`Element ${currentScrollableElement.labelNumber}`, currentScrollableElement);
                     } else {
                         ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);

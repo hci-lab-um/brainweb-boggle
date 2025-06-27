@@ -240,6 +240,15 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('find-stop', (event) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.stopFindInPage('clearSelection');
+        } catch (err) {
+            console.error('Error stopping find in page:', err.message);
+        }
+    });
+
     ipcMain.on('webpage-refresh', (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

@@ -343,6 +343,7 @@ ipcRenderer.on('text-findInPage', (event, searchText) => {
 
 ipcRenderer.on('word-findNext', (event, { searchText, forward }) => {
     try {
+        // searchText, case-insensitive, backwards/forwards, wrap around, whole word, search in frames, show dialog
         window.find(searchText, false, !forward, true, false, true, false);
     } catch (err) {
         console.error('Error finding next word:', err.message);

@@ -197,9 +197,6 @@ async function displayScrollableElements() {
 }
 
 function displayFindInPage(searchText, count = 0) {
-    const title = document.querySelector('.scroll-title');
-    title.innerHTML = searchText;
-
     if (count > 0) {
         let counter = document.querySelector('.scroll-counter');
         if (!counter) {
@@ -222,7 +219,14 @@ function displayFindInPage(searchText, count = 0) {
     } else {
         // Display not found message
         console.log(`No occurrences of "${searchText}" found`);
+        let scrollUpButton = document.getElementById('scrollUpBtn');
+        let scrollDownButton = document.getElementById('scrollDownBtn');
+        scrollUpButton.remove();
+        scrollDownButton.remove();
     }
+
+    const title = document.querySelector('.scroll-title');
+    title.innerHTML = searchText;
 }
 
 async function addHighlightToScrollableElements(elements) {
@@ -381,7 +385,7 @@ function attachEventListeners() {
                             top: -scrollDistance,
                             behavior: 'smooth'
                         });
-                    } 
+                    }
                     break;
                 case "scrollDownBtn":
                     if (document.getElementById('findInPageTitle')) {

@@ -211,33 +211,30 @@ function registerIpcHandlers(context) {
     ipcMain.on('text-findInPage', (event, searchText) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            if (activeTab) {
-                activeTab.webContentsView.webContents.send('text-findInPage', searchText);
-            }
+
+            // Remove any existing listener to prevent duplicates
+            activeTab.webContentsView.webContents.removeAllListeners('found-in-page');
+
+            activeTab.webContentsView.webContents.once('found-in-page', (event, result) => {
+                // result.activeMatchOrdinal = current match index (1-based)
+                // result.matches = total matches
+                let seekOverlay = viewsList.find(view => view.name === ViewNames.SEEK);
+                if (seekOverlay) {
+                    seekOverlay.webContentsView.webContents.send('text-findInPage-response', searchText, result);
+                }
+            });
+
+            activeTab.webContentsView.webContents.findInPage(searchText);
         } catch (err) {
             console.error('Error finding text in page:', err.message);
-        }
-    });
-
-    ipcMain.on('text-findInPage-response', (event, { searchText, count }) => {
-        try {
-            let seekOverlay = viewsList.find(view => view.name === ViewNames.SEEK);
-            if (seekOverlay) {
-                seekOverlay.webContentsView.webContents.send('text-findInPage-response', { searchText, count });
-            } else {
-                console.error('Seek overlay not found.');
-            }
-        } catch (err) {
-            console.error('Error handling text-findInPage-response:', err.message);
         }
     });
 
     ipcMain.on('word-findNext', (event, { searchText, forward }) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            if (activeTab) {
-                activeTab.webContentsView.webContents.send('word-findNext', { searchText, forward });
-            } 
+            if (forward) activeTab.webContentsView.webContents.findInPage(searchText, { findNext: true });
+            else activeTab.webContentsView.webContents.findInPage(searchText, { findNext: true, forward: false });
         } catch (err) {
             console.error('Error in word-findNext handler:', err.message);
         }
@@ -368,7 +365,7 @@ function registerIpcHandlers(context) {
             console.error('Error scrolling scrollable element:', err.message);
         }
     });
-    
+
     ipcMain.handle('bookmark-add', async (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

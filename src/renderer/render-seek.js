@@ -35,17 +35,17 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     }
 });
 
-ipcRenderer.on('text-findInPage-response', (event, { searchText, count }) => {
+ipcRenderer.on('text-findInPage-response', (event, searchText, result) => {
     try {
-        currentFindCount = count; // Update the total count of found texts
+        currentFindCount = result.matches; // Update the total count of found texts
         currentSearchText = searchText; // Update the current search text
         removeHighlightFromScrollableElements(); // Remove any existing highlights
-        console.log(`Find in page response: searchText="${searchText}", count=${count}`);
-        if (count > 0) {
+        console.log(`Find in page response: searchText="${searchText}", count=${currentFindCount}`);
+        if (currentFindCount > 0) {
             currentFindIndex = 1;
-            displayFindInPage(searchText, count);
+            displayFindInPage(searchText, currentFindCount);
         } else {
-            displayFindInPage(`No results found for "${searchText}"`, count);
+            displayFindInPage(`No results found for "${searchText}"`, currentFindCount);
         }
     } catch (err) {
         console.error('Error finding text in page:', err.message);

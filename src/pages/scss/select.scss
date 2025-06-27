@@ -105,9 +105,16 @@ body {
 .scroll-title {
     font-size: 2vw;
     margin-top: 13px;
-    text-wrap: nowrap;
     color: colors.$white;
     text-wrap: auto;
+
+    // Adding ellipsis for long titles (multi-line)
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: max-content;
 }
 
 .navbar-title {

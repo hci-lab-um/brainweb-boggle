@@ -106,19 +106,17 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
         scrollButtonsContainer.appendChild(scrollDownButton);
         sidebar.appendChild(scrollButtonsContainer);
 
-        if (scrollableElements.length > 1) {
-            // Add button to select scrollable elements
-            const selectScrollableElementButton = document.createElement('button');
-            selectScrollableElementButton.classList.add('button');
-            selectScrollableElementButton.setAttribute('id', 'selectScrollableElementBtn');
-            selectScrollableElementButton.innerHTML = createMaterialIcon('sm', 'swap_vert');
+        // Add button to select scrollable elements
+        const selectScrollableElementButton = document.createElement('button');
+        selectScrollableElementButton.classList.add('button');
+        selectScrollableElementButton.setAttribute('id', 'selectScrollableElementBtn');
+        selectScrollableElementButton.innerHTML = createMaterialIcon('sm', 'swap_vert');
 
-            const scrollableSpan = document.createElement('span');
-            scrollableSpan.textContent = 'Select Scrollable Element';
+        const scrollableSpan = document.createElement('span');
+        scrollableSpan.textContent = 'Select Scrollable Element';
 
-            selectScrollableElementButton.insertBefore(scrollableSpan, selectScrollableElementButton.firstChild);
-            navbar.appendChild(selectScrollableElementButton);
-        }
+        selectScrollableElementButton.insertBefore(scrollableSpan, selectScrollableElementButton.firstChild);
+        navbar.appendChild(selectScrollableElementButton);
     }
 
     // Add button to find
@@ -157,10 +155,8 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
     buttons = document.querySelectorAll('button');
 
-    // When there is only 1 scrollable element, we set the scenarioId to 11
-    if (scrollableElements.length === 1) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
-    // When there are multiple scrollable elements, we set the scenarioId to 10
-    else if (scrollableElements.length > 1) await updateScenarioId(10, buttons, ViewNames.SEEK, false);
+    // When there are multiple scrollable elements, we set the scenarioId to 11
+    if (scrollableElements.length > 0) await updateScenarioId(11, buttons, ViewNames.SEEK, false);
     // When there are no scrollable elements, we set the scenarioId to 12
     else if (scrollableElements.length === 0) await updateScenarioId(12, buttons, ViewNames.SEEK, false);
 
@@ -242,7 +238,7 @@ async function displayFindInPage(searchText, count = 0) {
         const scrollButtonsContainer = document.querySelector('.scroll-buttons-container');
         scrollButtonsContainer.remove();
 
-        await updateScenarioId(9, buttons, ViewNames.SEEK, false);
+        await updateScenarioId(10, buttons, ViewNames.SEEK, false);
     }
 }
 

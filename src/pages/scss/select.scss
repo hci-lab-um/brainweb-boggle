@@ -117,6 +117,11 @@ body {
     min-height: max-content;
 }
 
+.scroll-counter--notFound {
+    font-size: 1.7vw;
+    margin-top: -20vh;
+}
+
 .navbar-title {
     align-content: center;
     background-color: colors.$bg-white-transparent-7;

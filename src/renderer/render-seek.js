@@ -53,7 +53,7 @@ ipcRenderer.on('text-findInPage-response', (event, searchText, result) => {
             currentFindIndex = 1;
             displayFindInPage(searchText, currentFindCount);
         } else {
-            displayFindInPage(`No results found for "${searchText}"`, currentFindCount);
+            displayFindInPage(`No results found for "${searchText}".`, currentFindCount);
         }
     } catch (err) {
         console.error('Error finding text in page:', err.message);
@@ -219,22 +219,26 @@ async function displayFindInPage(searchText, count = 0) {
     navbarTitle.id = 'findInPageTitle';
     navbar.appendChild(navbarTitle);
 
+    let counter = document.querySelector('.scroll-counter');
+    if (!counter) {
+        counter = document.createElement('div');
+        counter.id = 'findInPageCounter';
+        counter.classList.remove('scroll-counter--notFound');
+        counter.classList.add('scroll-counter');
+    }
+    sidebar.appendChild(counter);
+
     if (count > 0) {
-        let counter = document.querySelector('.scroll-counter');
-        if (!counter) {
-            counter = document.createElement('div');
-            counter.id = 'findInPageCounter';
-            counter.classList.add('scroll-counter');
-            counter.innerHTML = `1/${count}`;
-        } else {
-            counter.innerHTML = `1/${count}`;
-        }
+        counter.innerHTML = `1/${count}`;
 
         // Appending the counter after the title
         title.parentNode.insertBefore(counter, title.nextSibling);
 
         await updateScenarioId(13, buttons, ViewNames.SEEK, false);
     } else {
+        counter.innerHTML = `<i>Find in Page</i> does not include content inside embedded sections.`;
+        counter.classList.add('scroll-counter--notFound');
+
         // Displaying not found message
         const scrollButtonsContainer = document.querySelector('.scroll-buttons-container');
         scrollButtonsContainer.remove();
@@ -324,7 +328,7 @@ async function addHighlightToScrollableElements(elements) {
         highlight.style.width = elementWidth;
         highlight.style.height = elementHeight;
         highlight.style.zIndex = '1000';
-        highlight.style.border = '3px solid rgba(183, 255, 0, 0.50)';
+        highlight.style.border = '6px solid rgba(183, 255, 0, 0.50)';
         highlight.style.borderRadius = '8px';
         highlight.style.boxSizing = 'border-box';
         highlight.style.transition = 'border-color 0.3s ease';

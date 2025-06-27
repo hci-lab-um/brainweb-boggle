@@ -308,48 +308,6 @@ ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, be
     }
 });
 
-function countOccurrences(searchText) {
-    const bodyText = document.body.innerText;
-    const regex = new RegExp(searchText, 'gi'); // 'g' = global, 'i' = case-insensitive
-    const matches = bodyText.match(regex);
-    return matches ? matches.length : 0;
-}
-
-function resetSearchPositionToTop() {
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-
-    const range = document.createRange();
-    range.selectNodeContents(document.body);
-    range.collapse(true); // Collapse to the start
-    selection.addRange(range);
-}
-
-function findFromTop(searchText) {
-    resetSearchPositionToTop();
-    return window.find(searchText);
-}
-
-ipcRenderer.on('text-findInPage', (event, searchText) => {
-    try {
-        const count = countOccurrences(searchText);
-        findFromTop(searchText);
-
-        ipcRenderer.send('text-findInPage-response', { searchText, count });
-    } catch (err) {
-        console.error('Error finding text in page:', err.message);
-    }
-});
-
-ipcRenderer.on('word-findNext', (event, { searchText, forward }) => {
-    try {
-        // searchText, case-insensitive, backwards/forwards, wrap around, whole word, search in frames, show dialog
-        window.find(searchText, false, !forward, true, false, true, false);
-    } catch (err) {
-        console.error('Error finding next word:', err.message);
-    }
-});
-
 function stretchBodyFromBottomCenter(duration = 500) {
     const body = document.body;
     body.style.overflow = 'hidden'; // prevents scrolling during animation

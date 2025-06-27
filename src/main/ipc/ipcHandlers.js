@@ -208,23 +208,59 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('text-findInPage', (event, searchText) => {
+    function countIframeMatches(term) {
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        let iframeMatchCount = 0;
+
+        for (const iframe of iframes) {
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                const text = doc.body?.innerText || '';
+                const matches = text.toLowerCase().match(new RegExp(term.toLowerCase(), 'g')) || [];
+                iframeMatchCount += matches.length;
+            } catch (e) {
+                // Cross-origin iframe — skip
+            }
+        }
+
+        return iframeMatchCount;
+    }
+
+    // Search does not include content inside embedded sections like iframes.
+    ipcMain.on('text-findInPage', async (event, searchText) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
 
-            // Remove any existing listener to prevent duplicates
+            let iframeCount = await activeTab.webContentsView.webContents.executeJavaScript(`(${countIframeMatches.toString()})(${JSON.stringify(searchText)})`);
+
+            // Remove any existing listeners to prevent duplicates
             activeTab.webContentsView.webContents.removeAllListeners('found-in-page');
 
             activeTab.webContentsView.webContents.once('found-in-page', (event, result) => {
                 // result.activeMatchOrdinal = current match index (1-based)
                 // result.matches = total matches
+
+                console.log('iframeCount:', iframeCount);
+                console.log('result before:', result.matches);
+
+                const correctedMatches = result.matches - iframeCount;
+                result.matches = correctedMatches < 0 ? 0 : correctedMatches; // Ensuring matches is not negative
+                console.log('result after:', result.matches);
+
                 let seekOverlay = viewsList.find(view => view.name === ViewNames.SEEK);
                 if (seekOverlay) {
                     seekOverlay.webContentsView.webContents.send('text-findInPage-response', searchText, result);
                 }
+
+                if (result.matches === 0) {
+                    activeTab.webContentsView.webContents.stopFindInPage('clearSelection');
+                }
             });
 
             activeTab.webContentsView.webContents.findInPage(searchText);
+
+            // Reset the search position to the top of the page so that the next search starts from the top
+            activeTab.webContentsView.webContents.executeJavaScript(`(${resetSearchPositionToTop.toString()})`)
         } catch (err) {
             console.error('Error finding text in page:', err.message);
         }

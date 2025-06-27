@@ -424,6 +424,11 @@ body {
   min-height: max-content;
 }
 
+.scroll-counter--notFound {
+  font-size: 1.7vw;
+  margin-top: -20vh;
+}
+
 .navbar-title {
   align-content: center;
   background-color: rgba(255, 255, 255, 0.07);

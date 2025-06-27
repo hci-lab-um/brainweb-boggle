@@ -18,6 +18,8 @@ let webpage;
 let scrollableElements = [];         // These are all the scrollable elements visible in the current tab
 let currentScrollableElement = null; // This is the currently selected scrollable element
 let currentSearchText = '';          // This is the text currently being searched in the page
+let currentFindIndex = 0;            // This is the index of the current found text in the page
+let currentFindCount = 0;            // This is the total number of found texts in the page
 
 ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     try {
@@ -35,10 +37,12 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
 
 ipcRenderer.on('text-findInPage-response', (event, { searchText, count }) => {
     try {
+        currentFindCount = count; // Update the total count of found texts
         currentSearchText = searchText; // Update the current search text
         removeHighlightFromScrollableElements(); // Remove any existing highlights
         console.log(`Find in page response: searchText="${searchText}", count=${count}`);
         if (count > 0) {
+            currentFindIndex = 1;
             displayFindInPage(searchText, count);
         } else {
             displayFindInPage(`No results found for "${searchText}"`, count);
@@ -196,7 +200,7 @@ async function displayScrollableElements() {
     }
 }
 
-async function displayFindInPage(searchText, count = 0) {  
+async function displayFindInPage(searchText, count = 0) {
     const title = document.querySelector('.scroll-title');
     title.innerHTML = searchText;
 
@@ -214,6 +218,7 @@ async function displayFindInPage(searchText, count = 0) {
         let counter = document.querySelector('.scroll-counter');
         if (!counter) {
             counter = document.createElement('div');
+            counter.id = 'findInPageCounter';
             counter.classList.add('scroll-counter');
             counter.innerHTML = `1/${count}`;
         } else {
@@ -383,6 +388,15 @@ function attachEventListeners() {
                             searchText: currentSearchText,
                             forward: false
                         });
+
+                        let counter = document.getElementById('findInPageCounter');
+                        if (counter) {
+                            // Fixed: scroll up should go to previous result (decrement)
+                            let nextIndex = currentFindIndex - 1;
+                            if (nextIndex < 1) nextIndex = currentFindCount;
+                            currentFindIndex = nextIndex; // Update the global variable
+                            counter.innerHTML = `${nextIndex}/${currentFindCount}`;
+                        }
                     } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
                             scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
@@ -397,6 +411,15 @@ function attachEventListeners() {
                             searchText: currentSearchText,
                             forward: true
                         });
+
+                        let counter = document.getElementById('findInPageCounter');
+                        if (counter) {
+                            // Fixed: scroll down should go to next result (increment)
+                            let nextIndex = currentFindIndex + 1;
+                            if (nextIndex > currentFindCount) nextIndex = 1;
+                            currentFindIndex = nextIndex; // Update the global variable
+                            counter.innerHTML = `${nextIndex}/${currentFindCount}`;
+                        }
                     } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
                             scrollableBoggleId: currentScrollableElement.scrollableBoggleId,

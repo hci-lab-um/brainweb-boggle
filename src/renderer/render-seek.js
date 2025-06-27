@@ -72,10 +72,15 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
     navbar.innerHTML = '';  // Clear existing navbar content
     sidebar.innerHTML = ''; // Clear existing sidebar content
-    let title;
 
     const scrollButtonsContainer = document.createElement('div');
     scrollButtonsContainer.classList.add('scroll-buttons-container');
+
+    let title = document.createElement('div');
+    title.textContent = titleContent;
+    title.classList.add('scroll-title');
+
+    sidebar.appendChild(title);
 
     // Getting the scrollable mainBody element with tagName 'html' or 'body'
     const mainBody = await scrollableElements.find(element => {
@@ -85,12 +90,6 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
-        title = document.createElement('div');
-        title.textContent = titleContent;
-        title.classList.add('scroll-title');
-
-        sidebar.appendChild(title);
-
         // Render top and bottom scroll buttons
         const scrollUpButton = document.createElement('button');
         scrollUpButton.classList.add('button', 'scroll-button', 'scroll-up');
@@ -117,6 +116,8 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
         selectScrollableElementButton.insertBefore(scrollableSpan, selectScrollableElementButton.firstChild);
         navbar.appendChild(selectScrollableElementButton);
+    } else {
+        title.textContent = 'No scrollable elements found';
     }
 
     // Add button to find

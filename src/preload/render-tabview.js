@@ -47,7 +47,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 
         console.log('visibleElements: ', visibleElements);
 
-        const serializedElements = visibleElements.map(el => serializeElement(el, elementIframeMap.get(el)));
+        const serializedElements = visibleElements.map(el => serialiseElement(el, elementIframeMap.get(el)));
         ipcRenderer.send('interactiveElements-response', serializedElements);
 
         // setInterval(checkAllInteractiveElementPositions, 4000);
@@ -69,9 +69,9 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
                 const matchingIframe = iframes.find(iframe => {
                     const rect = iframe.getBoundingClientRect();
                     return rect.x === element.iframeBounds.x &&
-                           rect.y === element.iframeBounds.y &&
-                           rect.width === element.iframeBounds.width &&
-                           rect.height === element.iframeBounds.height;
+                        rect.y === element.iframeBounds.y &&
+                        rect.width === element.iframeBounds.width &&
+                        rect.height === element.iframeBounds.height;
                 });
 
                 if (matchingIframe) {
@@ -145,12 +145,13 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
     }
 });
 
-ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
+ipcRenderer.on('elementsInDom-removeBoggleId', (event) => {
     try {
         // Remove boggle IDs from top-level elements
-        const elementsInDom = document.querySelectorAll('[data-boggle-id]');
+        const elementsInDom = document.querySelectorAll('[data-boggle-id], [data-scrollable-boggle-id]');
         elementsInDom.forEach((elementInDom) => {
             elementInDom.removeAttribute('data-boggle-id');
+            elementInDom.removeAttribute('data-scrollable-boggle-id');
         });
 
         // Remove boggle IDs from same-origin iframes
@@ -160,26 +161,99 @@ ipcRenderer.on('interactiveElements-removeBoggleId', (event) => {
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 if (!iframeDoc) continue;
 
-                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id]');
+                const iframeElements = iframeDoc.querySelectorAll('[data-boggle-id], [data-scrollable-boggle-id]');
                 iframeElements.forEach((elementInDom) => {
                     elementInDom.removeAttribute('data-boggle-id');
+                    elementInDom.removeAttribute('data-scrollable-boggle-id');
                 });
             } catch (err) {
                 console.warn('Skipping iframe during removeBoggleId due to cross-origin restriction:', iframe.src);
             }
         }
     } catch (error) {
-        console.error('Error in interactiveElements-removeBoggleId handler:', error);
+        console.error('Error in elementsInDom-removeBoggleId handler:', error);
     }
 });
 
+ipcRenderer.on('scrollableElements-get', async (event) => {
+    try {
+        const scrollableElements = [];
+        let scrollableElementsIframeMap = new Map(); // Track each scrollable element in iframe
+
+        let allElements = Array.from(document.querySelectorAll('*'));
+        for (const el of allElements) {
+            scrollableElementsIframeMap.set(el, null);
+        }
+
+        const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+        for (const iframe of iframes) {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc) {
+                    const scrollableIframeElements = Array.from(iframeDoc.querySelectorAll('*'));
+                    for (const el of scrollableIframeElements) {
+                        allElements.push(el);
+                        scrollableElementsIframeMap.set(el, iframe);
+                    }
+                }
+            } catch (err) {
+                console.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
+            }
+        }
+
+        let scrollableId = 1;
+        allElements.forEach((element) => {
+            const isHtml = element.tagName.toLowerCase() == 'html';
+            const isBody = element.tagName.toLowerCase() == 'body';
+
+            const style = window.getComputedStyle(element);
+            if (isHtml || isBody) {
+                if (element.scrollHeight > element.clientHeight) {
+                    // Only adding html to the scrollable elements. If there is no html we add the body as a fallback
+                    if (isBody && scrollableElements.some(el => el.tagName.toLowerCase() === 'html')) {
+                        return;
+                    }
+                    else if (isHtml && scrollableElements.some(el => el.tagName.toLowerCase() === 'body')) {
+                        scrollableElements.push(element);
+                        element.setAttribute('data-scrollable-boggle-id', scrollableId++);
+                        scrollableElements = scrollableElements.filter(el => el.tagName.toLowerCase() !== 'body');
+                        return;
+                    }
+                    else {
+                        scrollableElements.push(element);
+                        element.setAttribute('data-scrollable-boggle-id', scrollableId++);
+                    }
+                }
+            } else
+                // Getting any internal element within the page
+                if (
+                    element.scrollHeight > element.clientHeight &&
+                    (style.overflowY === 'scroll' || style.overflowY === 'auto') &&
+                    style.overflowY !== 'visible' &&
+                    style.visibility !== 'hidden'
+                ) {
+                    scrollableElements.push(element);
+                    element.setAttribute('data-scrollable-boggle-id', scrollableId++);
+                }
+        });
+        console.log('Scrollable Elements:', scrollableElements);
+
+        const visibleScrollableElements = filterVisibleElements(scrollableElements, true);
+        const serializedElements = visibleScrollableElements.map(el => serialiseElement(el, scrollableElementsIframeMap.get(el)));
+        ipcRenderer.send('scrollableElements-response', serializedElements);
+    }
+    catch (error) {
+        console.error('Error in scrollableElements-get handler:', error);
+    }
+});
 
 ipcRenderer.on('body-animate-fadeInUp', (event) => {
     stretchBodyFromBottomCenter();
 });
 
 ipcRenderer.on('navigate-back', (event) => {
-    try{
+    try {
         console.log('Navigating back');
         window.history.back();
     } catch (error) {
@@ -193,6 +267,44 @@ ipcRenderer.on('navigate-forward', (event) => {
         window.history.forward();
     } catch (error) {
         console.error('Error navigating forward:', error);
+    }
+});
+
+ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, behavior }) => {
+    try {
+        let domElementToScroll = null;
+
+        // First check top-level elements
+        domElementToScroll = document.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+
+        // If not found in top-level, check same-origin iframes
+        if (!domElementToScroll) {
+            const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
+
+            for (const iframe of iframes) {
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (iframeDoc) {
+                        domElementToScroll = iframeDoc.querySelector(`[data-scrollable-boggle-id="${scrollableBoggleId}"]`);
+                        if (domElementToScroll) {
+                            break; // Found it, exit the loop
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Skipping iframe during scroll due to cross-origin restriction:', iframe.src);
+                }
+            }
+        }
+
+        if (!domElementToScroll) {
+            console.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
+            return;
+        }
+
+        console.log(`Scrolling element ${domElementToScroll} with boggleId ${scrollableBoggleId}`);
+        domElementToScroll.scrollBy({ top, behavior });
+    } catch (error) {
+        console.error('Error in scrollableElement-scroll handler:', error);
     }
 });
 
@@ -233,9 +345,18 @@ function stretchBodyFromBottomCenter(duration = 500) {
     }, interval);
 }
 
-function filterVisibleElements(elements) {
+function filterVisibleElements(elements, areElementsScrollable = false) {
     try {
         return elements.filter(element => {
+            // if the element is the html or body tag, we always consider it visible, unless it is inside an iframe
+            if (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body') {
+                if (element.ownerDocument !== document && areElementsScrollable) {
+                    element = element.ownerDocument.defaultView.frameElement;
+                } else {
+                    return true;
+                }
+            }
+
             const style = window.getComputedStyle(element);
             const rect = element.getBoundingClientRect();
             return (
@@ -293,7 +414,7 @@ function isElementFullyOccluded(element) {
     }
 }
 
-function serializeElement(element, iframe) {
+function serialiseElement(element, iframe) {
     try {
         const rect = element.getBoundingClientRect();
         let x = rect.x;
@@ -318,6 +439,7 @@ function serializeElement(element, iframe) {
         return {
             id: element.id,
             boggleId: element.getAttribute('data-boggle-id'),
+            scrollableBoggleId: element.getAttribute('data-scrollable-boggle-id'),
             value: element.value,
             title: element.title,
             tagName: element.tagName,
@@ -333,49 +455,5 @@ function serializeElement(element, iframe) {
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);
         return null;
-    }
-}
-
-function checkAllInteractiveElementPositions() {
-    // Top-level elements
-    const elements = Array.from(document.querySelectorAll('[data-boggle-id]'));
-    elements.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        const currentPosition = { x: rect.x, y: rect.y };
-        const lastPosition = movementTracker.get(el);
-        if (!lastPosition || currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
-            elements.forEach((element) => {
-                element.removeAttribute('data-boggle-id');
-            });
-
-            movementTracker.set(el, currentPosition);
-            ipcRenderer.send('interactiveElements-moved');
-            return;
-        }
-    });
-
-    // Same-origin iframes
-    const iframes = Array.from(document.querySelectorAll('iframe[src]:not([src="about:blank"])'));
-    for (const iframe of iframes) {
-        try {
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            if (!iframeDoc) continue;
-            const iframeElements = Array.from(iframeDoc.querySelectorAll('[data-boggle-id]'));
-            iframeElements.forEach(el => {
-                const rect = el.getBoundingClientRect();
-                const currentPosition = { x: rect.x, y: rect.y };
-                const lastPosition = movementTracker.get(el);
-                if (!lastPosition || currentPosition.x !== lastPosition.x || currentPosition.y !== lastPosition.y) {
-                    iframeElements.forEach((iframeElement) => {
-                        iframeElement.removeAttribute('data-boggle-id');
-                    });
-                    movementTracker.set(el, currentPosition);
-                    ipcRenderer.send('interactiveElements-moved');
-                    return;
-                }
-            });
-        } catch (err) {
-            // Cross-origin iframes are skipped
-        }
     }
 }

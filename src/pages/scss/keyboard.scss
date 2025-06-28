@@ -91,7 +91,7 @@ body {
         border: none;
         padding: 2px; // crucial to match with autocomplete
         line-height: 1.2; // make sure this matches in both
-        overflow: hidden;
+        overflow-y: scroll;
         color: transparent;
         caret-color: colors.$black; // makes the caret visible
     }
@@ -104,7 +104,7 @@ body {
         font-size: 40px;
         font-family: monospace;
         white-space: pre-wrap;
-        // word-break: break-word;
+        word-break: break-word;
         padding: 2px;
         max-height: 100%;
         width: 100%;
@@ -112,6 +112,7 @@ body {
         pointer-events: none;
         z-index: 2;
         background: transparent;
+        overflow-y: hidden;
     }
 
     &__autocomplete span {

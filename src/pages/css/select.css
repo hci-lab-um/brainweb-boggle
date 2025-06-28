@@ -316,13 +316,18 @@ body {
   overflow: hidden;
 }
 
-#selectOverlay {
+#selectOverlay,
+#seekOverlay {
   display: block;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   height: 100vh;
+}
+
+#webpage {
+  background-color: transparent !important;
 }
 
 #sidebar {
@@ -365,12 +370,23 @@ body {
   width: min-content;
 }
 
-.button {
+#selectOverlay .button {
   max-height: 20%;
   font-size: 2rem;
 }
-.button--toggle {
+#selectOverlay .button--toggle {
   max-height: unset;
+}
+
+#seekOverlay .button {
+  font-size: 2vw;
+  border-radius: 8px;
+  gap: 5%;
+}
+
+#seekOverlay .navbar {
+  background-color: #1f1f1f;
+  gap: 2%;
 }
 
 .toggle-numbers-container {
@@ -393,6 +409,44 @@ body {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+}
+
+.scroll-title {
+  font-size: 2vw;
+  margin-top: 13px;
+  color: #ffffff;
+  text-wrap: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: max-content;
+}
+
+.scroll-counter--notFound {
+  font-size: 1.7vw;
+  margin-top: -20vh;
+}
+
+.navbar-title {
+  align-content: center;
+  background-color: rgba(255, 255, 255, 0.07);
+  font-size: 2.25vw;
+  color: #ffffff;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.scroll-buttons-container {
+  display: flex;
+  gap: 10%;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
 }
 
 /*# sourceMappingURL=select.css.map */

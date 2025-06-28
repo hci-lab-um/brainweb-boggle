@@ -34,10 +34,6 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     }
 });
 
-ipcRenderer.on('select-reInitialise', async () => {
-    await reInitialiseSelectOverlay();
-});
-
 window.addEventListener('resize', async () => {
     await reInitialiseSelectOverlay();
 });
@@ -94,7 +90,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
 // Removes element labels and highlights
 function removeLabelsAndHighlightFromElements(elements) {
     try {
-        ipcRenderer.send('interactiveElements-removeHighlight', elements);
+        ipcRenderer.send('interactiveElements-removeHighlight');
 
         const labels = webpage.querySelectorAll('.element-number');
         if (labels) labels.forEach(async label => await label.remove());
@@ -439,7 +435,7 @@ function attachEventListeners() {
                         }
 
                         ipcRenderer.send('mouse-click-nutjs', coordinates);
-                        ipcRenderer.send('interactiveElements-removeBoggleId');
+                        ipcRenderer.send('elementsInDom-removeBoggleId');
                     } catch (error) {
                         console.error('Error calculating the coordinates of the element', error);
                     }
@@ -461,8 +457,8 @@ function attachEventListeners() {
                     }
                 } else {
                     // No previous state, exit overlay
+                    ipcRenderer.send('elementsInDom-removeBoggleId');
                     ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
-                    ipcRenderer.send('interactiveElements-removeBoggleId');
                 }
                 return;
             }

@@ -64,6 +64,10 @@ function attachEventListeners() {
                 await stopManager();
 
                 switch (buttonId) {
+                    case "seekBtn":
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.SEEK, -1);
+                        break;
                     case "selectBtn":
                         // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
                         ipcRenderer.send('overlay-create', ViewNames.SELECT, -1);

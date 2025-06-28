@@ -208,6 +208,83 @@ function registerIpcHandlers(context) {
         }
     });
 
+    function countIframeMatches(term) {
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        let iframeMatchCount = 0;
+
+        for (const iframe of iframes) {
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                const text = doc.body?.innerText || '';
+                const matches = text.toLowerCase().match(new RegExp(term.toLowerCase(), 'g')) || [];
+                iframeMatchCount += matches.length;
+            } catch (e) {
+                // Cross-origin iframe — skip
+            }
+        }
+
+        return iframeMatchCount;
+    }
+
+    // Search does not include content inside embedded sections like iframes.
+    ipcMain.on('text-findInPage', async (event, searchText) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+
+            let iframeCount = await activeTab.webContentsView.webContents.executeJavaScript(`(${countIframeMatches.toString()})(${JSON.stringify(searchText)})`);
+
+            // Remove any existing listeners to prevent duplicates
+            activeTab.webContentsView.webContents.removeAllListeners('found-in-page');
+
+            activeTab.webContentsView.webContents.once('found-in-page', (event, result) => {
+                // result.activeMatchOrdinal = current match index (1-based)
+                // result.matches = total matches
+
+                console.log('iframeCount:', iframeCount);
+                console.log('result before:', result.matches);
+
+                const correctedMatches = result.matches - iframeCount;
+                result.matches = correctedMatches < 0 ? 0 : correctedMatches; // Ensuring matches is not negative
+                console.log('result after:', result.matches);
+
+                let seekOverlay = viewsList.find(view => view.name === ViewNames.SEEK);
+                if (seekOverlay) {
+                    seekOverlay.webContentsView.webContents.send('text-findInPage-response', searchText, result);
+                }
+
+                if (result.matches === 0) {
+                    activeTab.webContentsView.webContents.stopFindInPage('clearSelection');
+                }
+            });
+
+            activeTab.webContentsView.webContents.findInPage(searchText);
+
+            // Reset the search position to the top of the page so that the next search starts from the top
+            activeTab.webContentsView.webContents.executeJavaScript(`(${resetSearchPositionToTop.toString()})`)
+        } catch (err) {
+            console.error('Error finding text in page:', err.message);
+        }
+    });
+
+    ipcMain.on('word-findNext', (event, { searchText, forward }) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            if (forward) activeTab.webContentsView.webContents.findInPage(searchText, { findNext: true });
+            else activeTab.webContentsView.webContents.findInPage(searchText, { findNext: true, forward: false });
+        } catch (err) {
+            console.error('Error in word-findNext handler:', err.message);
+        }
+    });
+
+    ipcMain.on('find-stop', (event) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.stopFindInPage('clearSelection');
+        } catch (err) {
+            console.error('Error stopping find in page:', err.message);
+        }
+    });
+
     ipcMain.on('webpage-refresh', (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
@@ -289,30 +366,48 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('interactiveElements-removeHighlight', (event, elements) => {
+    ipcMain.on('interactiveElements-removeHighlight', (event) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight', elements);
+            activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight');
         } catch (err) {
             console.error('Error removing highlight from interactive elements:', err.message);
         }
     });
 
-    ipcMain.on('interactiveElements-removeBoggleId', (event, elements) => {
+    ipcMain.on('elementsInDom-removeBoggleId', (event, elements) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('interactiveElements-removeBoggleId', elements);
+            activeTab.webContentsView.webContents.send('elementsInDom-removeBoggleId', elements);
         } catch (err) {
             console.error('Error removing Boggle IDs from interactive elements:', err.message);
         }
     });
 
-    ipcMain.on('interactiveElements-moved', (event) => {
+    ipcMain.handle('scrollableElements-get', (event) => {
+        return new Promise((resolve, reject) => {
+            try {
+                let activeTab = tabsList.find(tab => tab.isActive);
+                activeTab.webContentsView.webContents.send('scrollableElements-get');
+                ipcMain.once('scrollableElements-response', (event, elements) => {
+                    if (elements) {
+                        resolve(elements);
+                    } else {
+                        reject(new Error('No scrollable elements found'));
+                    }
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    });
+
+    ipcMain.on('scrollableElement-scroll', (event, scrollObject) => {
         try {
-            let selectOverlay = viewsList.find(view => view.name === ViewNames.SELECT);
-            selectOverlay.webContentsView.webContents.send('select-reInitialise');
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('scrollableElement-scroll', scrollObject);
         } catch (err) {
-            console.error('Error handling interactive elements moved:', err.message);
+            console.error('Error scrolling scrollable element:', err.message);
         }
     });
 

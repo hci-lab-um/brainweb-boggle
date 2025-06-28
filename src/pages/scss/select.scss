@@ -11,13 +11,18 @@ body {
     overflow: hidden;
 }
 
-#selectOverlay {
+#selectOverlay,
+#seekOverlay {
     display: block;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     height: 100vh;
+}
+
+#webpage {
+    background-color: transparent !important;
 }
 
 #sidebar {
@@ -55,14 +60,24 @@ body {
     }
 }
 
-
-.button {
+#selectOverlay .button {
     max-height: 20%;
     font-size: 2rem;
 
     &--toggle {
         max-height: unset;
     }
+}
+
+#seekOverlay .button {
+    font-size: 2vw;
+    border-radius: 8px;
+    gap: 5%;
+}
+
+#seekOverlay .navbar {
+    background-color: colors.$bg-dark;
+    gap: 2%;
 }
 
 .toggle-numbers-container {
@@ -85,4 +100,45 @@ body {
     align-items: center;
     justify-content: center;
     white-space: nowrap;
+}
+
+.scroll-title {
+    font-size: 2vw;
+    margin-top: 13px;
+    color: colors.$white;
+    text-wrap: auto;
+
+    // Adding ellipsis for long titles (multi-line)
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: max-content;
+}
+
+.scroll-counter--notFound {
+    font-size: 1.7vw;
+    margin-top: -20vh;
+}
+
+.navbar-title {
+    align-content: center;
+    background-color: colors.$bg-white-transparent-7;
+    font-size: 2.25vw;
+    color: colors.$white;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+}
+
+.scroll-buttons-container {
+    display: flex;
+    gap: 10%;
+    // padding: 0 20px 20px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
 }

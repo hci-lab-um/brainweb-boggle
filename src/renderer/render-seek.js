@@ -78,6 +78,7 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
 
     let title = document.createElement('div');
     title.textContent = titleContent;
+    title.id = 'scrollableElementTitle';
     title.classList.add('scroll-title');
 
     sidebar.appendChild(title);
@@ -87,6 +88,18 @@ async function initSeekOverlay(titleContent = 'Element 1', selectedScrollableEle
         console.log(`Checking element: ${element.tagName}`);
         return element.tagName && (element.tagName.toLowerCase() === 'html' || element.tagName.toLowerCase() === 'body');
     });
+
+    // Add read mode button to seek
+    const readModeButton = document.createElement('button');
+    readModeButton.classList.add('button');
+    readModeButton.setAttribute('id', 'readBtn');
+    readModeButton.innerHTML = createMaterialIcon('sm', 'auto_stories');
+
+    const readModeSpan = document.createElement('span');
+    readModeSpan.textContent = 'Read';
+
+    readModeButton.insertBefore(readModeSpan, readModeButton.firstChild);
+    navbar.appendChild(readModeButton);
 
     // Choose layout strategy based on number of elements
     if (scrollableElements && scrollableElements.length > 0) {
@@ -498,6 +511,22 @@ function attachEventListeners() {
                     } else {
                         ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);
                         ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
+                    }
+                    break;
+                case "readBtn":
+                    await stopManager();
+                    try {
+                        const textElement = button.querySelector('span');
+                        if (textElement.textContent.trim() === "Read") {
+                            textElement.textContent = "Stop Reading";
+                            await updateScenarioId(4, buttons, ViewNames.SEEK);
+                        } else {
+                            textElement.textContent = "Read";
+                            if (scrollableElements.length === 0) await updateScenarioId(12, buttons, ViewNames.SEEK);
+                            else await updateScenarioId(11, buttons, ViewNames.SEEK);
+                        }
+                    } catch (error) {
+                        console.error('Error toggling read mode:', error);
                     }
                     break;
                 case "firstScrollableElementBtn":

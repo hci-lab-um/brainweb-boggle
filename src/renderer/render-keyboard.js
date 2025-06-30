@@ -261,7 +261,7 @@ function isLocalOrIP(hostname) {
 
         return ipv4Regex.test(hostname) || ipv6Regex.test(hostname) || hostname.toLowerCase() === LOCALHOST;
     } catch (error) {
-        logger.error("Error in isLocalOrIP:", error.message);
+        console.error("Error in isLocalOrIP:", error.message);
         return false;
     }
 }

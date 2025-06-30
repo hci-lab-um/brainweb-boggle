@@ -7,7 +7,7 @@ const { captureSnapshot } = require('../../utils/utilityFunctions');
 const defaultUrl = 'https://www.google.com';
 
 function registerIpcHandlers(context) {
-    //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE ////////////////
+    //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////
     let {
         mainWindow,
         mainWindowContent,
@@ -26,15 +26,22 @@ function registerIpcHandlers(context) {
     // Helper function to serialise tabsList
     async function getSerialisableTabsList(tabsList) {
         return Promise.all(tabsList.map(async tab => {
-            tab.webContentsView.setBounds(webpageBounds);
-            const snapshot = await captureSnapshot(tab) || tab.snapshot;
-            tab.snapshot = snapshot; // Mutate the snapshot in tabsList
+
+            // Tabs that were saved in the database but not yet loaded will have webContentsView set to null.
+            // and therefore, won't update the snapshot, title, and URL to the latest values - because there is no latest value.
+            if (tab.webContentsView) {
+                tab.webContentsView.setBounds(webpageBounds);
+                tab.title = (await tab.webContentsView.webContents.getTitle()) || tab.title;
+                tab.url = (await tab.webContentsView.webContents.getURL()) || tab.url;
+                tab.snapshot = await captureSnapshot(tab) || tab.snapshot; // Mutates the snapshot in tabsList
+            }
+
             return {
                 tabId: tab.tabId,
                 isActive: tab.isActive,
-                snapshot: snapshot,
-                title: (await tab.webContentsView.webContents.getTitle()) || tab.title,
-                url: (await tab.webContentsView.webContents.getURL()) || tab.url,
+                snapshot: tab.snapshot,
+                title: tab.title,
+                url: tab.url,
             };
         }));
     }
@@ -470,34 +477,44 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('tab-visit', (event, tabId) => {
+    ipcMain.on('tab-visit', async (event, tabId) => {
         // This is used to display the select tab when the user clicks on a tab
         try {
             let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
             if (tabToVisit) {
 
-                // Only if the tab is an error page, we reload the original URL to refresh the content.
-                // Otherwise, we just update the omnibox with the current URL of the tab.
-                if (tabToVisit.isErrorPage) {
-                    // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
-                    tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
+                // If the selected tab was not yet created (because it was the last active tab), we create it.
+                let createNewTab = !tabToVisit.webContentsView;
+                if (createNewTab) {
+                    await createTabView(tabToVisit.url, false, tabToVisit);
+                    tabToVisit.webContentsView = tabsList.find(tab => tab.tabId === tabId).webContentsView;
                 } else {
-                    let title = tabToVisit.webContentsView.webContents.getTitle();
-                    if (!title) title = tabToVisit.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
-                    mainWindowContent.webContents.send('omniboxText-update', title);
+                    // Only if the tab is an error page, we reload the original URL to refresh the content.
+                    // Otherwise, we just update the omnibox with the current URL of the tab.
+                    if (tabToVisit.isErrorPage) {
+                        // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
+                        tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
+                    } else {
+                        let title = tabToVisit.webContentsView.webContents.getTitle();
+                        if (!title) title = tabToVisit.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
+                        mainWindowContent.webContents.send('omniboxText-update', title);
+                    }
                 }
 
                 // Deactivates all tabs and activates the selected tab
                 tabsList.forEach(tab => tab.isActive = false);
                 tabToVisit.isActive = true;
 
-                tabToVisit.webContentsView.webContents.send('body-animate-fadeInUp');
+                // When a new tab is created, it is added to the top of the main window child views immediately.
+                if (!createNewTab) {
+                    // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
+                    mainWindow.contentView.removeChildView(tabToVisit.webContentsView);
+                    mainWindow.contentView.addChildView(tabToVisit.webContentsView);
 
-                // Moving the selected tab to the front by removing and re-adding the tabView to the main window child views
-                mainWindow.contentView.removeChildView(tabToVisit.webContentsView);
-                mainWindow.contentView.addChildView(tabToVisit.webContentsView);
+                    tabToVisit.webContentsView.webContents.send('body-animate-fadeInUp');
 
-                updateNavigationButtons(tabToVisit.webContentsView);
+                    updateNavigationButtons(tabToVisit.webContentsView);
+                }
             } else {
                 console.error(`Tab with ID ${tabId} not found.`);
             }

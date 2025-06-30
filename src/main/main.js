@@ -49,7 +49,7 @@ app.on('window-all-closed', async () => {
             app.quit()
         }
     } catch (err) {
-        logger.error('Error during app closure:', err.message);
+        console.error('Error during app closure:', err.message);
     }
 });
 
@@ -191,15 +191,28 @@ async function createInitialTabs() {
         await createTabView(defaultUrl);
     } else {
         // Sorting the tabs so that the active tab is always last so that the loading icon is displayed correctly.
-        const sortedTabs = [...tabsFromDatabase].sort((a, b) => (a.isActive ? 1 : 0) - (b.isActive ? 1 : 0));
-        for (const tab of sortedTabs) {
-            await createTabView(tab.url, false, tab);
-        }
+        for (const tab of tabsFromDatabase) {
+            let isTheActiveTab = tab.isActive === 1 || tab.isActive === true;
 
-        // The active tab is removed from the main window content view and added back to ensure it is displayed on top.
-        let activeTab = tabsList.find(tab => tab.isActive === true);
-        mainWindow.contentView.removeChildView(activeTab.webContentsView);
-        mainWindow.contentView.addChildView(activeTab.webContentsView);
+            // Here we only create the tabView for the active tab. The rest have an object created without it but are still
+            // added to the tabsList so that they can be created later.
+            if (isTheActiveTab) {
+                await createTabView(tab.url, false, tab);
+            } else {
+                tabObject = {
+                    tabId: tab.id,
+                    webContentsView: null, // This will be set only when the tab is actually created
+                    url: tab.url,
+                    title: tab.title,
+                    isActive: tab.isActive === 1 ? true : false,
+                    snapshot: tab.snapshot,
+                    isErrorPage: tab.isErrorPage,
+                    originalURL: tab.originalURL
+                };
+
+                tabsList.push(tabObject);
+            }
+        }
     }
 }
 
@@ -246,18 +259,35 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         // Populating the tabsList
         // -----------------------
         if (tabDataFromDB) {
-            tabObject = {
-                tabId: tabDataFromDB.id,
-                webContentsView: thisTabView,
-                url: tabDataFromDB.url,
-                title: tabDataFromDB.title,
-                isActive: tabDataFromDB.isActive === 1 ? true : false,
-                snapshot: tabDataFromDB.snapshot,
-                isErrorPage: tabDataFromDB.isErrorPage,
-                originalURL: tabDataFromDB.originalURL
-            };
+            // If an object for this tab already exists (because it was loaded from the database but was not the last
+            // active tab and hence we did not create a webContentsView for it), we update it with the new webContentsView.
+            // Otherwise, we create a new tab object and push it to the tabsList.
 
-            tabsList.push(tabObject);
+            // Small note: tabDataFromDB.id is usually used to get the id, but in this case, the object is not actually
+            // from the database, but rather from the tabsList array in the IPC handlers.
+            if (tabsList.some(tab => tab.tabId === tabDataFromDB.tabId)) {
+                // Updating the previously active tab to not active to prevent it from being active when the new tab is created.
+                let previousActiveTab = tabsList.find(tab => tab.isActive === true);
+                if (previousActiveTab) previousActiveTab.isActive = false;
+
+                const existingTab = tabsList.find(tab => tab.tabId === tabDataFromDB.tabId);
+                existingTab.webContentsView = thisTabView;
+                existingTab.isActive = true;
+                thisTabView.setBounds(webpageBounds);
+            } else {
+                tabObject = {
+                    tabId: tabDataFromDB.id,
+                    webContentsView: thisTabView,
+                    url: tabDataFromDB.url,
+                    title: tabDataFromDB.title,
+                    isActive: tabDataFromDB.isActive === 1 ? true : false,
+                    snapshot: tabDataFromDB.snapshot,
+                    isErrorPage: tabDataFromDB.isErrorPage,
+                    originalURL: tabDataFromDB.originalURL
+                };
+
+                tabsList.push(tabObject);
+            }
         } else {
             //Set new tab as active (if any)
             tabsList.forEach(tab => {
@@ -284,7 +314,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                     // The tabs loaded from the database will already have a snapshot.
                     // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
                     captureSnapshot(activeTab);
-                    
+
                     let title = activeTab.webContentsView.webContents.getTitle();
 
                     // Fallback to URL if there is no title
@@ -347,7 +377,6 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         }
 
         thisTabView.webContents.openDevTools();
-
     } catch (err) {
         console.error('Error creating tab view:', err.message);
     }
@@ -436,8 +465,8 @@ async function deleteAndInsertAllTabs() {
         // Update the database with the open tabs
         for (const tab of tabsList) {
             const tabData = {
-                url: !tab.isErrorPage ? (tab.webContentsView.webContents.getURL() ? tab.webContentsView.webContents.getURL() : tab.url) : null,
-                title: tab.webContentsView.webContents.getTitle() ? tab.webContentsView.webContents.getTitle() : tab.title,
+                url: !tab.isErrorPage ? (tab.webContentsView?.webContents.getURL() ? tab.webContentsView?.webContents.getURL() : tab.url) : null,
+                title: tab.webContentsView?.webContents.getTitle() ? tab.webContentsView?.webContents.getTitle() : tab.title,
                 isActive: tab.isActive,
                 snapshot: tab.snapshot,
                 originalURL: tab.originalURL,
@@ -447,6 +476,6 @@ async function deleteAndInsertAllTabs() {
             await db.addTab(tabData);
         }
     } catch (err) {
-        logger.error('Error updating database with open tabs:', err.message);
+        console.error('Error updating database with open tabs:', err.message);
     }
 }

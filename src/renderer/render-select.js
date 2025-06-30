@@ -3,6 +3,7 @@ const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon } = require('../utils/utilityFunctions');
+const logger = require('../main/modules/logger');
 
 // Prefix used for generating button IDs
 const idPrefix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
@@ -30,7 +31,7 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
         webpageBounds = webpage.getBoundingClientRect();
         await initSelectOverlay(); // Begin initialisation
     } catch (error) {
-        console.error('Error in select-loaded handler:', error);
+        logger.error('Error in select-loaded handler:', error);
     }
 });
 
@@ -83,7 +84,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             webpage.appendChild(label);
         });
     } catch (error) {
-        console.error('Error in addLabelsAndHighlightToElements:', error);
+        logger.error('Error in addLabelsAndHighlightToElements:', error);
     }
 }
 
@@ -95,7 +96,7 @@ function removeLabelsAndHighlightFromElements(elements) {
         const labels = webpage.querySelectorAll('.element-number');
         if (labels) labels.forEach(async label => await label.remove());
     } catch (error) {
-        console.error('Error in interactiveElements-removeHighlight handler:', error);
+        logger.error('Error in interactiveElements-removeHighlight handler:', error);
     }
 }
 
@@ -403,7 +404,7 @@ function attachEventListeners() {
                         // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, elementToClick);
                     } catch (error) {
-                        console.error('Error creating keyboard overlay:', error);
+                        logger.error('Error creating keyboard overlay:', error);
                     }
                 } else {
                     try {
@@ -437,7 +438,7 @@ function attachEventListeners() {
                         ipcRenderer.send('mouse-click-nutjs', coordinates);
                         ipcRenderer.send('elementsInDom-removeBoggleId');
                     } catch (error) {
-                        console.error('Error calculating the coordinates of the element', error);
+                        logger.error('Error calculating the coordinates of the element', error);
                     }
                 }
                 return;

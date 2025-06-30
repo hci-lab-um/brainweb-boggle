@@ -16,6 +16,8 @@
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
     "sqlite3": "^5.1.7",
-    "ssvep-stimuli": "^0.1.5"
+    "ssvep-stimuli": "^0.1.5",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   }
 }

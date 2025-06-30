@@ -1,4 +1,5 @@
 const { CssConstants } = require('./constants/enums');
+const logger = require('../main/modules/logger');
 
 /**
  * This function adds a border animation to the flickering buttons when they are selected (i.e. classified by the FBCCA).
@@ -13,11 +14,11 @@ function addButtonSelectionAnimation(button) {
                 button.classList.remove('border');
                 if (button.classList.contains('accent')) button.classList.remove('border--accent');
             } catch (error) {
-                console.error("Error removing 'pulse' class:", error.message);
+                logger.error("Error removing 'pulse' class:", error.message);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     } catch (error) {
-        console.error("Error adding 'pulse' class to sidebar menu:", error.message);
+        logger.error("Error adding 'pulse' class to sidebar menu:", error.message);
     }
 }
 

@@ -3,6 +3,7 @@ const { ViewNames, CssConstants } = require('./constants/enums');
 const { updateScenarioId, stopManager } = require('./scenarioManager');
 const { addButtonSelectionAnimation } = require('./selectionAnimation');
 const { createMaterialIcon, createPopup, createNavigationButton, updatePaginationIndicators, paginate } = require('./utilityFunctions');
+const logger = require('../main/modules/logger');
 
 let buttons = [];
 let itemsList = [];     // This will hold the list of items loaded from the main process
@@ -62,7 +63,7 @@ async function initialise(overlayData, isReload = false, name) {
         // Updating the scenarioId for the overlay
         await updateScenarioId(scenarioId, buttons, overlayName);
     } catch (error) {
-        console.error('Error in items-loaded handler:', error);
+        logger.error('Error in items-loaded handler:', error);
     }
 }
 
@@ -153,7 +154,7 @@ function initialiseItemsOverlay() {
 
                     return itemButton;
                 } catch (error) {
-                    console.error('Error creating itemButton:', error);
+                    logger.error('Error creating itemButton:', error);
                 }
             };
 
@@ -208,7 +209,7 @@ function initialiseItemsOverlay() {
             attachEventListeners();
         }
     } catch (error) {
-        console.error('Error initialising items overlay:', error);
+        logger.error('Error initialising items overlay:', error);
     }
 }
 
@@ -228,7 +229,7 @@ function showBookmarkExistsPopup() {
             }
         });
     } catch (error) {
-        console.error('Error opening bookmark exists popup:', error.message);
+        logger.error('Error opening bookmark exists popup:', error.message);
     }
 }
 
@@ -244,7 +245,7 @@ function showItemAddedPopup() {
             }
         });
     } catch (error) {
-        console.error('Error opening settings overlay:', error.message);
+        logger.error('Error opening settings overlay:', error.message);
     }
 }
 
@@ -270,7 +271,7 @@ function showItemDeletedPopup(url, tabId) {
             }
         });
     } catch (error) {
-        console.error('Error opening settings overlay:', error.message);
+        logger.error('Error opening settings overlay:', error.message);
     }
 }
 
@@ -294,7 +295,7 @@ function showDeleteAllSuccessPopup() {
             }
         });
     } catch (error) {
-        console.error('Error opening delete all success popup:', error.message);
+        logger.error('Error opening delete all success popup:', error.message);
     }
 }
 
@@ -348,7 +349,7 @@ async function showDeleteAllConfirmationPopup() {
 
         await updateScenarioId(31, buttons, overlayName);
     } catch (error) {
-        console.error('Error opening delete all confirmation popup:', error.message);
+        logger.error('Error opening delete all confirmation popup:', error.message);
     }
 }
 
@@ -435,7 +436,7 @@ async function showItemActionPopup(item) {
 
         await updateScenarioId(32, buttons, overlayName);
     } catch (error) {
-        console.error('Error opening item action popup:', error.message);
+        logger.error('Error opening item action popup:', error.message);
     }
 }
 
@@ -510,7 +511,7 @@ function attachEventListeners() {
             }, CssConstants.SELECTION_ANIMATION_DURATION);
 
         } catch (error) {
-            console.error('Error in button click handler:', error);
+            logger.error('Error in button click handler:', error);
         }
     });
 }

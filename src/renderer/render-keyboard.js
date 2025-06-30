@@ -4,6 +4,7 @@ const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const fs = require('original-fs')
 const path = require('path')
+const logger = require('../main/modules/logger');
 
 let buttons = [];
 let textarea;
@@ -35,7 +36,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             attachEventListeners();
         });
     } catch (error) {
-        console.error('Error in keyboard-loaded handler:', error);
+        logger.error('Error in keyboard-loaded handler:', error);
     }
 });
 
@@ -43,7 +44,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
     } catch (error) {
-        console.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error);
     }
 });
 
@@ -51,7 +52,7 @@ ipcRenderer.on('textarea-populate', (event, text) => {
     try {
         updateTextareaAtCursor(text);
     } catch (error) {
-        console.error('Error in textarea-populate handler:', error);
+        logger.error('Error in textarea-populate handler:', error);
     }
 });
 
@@ -83,7 +84,7 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
         await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
         textarea.focus();
     } catch (error) {
-        console.error('Error in textarea-moveCursor handler:', error);
+        logger.error('Error in textarea-moveCursor handler:', error);
     }
 });
 
@@ -215,7 +216,7 @@ async function getScenarioNumber() {
         return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
     }
 
-    console.error("No matching scenario");
+    logger.error("No matching scenario");
 }
 
 async function fetchValidTLDs() {
@@ -229,7 +230,7 @@ async function fetchValidTLDs() {
         }
         return new Set();
     } catch (error) {
-        console.error("Failed to fetch TLD list:", error.message);
+        logger.error("Failed to fetch TLD list:", error.message);
         return new Set();
     }
 }
@@ -261,7 +262,7 @@ function isLocalOrIP(hostname) {
 
         return ipv4Regex.test(hostname) || ipv6Regex.test(hostname) || hostname.toLowerCase() === LOCALHOST;
     } catch (error) {
-        console.error("Error in isLocalOrIP:", error.message);
+        logger.error("Error in isLocalOrIP:", error.message);
         return false;
     }
 }
@@ -304,7 +305,7 @@ async function processUrlInput(input) {
             if (!isLocalOrIP(urlObject.hostname)) {
                 // If TLD is invalid, treat it as a search query
                 if (!(await isValidTLD(urlObject.hostname, VALID_TLDs))) {
-                    console.warn(`Invalid TLD detected: ${urlObject.hostname}`);
+                    logger.warn(`Invalid TLD detected: ${urlObject.hostname}`);
                     url = `https://www.google.com/search?q=${encodeURIComponent(unprocessedInput)}`;
                 }
             }
@@ -315,7 +316,7 @@ async function processUrlInput(input) {
 
         return url;
     } catch (error) {
-        console.error("Error in browseToUrl:", error.message);
+        logger.error("Error in browseToUrl:", error.message);
     }
 }
 

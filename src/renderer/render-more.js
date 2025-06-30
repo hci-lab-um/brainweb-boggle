@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants  } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const logger = require('../main/modules/logger');
 
 let buttons = [];
 
@@ -13,7 +14,7 @@ ipcRenderer.on('more-loaded', async (event, overlayData) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
         attachEventListeners();
     } catch (error) {
-        console.error('Error in more-loaded handler:', error);
+        logger.error('Error in more-loaded handler:', error);
     }
 });
 
@@ -21,7 +22,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
     } catch (error) {
-        console.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error);
     }
 });
 

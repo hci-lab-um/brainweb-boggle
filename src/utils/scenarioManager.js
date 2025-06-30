@@ -2,6 +2,7 @@ const stimuli = require("ssvep-stimuli");
 const { scenarioConfig } = require('../../configs/scenarioConfig');
 const { browserConfig } = require('../../configs/browserConfig');
 const { ipcRenderer } = require("electron");
+const logger = require('../main/modules/logger');
 
 let manager;
 
@@ -19,7 +20,7 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         manager = new stimuli.CSS('approximation', frequencies.length);
 
         if (!frequencies) {
-            console.error(`No frequencies found for scenario ID: ${scenarioId}`);
+            logger.error(`No frequencies found for scenario ID: ${scenarioId}`);
             return;
         }
 
@@ -39,7 +40,7 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
 
         await manager.start();
     } catch (error) {
-        console.error('Error in updateScenarioId:', error);
+        logger.error('Error in updateScenarioId:', error);
     }
 }
 
@@ -49,7 +50,7 @@ async function stopManager() {
             await manager.stop();
         }
     } catch (error) {
-        console.error('Error in stopManager:', error);
+        logger.error('Error in stopManager:', error);
     }
 }
 

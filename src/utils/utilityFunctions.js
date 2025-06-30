@@ -15,10 +15,10 @@ async function captureSnapshot(activeTab) {
             activeTab.snapshot = snapshot.toDataURL();
             return activeTab.snapshot;
         } else {
-            console.error('Active tab or webContents not available for capture');
+            logger.warn('Active tab or webContents not available for capture');
         }
     } catch (err) {
-        console.error('Error capturing snapshot:', err.message);
+        logger.error('Error capturing snapshot:', err.message);
         return null;
     }
 }
@@ -170,11 +170,11 @@ function slideInView(view, webpageBounds, duration = 300) {
                     view.setBounds(webpageBounds); // Ensure final bounds are set
                 }
             } catch (err) {
-                console.error('Error during slide in view:', err.message);
+                logger.error('Error during slide in view:', err.message);
             }
         }, interval);
     } catch (err) {
-        console.error('Error sliding in view:', err.message);
+        logger.error('Error sliding in view:', err.message);
     }
 }
 

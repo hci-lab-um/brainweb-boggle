@@ -3,6 +3,7 @@ const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon } = require('../utils/utilityFunctions');
+const logger = require('../main/modules/logger');
 
 const scrollDistance = 400; // Distance to scroll in pixels
 
@@ -31,7 +32,7 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
         webpageBounds = webpage.getBoundingClientRect();
         await initSeekOverlay(); // Begin initialisation
     } catch (error) {
-        console.error('Error in select-loaded handler:', error);
+        logger.error('Error in select-loaded handler:', error);
     }
 });
 
@@ -39,7 +40,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.SEEK);
     } catch (error) {
-        console.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error);
     }
 });
 
@@ -56,7 +57,7 @@ ipcRenderer.on('text-findInPage-response', (event, searchText, result) => {
             displayFindInPage(`No results found for "${searchText}".`, currentFindCount);
         }
     } catch (err) {
-        console.error('Error finding text in page:', err.message);
+        logger.error('Error finding text in page:', err.message);
     }
 });
 
@@ -526,7 +527,7 @@ function attachEventListeners() {
                             else await updateScenarioId(11, buttons, ViewNames.SEEK);
                         }
                     } catch (error) {
-                        console.error('Error toggling read mode:', error);
+                        logger.error('Error toggling read mode:', error);
                     }
                     break;
                 case "firstScrollableElementBtn":

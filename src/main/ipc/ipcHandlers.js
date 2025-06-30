@@ -3,6 +3,7 @@ const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot } = require('../../utils/utilityFunctions');
+const logger = require('../modules/logger');
 
 const defaultUrl = 'https://www.google.com';
 
@@ -92,10 +93,10 @@ function registerIpcHandlers(context) {
             try {
                 overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
             } catch (err) {
-                console.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
+                logger.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
             }
         }).catch(err => {
-            console.error(`Error loading ${overlayName} overlay:`, err.message);
+            logger.error(`Error loading ${overlayName} overlay:`, err.message);
         });
     });
 
@@ -122,7 +123,7 @@ function registerIpcHandlers(context) {
             topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
             topMostView.webContentsView.webContents.focus();
         } catch (err) {
-            console.error('Error closing overlay:', err.message);
+            logger.error('Error closing overlay:', err.message);
         }
     });
 
@@ -145,7 +146,7 @@ function registerIpcHandlers(context) {
             let topMostView = viewsList[viewsList.length - 1];
             topMostView.webContentsView.webContents.focus();
         } catch (err) {
-            console.error('Error closing overlay:', err.message);
+            logger.error('Error closing overlay:', err.message);
         }
     });
 
@@ -157,7 +158,7 @@ function registerIpcHandlers(context) {
             scenarioIdDict[viewName].push(scenarioId);
             console.log(`Scenario ID updated for ${viewName}:`, scenarioId);
         } catch (err) {
-            console.error('Error updating scenarioIdDict:', err.message);
+            logger.error('Error updating scenarioIdDict:', err.message);
         }
     });
 
@@ -168,7 +169,7 @@ function registerIpcHandlers(context) {
                 updateNavigationButtons(activeTab.webContentsView);
             }
         } catch (err) {
-            console.error('Error stopping read mode:', err.message);
+            logger.error('Error stopping read mode:', err.message);
         }
     });
 
@@ -181,7 +182,7 @@ function registerIpcHandlers(context) {
             let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
             keyboardOverlay.webContentsView.webContents.send('textarea-populate', text);
         } catch (err) {
-            console.error('Error populating textarea:', err.message);
+            logger.error('Error populating textarea:', err.message);
         }
     });
 
@@ -194,7 +195,7 @@ function registerIpcHandlers(context) {
             let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
             keyboardOverlay.webContentsView.webContents.send('textarea-moveCursor', iconName);
         } catch (err) {
-            console.error('Error moving cursor in textarea:', err.message);
+            logger.error('Error moving cursor in textarea:', err.message);
         }
     });
 
@@ -208,10 +209,10 @@ function registerIpcHandlers(context) {
                 if (!title) title = url; // Fallback to URL if title is not available
                 mainWindowContent.webContents.send('omniboxText-update', title)
             } else {
-                console.error('activeTab is not initialized.');
+                logger.error('activeTab is not initialized.');
             }
         } catch (err) {
-            console.error('Error loading URL in activeTab:', err.message);
+            logger.error('Error loading URL in activeTab:', err.message);
         }
     });
 
@@ -269,7 +270,7 @@ function registerIpcHandlers(context) {
             // Reset the search position to the top of the page so that the next search starts from the top
             activeTab.webContentsView.webContents.executeJavaScript(`(${resetSearchPositionToTop.toString()})`)
         } catch (err) {
-            console.error('Error finding text in page:', err.message);
+            logger.error('Error finding text in page:', err.message);
         }
     });
 
@@ -279,7 +280,7 @@ function registerIpcHandlers(context) {
             if (forward) activeTab.webContentsView.webContents.findInPage(searchText, { findNext: true });
             else activeTab.webContentsView.webContents.findInPage(searchText, { findNext: true, forward: false });
         } catch (err) {
-            console.error('Error in word-findNext handler:', err.message);
+            logger.error('Error in word-findNext handler:', err.message);
         }
     });
 
@@ -288,7 +289,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.stopFindInPage('clearSelection');
         } catch (err) {
-            console.error('Error stopping find in page:', err.message);
+            logger.error('Error stopping find in page:', err.message);
         }
     });
 
@@ -297,7 +298,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.reload();
         } catch (err) {
-            console.error('Error refreshing webpage:', err.message);
+            logger.error('Error refreshing webpage:', err.message);
         }
     });
 
@@ -306,7 +307,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.setZoomLevel(activeTab.webContentsView.webContents.getZoomLevel() + 1);
         } catch (err) {
-            console.error('Error zooming in webpage:', err.message);
+            logger.error('Error zooming in webpage:', err.message);
         }
     });
 
@@ -315,7 +316,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.setZoomLevel(activeTab.webContentsView.webContents.getZoomLevel() - 1);
         } catch (err) {
-            console.error('Error zooming out webpage:', err.message);
+            logger.error('Error zooming out webpage:', err.message);
         }
     });
 
@@ -324,7 +325,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.setZoomLevel(0);
         } catch (err) {
-            console.error('Error resetting webpage zoom:', err.message);
+            logger.error('Error resetting webpage zoom:', err.message);
         }
     });
 
@@ -333,7 +334,7 @@ function registerIpcHandlers(context) {
             var tab = tabsList.find(tab => tab.isActive === true);
             tab.webContentsView.webContents.send('navigate-back');
         } catch (err) {
-            console.error('Error in webpage-goBack handler:', err.message);
+            logger.error('Error in webpage-goBack handler:', err.message);
         }
     });
 
@@ -342,7 +343,7 @@ function registerIpcHandlers(context) {
             var tab = tabsList.find(tab => tab.isActive === true);
             tab.webContentsView.webContents.send('navigate-forward');
         } catch (err) {
-            console.error('Error in webpage-goForward handler:', err.message);
+            logger.error('Error in webpage-goForward handler:', err.message);
         }
     });
 
@@ -369,7 +370,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.send('interactiveElements-addHighlight', elements);
         } catch (err) {
-            console.error('Error adding highlight to interactive elements:', err.message);
+            logger.error('Error adding highlight to interactive elements:', err.message);
         }
     });
 
@@ -378,7 +379,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.send('interactiveElements-removeHighlight');
         } catch (err) {
-            console.error('Error removing highlight from interactive elements:', err.message);
+            logger.error('Error removing highlight from interactive elements:', err.message);
         }
     });
 
@@ -387,7 +388,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.send('elementsInDom-removeBoggleId', elements);
         } catch (err) {
-            console.error('Error removing Boggle IDs from interactive elements:', err.message);
+            logger.error('Error removing Boggle IDs from interactive elements:', err.message);
         }
     });
 
@@ -414,7 +415,7 @@ function registerIpcHandlers(context) {
             let activeTab = tabsList.find(tab => tab.isActive);
             activeTab.webContentsView.webContents.send('scrollableElement-scroll', scrollObject);
         } catch (err) {
-            console.error('Error scrolling scrollable element:', err.message);
+            logger.error('Error scrolling scrollable element:', err.message);
         }
     });
 
@@ -436,7 +437,7 @@ function registerIpcHandlers(context) {
             await db.addBookmark(bookmark);
             return true;
         } catch (err) {
-            console.error('Error adding bookmark:', err.message);
+            logger.error('Error adding bookmark:', err.message);
             return false;
         }
     });
@@ -446,7 +447,7 @@ function registerIpcHandlers(context) {
             await db.deleteAllBookmarks();
             bookmarksList = [];
         } catch (err) {
-            console.error('Error deleting all bookmarks:', err.message);
+            logger.error('Error deleting all bookmarks:', err.message);
         }
     });
 
@@ -463,7 +464,7 @@ function registerIpcHandlers(context) {
             let isReload = true;
             topMostView.webContentsView.webContents.send('bookmarks-loaded', { bookmarksList }, isReload);
         } catch (err) {
-            console.error('Error deleting bookmark by URL:', err.message);
+            logger.error('Error deleting bookmark by URL:', err.message);
         }
     });
 
@@ -472,7 +473,7 @@ function registerIpcHandlers(context) {
             createTabView(defaultUrl, true);
             return true;
         } catch (err) {
-            console.error('Error adding tab:', err.message);
+            logger.error('Error adding tab:', err.message);
             return false;
         }
     });
@@ -516,10 +517,10 @@ function registerIpcHandlers(context) {
                     updateNavigationButtons(tabToVisit.webContentsView);
                 }
             } else {
-                console.error(`Tab with ID ${tabId} not found.`);
+                logger.error(`Tab with ID ${tabId} not found.`);
             }
         } catch (err) {
-            console.error('Error activating tab:', err.message);
+            logger.error('Error activating tab:', err.message);
         }
 
     });
@@ -529,7 +530,7 @@ function registerIpcHandlers(context) {
         try {
             tabsList.length = 0;
         } catch (err) {
-            console.error('Error deleting all tabs:', err.message);
+            logger.error('Error deleting all tabs:', err.message);
         }
     });
 
@@ -564,7 +565,7 @@ function registerIpcHandlers(context) {
                 topMostView.webContentsView.webContents.send('tabs-loaded', { tabsList: serialisableTabsList }, isReload);
             }
         } catch (err) {
-            console.error('Error deleting tab by ID:', err.message);
+            logger.error('Error deleting tab by ID:', err.message);
         }
     });
 
@@ -639,7 +640,7 @@ function registerIpcHandlers(context) {
             await deleteAndInsertAllTabs()
             app.quit();
         } catch (err) {
-            console.error('Error exiting app:', err.message);
+            logger.error('Error exiting app:', err.message);
         }
     });
 }

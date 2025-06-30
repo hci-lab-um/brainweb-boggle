@@ -2,6 +2,7 @@ const { app } = require('electron');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const dbPath = path.join(app.getPath('userData'), 'boggle.db');
+const logger = require('./logger');
 
 let db;
 
@@ -9,10 +10,10 @@ function connect() {
     return new Promise((resolve, reject) => {
         db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
             if (err) {
-                console.log(`Error connecting to the database: ${err.message}, dbPath: ${dbPath}`);
+                logger.error(`Error connecting to the database: ${err.message}, dbPath: ${dbPath}`);
                 reject(err);
             } else {
-                console.log('Connected to the SQLite database.');
+                logger.info('Connected to the SQLite database.');
                 resolve(db);
             }
         });
@@ -24,10 +25,10 @@ function close() {
         if (db) {
             db.close((err) => {
                 if (err) {
-                    console.error('Error closing the database:', err.message);
+                    logger.error('Error closing the database:', err.message);
                     reject(err);
                 } else {
-                    console.log('Database connection closed.');
+                    logger.info('Database connection closed.');
                     resolve();
                 }
             });
@@ -54,10 +55,10 @@ function createBookmarksTable() {
         `;
         db.run(createBookmarksTable, (err) => {
             if (err) {
-                console.error('Error creating bookmarks table:', err.message);
+                logger.error('Error creating bookmarks table:', err.message);
                 reject(err);
             } else {
-                console.log('Bookmarks table created successfully.');
+                logger.info('Bookmarks table created successfully.');
                 resolve();
             }
         });
@@ -80,10 +81,10 @@ function createTabsTable() {
         `;
         db.run(createTabsTable, (err) => {
             if (err) {
-                console.error('Error creating tabs table:', err.message);
+                logger.error('Error creating tabs table:', err.message);
                 reject(err);
             } else {
-                console.log('Tabs table created successfully.');
+                logger.info('Tabs table created successfully.');
                 resolve();
             }
         });
@@ -94,7 +95,7 @@ async function createTables() {
     return createBookmarksTable()
         .then(createTabsTable)
         .catch((err) => {
-            console.error('Error creating tables:', err.message);
+            logger.error('Error creating tables:', err.message);
             throw err;
         });
 }
@@ -116,16 +117,16 @@ function addBookmark({ url, title, snapshot }) {
             `;
             db.run(insertBookmark, [url, title, binarySnapshot], function (err) {
                 if (err) {
-                    console.error('Error inserting bookmark:', err.message);
+                    logger.error('Error inserting bookmark:', err.message);
                     reject(err);
                 } else {
-                    console.log(`A bookmark has been inserted with rowid ${this.lastID}`);
+                    logger.info(`A bookmark has been inserted with rowid ${this.lastID}`);
                     resolve(this.lastID);
                 }
             });
         });
     } catch (err) {
-        console.error('Error adding bookmark:', err.message);
+        logger.error('Error adding bookmark:', err.message);
     }
 }
 
@@ -142,16 +143,16 @@ function addTab({url, title, isActive, snapshot, originalURL, isErrorPage}) {
             `;
             db.run(insertTab, [url, title, isActive, binarySnapshot, originalURL, isErrorPage], function(err) {
                 if (err) {
-                    console.error('Error inserting tab:', err.message);
+                    logger.error('Error inserting tab:', err.message);
                     reject(err);
                 } else {
-                    console.log(`A tab has been inserted with rowid ${this.lastID}`);
+                    logger.info(`A tab has been inserted with rowid ${this.lastID}`);
                     resolve(this.lastID);
                 }
             });
         });
     } catch (err) {
-        console.error('Error adding tab:', err.message);
+        logger.error('Error adding tab:', err.message);
     }
 }
 
@@ -164,10 +165,10 @@ function deleteBookmarkByUrl(url) {
         const deleteBookmark = `DELETE FROM bookmarks WHERE url = ?`;
         db.run(deleteBookmark, [url], function (err) {
             if (err) {
-                console.error('Error deleting bookmark:', err.message);
+                logger.error('Error deleting bookmark:', err.message);
                 reject(err);
             } else {
-                console.log(`Bookmark with URL: ${url} has been deleted`);
+                logger.info(`Bookmark with URL: ${url} has been deleted`);
                 resolve();
             }
         });
@@ -183,10 +184,10 @@ function deleteAllBookmarks() {
         const deleteAll = `DELETE FROM bookmarks`;
         db.run(deleteAll, function (err) {
             if (err) {
-                console.error('Error deleting all bookmarks:', err.message);
+                logger.error('Error deleting all bookmarks:', err.message);
                 reject(err);
             } else {
-                console.log('All bookmarks have been deleted');
+                logger.info('All bookmarks have been deleted');
                 resolve();
             }
         });
@@ -198,10 +199,10 @@ function deleteAllTabs() {
         const deleteTabs = `DELETE FROM tabs`;
         db.run(deleteTabs, function(err) {
             if (err) {
-                console.error('Error deleting all tabs:', err.message);
+                logger.error('Error deleting all tabs:', err.message);
                 reject(err);
             } else {
-                console.log('All tabs have been deleted');
+                logger.info('All tabs have been deleted');
                 resolve();
             }
         });
@@ -217,7 +218,7 @@ function getBookmarks() {
         const query = `SELECT * FROM bookmarks`;
         db.all(query, (err, rows) => {
             if (err) {
-                console.error('Error retrieving bookmarks:', err.message);
+                logger.error('Error retrieving bookmarks:', err.message);
                 reject(err);
             } else {
                 // Convert each snapshot (BLOB) to a Base64 string
@@ -231,7 +232,7 @@ function getBookmarks() {
             }
         });
     }).catch(err => {
-        console.error('Error getting bookmarks:', err.message);
+        logger.error('Error getting bookmarks:', err.message);
     });
 }
 
@@ -240,7 +241,7 @@ function getTabs() {
         const query = `SELECT * FROM tabs`;
         db.all(query, (err, rows) => {
             if (err) {
-                console.error('Error retrieving tabs:', err.message);
+                logger.error('Error retrieving tabs:', err.message);
                 reject(err);
             } else {
                 // Convert each snapshot (BLOB) to a Base64 string if snapshot is present
@@ -254,7 +255,7 @@ function getTabs() {
             }
         });
     }).catch(err => {
-        console.error('Error getting tabs:', err.message);
+        logger.error('Error getting tabs:', err.message);
     });
 }
 

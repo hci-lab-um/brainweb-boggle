@@ -3,6 +3,7 @@ const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
+const logger = require('../main/modules/logger');
 
 let buttons = [];
 
@@ -14,7 +15,7 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
     } catch (error) {
-        console.error('Error in keyboard-loaded handler:', error);
+        logger.error('Error in keyboard-loaded handler:', error);
     }
 });
 
@@ -24,7 +25,7 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
 //     try {
 //         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
 //     } catch (error) {
-//         console.error('Error in scenarioId-update handler:', error);
+//         logger.error('Error in scenarioId-update handler:', error);
 //     }
 // });
 
@@ -75,7 +76,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     }
                     return key;
                 } catch (error) {
-                    console.error('Error creating key:', error);
+                    logger.error('Error creating key:', error);
                 }
             };
 
@@ -136,7 +137,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
             renderPage();
             resolve();
         } else {
-            console.error('Keyboard keys element not found');
+            logger.error('Keyboard keys element not found');
             reject(new Error('Keyboard keys element not found'));
         }
     });

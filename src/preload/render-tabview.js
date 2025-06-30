@@ -1,4 +1,5 @@
 const { ipcRenderer } = require("electron");
+const logger = require('../main/modules/logger');
 
 const movementTracker = new Map();
 
@@ -33,7 +34,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
                     }
                 }
             } catch (err) {
-                console.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
+                logger.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
             }
         }
 
@@ -52,7 +53,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 
         // setInterval(checkAllInteractiveElementPositions, 4000);
     } catch (error) {
-        console.error('Error in interactiveElements-get handler:', error);
+        logger.error('Error in interactiveElements-get handler:', error);
     }
 });
 
@@ -81,7 +82,7 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
                             elementInDom = iframeDoc.querySelector(`[data-boggle-id="${element.boggleId}"]`);
                         }
                     } catch (err) {
-                        console.warn('Cannot access iframe due to cross-origin restriction:', err);
+                        logger.warn('Cannot access iframe due to cross-origin restriction:', err);
                     }
                 }
             } else {
@@ -90,7 +91,7 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
             }
 
             if (!elementInDom) {
-                console.warn(`Element with boggleId ${element.boggleId} not found in the DOM.`);
+                logger.warn(`Element with boggleId ${element.boggleId} not found in the DOM.`);
                 return;
             }
 
@@ -106,7 +107,7 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
             elementInDom.style.boxShadow = 'rgba(0, 0, 0, 0.8) 0px 0px 0px 2px inset';
         });
     } catch (error) {
-        console.error('Error in interactiveElements-addHighlight handler:', error);
+        logger.error('Error in interactiveElements-addHighlight handler:', error);
     }
 });
 
@@ -137,11 +138,11 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
                     elementInDom.removeAttribute('data-original-shadow');
                 });
             } catch (err) {
-                console.warn('Skipping iframe during removeHighlight due to cross-origin restriction:', iframe.src);
+                logger.warn('Skipping iframe during removeHighlight due to cross-origin restriction:', iframe.src);
             }
         }
     } catch (error) {
-        console.error('Error in interactiveElements-removeHighlight handler:', error);
+        logger.error('Error in interactiveElements-removeHighlight handler:', error);
     }
 });
 
@@ -167,11 +168,11 @@ ipcRenderer.on('elementsInDom-removeBoggleId', (event) => {
                     elementInDom.removeAttribute('data-scrollable-boggle-id');
                 });
             } catch (err) {
-                console.warn('Skipping iframe during removeBoggleId due to cross-origin restriction:', iframe.src);
+                logger.warn('Skipping iframe during removeBoggleId due to cross-origin restriction:', iframe.src);
             }
         }
     } catch (error) {
-        console.error('Error in elementsInDom-removeBoggleId handler:', error);
+        logger.error('Error in elementsInDom-removeBoggleId handler:', error);
     }
 });
 
@@ -198,7 +199,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
                     }
                 }
             } catch (err) {
-                console.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
+                logger.warn('Skipping iframe due to cross-origin restriction:', iframe.src);
             }
         }
 
@@ -244,7 +245,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
         ipcRenderer.send('scrollableElements-response', serializedElements);
     }
     catch (error) {
-        console.error('Error in scrollableElements-get handler:', error);
+        logger.error('Error in scrollableElements-get handler:', error);
     }
 });
 
@@ -257,16 +258,16 @@ ipcRenderer.on('navigate-back', (event) => {
         console.log('Navigating back');
         window.history.back();
     } catch (error) {
-        console.error('Error navigating back:', error);
+        logger.error('Error navigating back:', error);
     }
 });
 
 ipcRenderer.on('navigate-forward', (event) => {
     try {
-        console.log('Navigating back');
+        console.log('Navigating forward');
         window.history.forward();
     } catch (error) {
-        console.error('Error navigating forward:', error);
+        logger.error('Error navigating forward:', error);
     }
 });
 
@@ -291,20 +292,20 @@ ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, be
                         }
                     }
                 } catch (err) {
-                    console.warn('Skipping iframe during scroll due to cross-origin restriction:', iframe.src);
+                    logger.warn('Skipping iframe during scroll due to cross-origin restriction:', iframe.src);
                 }
             }
         }
 
         if (!domElementToScroll) {
-            console.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
+            logger.warn(`Scrollable element with boggleId ${scrollableBoggleId} not found in the DOM.`);
             return;
         }
 
         console.log(`Scrolling element ${domElementToScroll} with boggleId ${scrollableBoggleId}`);
         domElementToScroll.scrollBy({ top, behavior });
     } catch (error) {
-        console.error('Error in scrollableElement-scroll handler:', error);
+        logger.error('Error in scrollableElement-scroll handler:', error);
     }
 });
 
@@ -378,7 +379,7 @@ function filterVisibleElements(elements, areElementsScrollable = false) {
             );
         });
     } catch (error) {
-        console.error(`Error filtering visible elements: ${error.message}`);
+        logger.error(`Error filtering visible elements: ${error.message}`);
     }
 }
 
@@ -409,7 +410,7 @@ function isElementFullyOccluded(element) {
         }
         return true; // All points are occluded
     } catch (error) {
-        console.error('Error in isElementFullyOccluded:', error);
+        logger.error('Error in isElementFullyOccluded:', error);
         return false;
     }
 }
@@ -453,7 +454,7 @@ function serialiseElement(element, iframe) {
             iframeBounds
         };
     } catch (error) {
-        console.error(`Error serializing element: ${error.message}`);
+        logger.error(`Error serializing element: ${error.message}`);
         return null;
     }
 }

@@ -4,6 +4,7 @@ const path = require('path')
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
+const logger = require('./modules/logger');
 
 let splashWindow;
 let mainWindow;
@@ -24,7 +25,7 @@ app.whenReady().then(async () => {
         await db.createTables();
         await initialiseVariables();
     } catch (err) {
-        console.error('Error initialising database:', err.message);
+        logger.error('Error initialising database:', err.message);
     }
 
     try {
@@ -33,7 +34,7 @@ app.whenReady().then(async () => {
             createMainWindow();
         }, 4000);
     } catch (err) {
-        console.error('Error during app initialisation:', err);
+        logger.error('Error during app initialisation:', err);
     }
 })
 
@@ -49,7 +50,7 @@ app.on('window-all-closed', async () => {
             app.quit()
         }
     } catch (err) {
-        console.error('Error during app closure:', err.message);
+        logger.error('Error during app closure:', err.message);
     }
 });
 
@@ -58,7 +59,7 @@ async function initialiseVariables() {
         bookmarksList = await db.getBookmarks();
         tabsFromDatabase = await db.getTabs();
     } catch (err) {
-        console.error("Error initialising variables: ", err);
+        logger.error("Error initialising variables: ", err);
     }
 }
 
@@ -75,7 +76,7 @@ function createSplashWindow() {
         splashWindowContent.setBounds({ x: 0, y: 0, width: splashWindow.getBounds().width, height: splashWindow.getBounds().height });
         splashWindowContent.webContents.loadURL(path.join(__dirname, '../pages/html/splash.html'));
     } catch (err) {
-        console.error('Error creating splash window:', err.message);
+        logger.error('Error creating splash window:', err.message);
     }
 }
 
@@ -142,13 +143,13 @@ function createMainWindow() {
                             })
                         });
                     } catch (err) {
-                        console.error('Error processing webpage bounds:', err.message);
+                        logger.error('Error processing webpage bounds:', err.message);
                     }
                 }).catch(err => {
-                    console.error('Error executing JavaScript in main window:', err.message);
+                    logger.error('Error executing JavaScript in main window:', err.message);
                 });
             } catch (err) {
-                console.error('Error sending scenarioId to render-mainwindow:', err.message);
+                logger.error('Error sending scenarioId to render-mainwindow:', err.message);
             }
         });
 
@@ -156,7 +157,7 @@ function createMainWindow() {
             try {
                 resizeMainWindow();
             } catch (err) {
-                console.error('Error resizing main window:', err.message);
+                logger.error('Error resizing main window:', err.message);
             }
         });
 
@@ -164,7 +165,7 @@ function createMainWindow() {
             try {
                 resizeMainWindow();
             } catch (err) {
-                console.error('Error maximizing main window:', err.message);
+                logger.error('Error maximizing main window:', err.message);
             }
         });
 
@@ -177,12 +178,12 @@ function createMainWindow() {
                 // mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
-                console.error('Error showing main window:', err.message);
+                logger.error('Error showing main window:', err.message);
             }
         });
     }
     catch (err) {
-        console.error('Error creating main window:', err)
+        logger.error('Error creating main window:', err)
     }
 }
 
@@ -333,7 +334,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                     }
                 }
             } catch (err) {
-                console.error('Error during tabview stop loading:', err.message);
+                logger.error('Error during tabview stop loading:', err.message);
             }
         });
 
@@ -346,7 +347,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 createTabView(url, true);
                 return { action: 'deny' };
             } catch (err) {
-                console.error('Error during window open handler:', err.message);
+                logger.error('Error during window open handler:', err.message);
                 return { action: 'deny' };
             }
         });
@@ -361,7 +362,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 const idx = tabsList.findIndex(tab => tab.webContentsView === thisTabView);
                 if (idx !== -1) tabsList.splice(idx, 1); /////// IMP: This MUTATES the tabsList in place, thus updating the variable inside IpcHandlers  ///////
             } catch (err) {
-                console.warn('View already removed or invalid:', err.message);
+                logger.warn('View already removed or invalid:', err.message);
             }
         });
 
@@ -378,7 +379,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
         thisTabView.webContents.openDevTools();
     } catch (err) {
-        console.error('Error creating tab view:', err.message);
+        logger.error('Error creating tab view:', err.message);
     }
 }
 
@@ -422,13 +423,13 @@ function resizeMainWindow() {
                     tabView.setBounds(webpageBounds);
                 }
             } catch (err) {
-                console.error('Error updating webpage bounds:', err.message);
+                logger.error('Error updating webpage bounds:', err.message);
             }
         }).catch(err => {
             log.error(err);
         });
     } catch (err) {
-        console.error('Error resizing main window:', err.message);
+        logger.error('Error resizing main window:', err.message);
     }
 }
 
@@ -476,6 +477,6 @@ async function deleteAndInsertAllTabs() {
             await db.addTab(tabData);
         }
     } catch (err) {
-        console.error('Error updating database with open tabs:', err.message);
+        logger.error('Error updating database with open tabs:', err.message);
     }
 }

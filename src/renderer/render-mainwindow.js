@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const logger = require('../main/modules/logger');
 
 let buttons = [];
 
@@ -13,7 +14,7 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
         attachEventListeners();
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
-        console.error('Error in mainWindow-loaded handler:', error);
+        logger.error('Error in mainWindow-loaded handler:', error);
     }
 });
 
@@ -21,7 +22,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
     } catch (error) {
-        console.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error);
     }
 });
 
@@ -30,7 +31,7 @@ ipcRenderer.on('omniboxText-update', (event, title) => {
         console.log('title in omniboxText-update', title)
         updateOmniboxText(title);
     } catch (error) {
-        console.error('Error in omniboxText-update handler:', error);
+        logger.error('Error in omniboxText-update handler:', error);
     }
 });
 
@@ -83,7 +84,7 @@ function attachEventListeners() {
                                 ipcRenderer.send('readMode-stop');
                             }
                         } catch (error) {
-                            console.error('Error toggling read mode:', error);
+                            logger.error('Error toggling read mode:', error);
                         }
                         break;
                     case "searchBtn":
@@ -95,14 +96,14 @@ function attachEventListeners() {
                             }
                             ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
                         } catch (error) {
-                            console.error('Error creating keyboard overlay:', error);
+                            logger.error('Error creating keyboard overlay:', error);
                         }
                         break;
                     case "moreBtn":
                         try {
                             ipcRenderer.send('overlay-create', ViewNames.MORE, 20);
                         } catch (error) {
-                            console.error('Error creating keyboard overlay:', error);
+                            logger.error('Error creating keyboard overlay:', error);
                         }
                         break;
                     case "backBtn":

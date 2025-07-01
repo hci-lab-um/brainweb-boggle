@@ -1,5 +1,5 @@
 const stimuli = require("ssvep-stimuli");
-const { scenarioConfig } = require('../../configs/scenarioConfig');
+const scenarioConfig = require('../../configs/scenarioConfig.json');
 const { browserConfig } = require('../../configs/browserConfig');
 const { ipcRenderer } = require("electron");
 const logger = require('../main/modules/logger');

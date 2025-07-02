@@ -4,8 +4,11 @@ const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
+const { processDataWithFbcca } = require('../modules/eeg-pipeline');
+const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 
 const defaultUrl = 'https://www.google.com';
+let bciIntervalId = null;           // This will hold the ID of the BCI interval
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////
@@ -46,6 +49,20 @@ function registerIpcHandlers(context) {
             };
         }));
     }
+
+    ipcMain.on('bciInterval-restart', (event, scenarioId) => {
+        // Clear the previous interval if it exists
+        if (bciIntervalId) {
+            clearInterval(bciIntervalId);
+        }
+
+        // Set new interval to process data every 4 seconds
+        bciIntervalId = setInterval(() => {
+            // Process the latest data with the fbcca algorithm. 
+            // viewsList will be used to determine which view to process the data for
+            processDataWithFbcca(scenarioId, viewsList);
+        }, fbccaConfiguration.gazeLengthInSecs * 1000);
+    });
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();

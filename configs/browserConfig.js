@@ -1,4 +1,6 @@
 const browserConfig = {
+    fbccaLanguage: 'python', // 'javascript' or 'python'
+    // fbccaLanguage: 'javascript',
     stimuli: {
         maxConcurrentStimuli: 18,
         customSetup: {

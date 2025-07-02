@@ -5,6 +5,7 @@ const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
 const logger = require('./modules/logger');
+const { startLslWebSocket, connectWebSocket } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
@@ -20,6 +21,13 @@ let tabsFromDatabase = [];      // This will hold the tabs fetched from the data
 let isMainWindowLoaded = false; // This is a flag to track if main window is fully loaded
 
 app.whenReady().then(async () => {
+    try {
+        await startLslWebSocket();
+        connectWebSocket();
+    } catch (err) {
+        logger.error('Error starting LSL WebSocket:', err.message);
+    }
+
     try {
         await db.connect();
         await db.createTables();

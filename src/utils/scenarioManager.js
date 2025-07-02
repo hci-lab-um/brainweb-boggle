@@ -39,6 +39,9 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         });
 
         await manager.start();
+
+        // Restart the BCI interval with the new scenario ID to be able to process the data according to the new scenario
+        ipcRenderer.send('bciInterval-restart', scenarioId);
     } catch (error) {
         logger.error('Error in updateScenarioId:', error);
     }

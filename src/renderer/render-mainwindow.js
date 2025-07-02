@@ -18,6 +18,14 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
@@ -107,7 +115,7 @@ function attachEventListeners() {
                         }
                         break;
                     case "backBtn":
-                        ipcRenderer.send('webpage-goBack');                        
+                        ipcRenderer.send('webpage-goBack');
                         break;
                     case "forwardBtn":
                         ipcRenderer.send('webpage-goForward');

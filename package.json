@@ -15,9 +15,15 @@
   },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
+    "child_process": "^1.0.2",
+    "mathjs": "^14.5.2",
+    "ml-matrix": "^6.12.1",
+    "path": "^0.12.7",
+    "python-shell": "^5.0.0",
     "sqlite3": "^5.1.7",
     "ssvep-stimuli": "^0.1.5",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "ws": "^8.18.3"
   }
 }

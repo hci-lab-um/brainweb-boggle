@@ -28,7 +28,7 @@
         "phases": [1, 0.5, 1.5, 1.5, 0, 0, 0]
     },
     "scenario_4": {
-        "name": "MAIN_WINDOW",
+        "name": "MAIN_WINDOW or SEEK",
         "description": "Disabled nav buttons, active read mode, hidden scrollbars",
         "buttonIds": ["readBtn"],
         "frequencies": [14.5],

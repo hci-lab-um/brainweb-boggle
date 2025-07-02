@@ -1,0 +1,5 @@
+websockets
+numpy
+scipy
+scikit-learn
+pylsl==1.16.2

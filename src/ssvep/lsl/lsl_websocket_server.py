@@ -211,7 +211,7 @@
 # import json
 # import csv
 # import os
-# from pylsl import StreamInlet, resolve_streams
+# from pylsl import StreamInlet, resolve_stream
 # from scipy.signal import butter, lfilter, iirnotch
 
 # CSV_FILENAME = "eeg_data_9_5Hz.csv"
@@ -219,9 +219,9 @@
 # # Function to initialize the LSL stream inlet
 # def initialize_lsl_inlet():
 #     print("Looking for an EEG stream...")
-#     # streams = resolve_streams('type', 'EEG')
+#     # streams = resolve_stream('type', 'EEG')
 #     # inlet = StreamInlet(streams[0])
-#     streams = resolve_streams()
+#     streams = resolve_stream()
 #     # Then filter for EEG streams:
 #     eeg_streams = [s for s in streams if s.type() == 'EEG']
 #     if not eeg_streams:
@@ -355,10 +355,10 @@ def fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch):
     return None
 
 # Main streaming function
-async def lsl_to_websocket(websocket, path):
+async def lsl_to_websocket(websocket):
     inlet = initialize_lsl_inlet()
 
-    fs = 500  # Sample rate
+    fs = 500  # Sample rate - THIS SHOULD USE THE FBCCA_CONFIG.PY
     lowcut = 2.0
     highcut = 100.0
     notch_freq = 50.0

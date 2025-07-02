@@ -72,7 +72,7 @@
 
 import numpy as np
 from fbcca_config import fbcca_config
-from sklearn.cross_decomposition import CCA
+from sklearn.cross_decomposition import CCA # Confirm the scikit-learn version supports CCA!!!!!
 from filterbank import filterbank  # Make sure it downsample to 256 Hz internally
 
 def test_fbcca(eeg, list_freqs):

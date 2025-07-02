@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 const WebSocket = require('ws');
 const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
 const Configuration = require('../../ssvep/fbcca-js/fbcca_config');
-const browserConfig = require('../../../configs/browserConfig');
+const { browserConfig } = require('../../../configs/browserConfig');
 
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
 let messageResult = { data: [] };

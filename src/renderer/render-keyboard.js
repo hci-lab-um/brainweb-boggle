@@ -12,7 +12,7 @@ let corpusWords = null;
 let isUpperCase = false;
 let elementProperties;
 let suggestion = '';
-let textareaAutocomplete;
+let autoCompleteButton;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
@@ -20,16 +20,16 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
 
         buttons = document.querySelectorAll('button');
         textarea = document.querySelector('#textarea');
-        textareaAutocomplete = document.getElementById('textarea-autocomplete');
+        autoCompleteButton = document.getElementById('autoCompleteBtn');
 
-        
+
         textarea.value = elementProperties.value;
         // Ensuring textarea stays focused by refocusing it if focus is lost
         textarea.addEventListener("focusout", (event) => {
             setTimeout(() => textarea.focus(), 0);
         });
 
-        updateGhostText();
+        updateAutoCompleteButton();
 
         getScenarioNumber().then(async scenarioNumber => {
             await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
@@ -79,7 +79,7 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
                 break;
         }
 
-        updateGhostText();
+        updateAutoCompleteButton();
         let scenarioNumber = await getScenarioNumber();
         await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
         textarea.focus();
@@ -123,7 +123,7 @@ function updateTextareaAtCursor(insertText = null) {
         textarea.selectionStart = textarea.selectionEnd = start - 1;
     }
 
-    updateGhostText();
+    updateAutoCompleteButton();
 
     getScenarioNumber().then(scenarioNumber => {
         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
@@ -162,35 +162,27 @@ function getSuggestion(partialWord, corpus) {
     return match ? match.slice(partialWord.length) : '';
 }
 
-function escapeHtml(text) {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;')
-        .replace(/\n/g, '<br>')
-        .replace(/ {2}/g, ' &nbsp;'); // preserves double spaces
-}
+async function updateAutoCompleteButton() {
+    const text = textarea.value;
+    const words = await loadCorpus();
+    const parts = text.split(/\s+/);
+    const lastWord = parts.pop();
+    suggestion = getSuggestion(lastWord, words);
 
-async function updateGhostText() {
-  const text = textarea.value;
-  const words = await loadCorpus();
-  const parts = text.split(/\s+/);
-  const lastWord = parts.pop();
-  suggestion = getSuggestion(lastWord, words);
-
-  if (textarea.selectionStart === textarea.value.length && suggestion) {
-    const displaySuggestion = isUpperCase ? suggestion.toUpperCase() : suggestion;
-
-    // Breaks into HTML-safe string
-    const escapedText = escapeHtml(text);
-    const escapedSuggestion = `<span>${escapeHtml(displaySuggestion)}</span>`;
-
-    textareaAutocomplete.innerHTML = escapedText + escapedSuggestion;
-  } else {
-    textareaAutocomplete.innerHTML = escapeHtml(text);
-  }
+    if (textarea.selectionStart === textarea.value.length && suggestion && lastWord) {
+        // Display the complete suggested word, not just the completion part
+        const fullSuggestedWord = lastWord + suggestion;
+        const displaySuggestion = isUpperCase ? fullSuggestedWord.toUpperCase() : fullSuggestedWord;
+        const buttonSpan = autoCompleteButton.querySelector('.keyboard__key');
+        if (buttonSpan) {
+            buttonSpan.textContent = displaySuggestion;
+        }
+    } else {
+        const buttonSpan = autoCompleteButton.querySelector('.keyboard__key');
+        if (buttonSpan) {
+            buttonSpan.textContent = 'AUTO';
+        }
+    }
 }
 
 async function getScenarioNumber() {
@@ -198,7 +190,7 @@ async function getScenarioNumber() {
     const textAreaPopulated = textarea.value.length > 0;
     const cursorAtStart = textarea.selectionStart === 0;
     const cursorAtEnd = textarea.selectionStart === textarea.value.length;
- 
+
     if (!textAreaPopulated) {
         return 80; // Scenario: No text in search field
     }
@@ -357,7 +349,7 @@ function attachEventListeners() {
                         let span = button.querySelector('.keyboard__key');
                         span.classList.toggle("keyboard__key--active", isUpperCase);
                         toggleLetterCase(isUpperCase);
-                        updateGhostText();
+                        updateAutoCompleteButton();
                         break;
                     case 'zxcBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'zxcBtn', isUpperCase);
@@ -376,7 +368,7 @@ function attachEventListeners() {
                         break;
                     case 'clearAllBtn':
                         textarea.value = '';
-                        updateGhostText();
+                        updateAutoCompleteButton();
 
                         getScenarioNumber().then(scenarioNumber => {
                             updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);

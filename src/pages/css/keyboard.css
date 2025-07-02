@@ -373,43 +373,13 @@ body {
   background: #08FF00;
 }
 
-.textarea__input {
-  position: relative;
-  height: 100%;
+.textarea {
+  flex: 4 1 0%;
   border-radius: 6px;
   background: #f8f9fa;
-  width: 100%;
+  width: 669px;
   resize: none;
   font-size: 40px;
-  font-family: monospace;
-  z-index: 1;
-  border: none;
-  padding: 2px;
-  line-height: 1.2;
-  overflow-y: scroll;
-  color: transparent;
-  caret-color: #000000;
-}
-.textarea__autocomplete {
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: #000000;
-  font-size: 40px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  word-break: break-word;
-  padding: 2px;
-  max-height: 100%;
-  width: 100%;
-  line-height: 1.2;
-  pointer-events: none;
-  z-index: 2;
-  background: transparent;
-  overflow-y: hidden;
-}
-.textarea__autocomplete span {
-  color: #aaa;
 }
 
 .keyboard__keysContainer {

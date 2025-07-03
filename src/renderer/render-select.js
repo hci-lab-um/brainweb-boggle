@@ -35,6 +35,14 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 window.addEventListener('resize', async () => {
     await reInitialiseSelectOverlay();
 });

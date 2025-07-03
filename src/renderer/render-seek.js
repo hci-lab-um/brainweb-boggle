@@ -36,6 +36,14 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.SEEK);

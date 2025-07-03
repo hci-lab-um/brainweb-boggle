@@ -19,6 +19,14 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 // // ONLY NEEDED IF THERE WILL BE A SCREEN WITH SCROLL BUTTONS - SYMBOLS
 // // The logic might need updating!!
 // ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {

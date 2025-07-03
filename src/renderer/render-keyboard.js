@@ -48,6 +48,14 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 ipcRenderer.on('textarea-populate', (event, text) => {
     try {
         updateTextareaAtCursor(text);

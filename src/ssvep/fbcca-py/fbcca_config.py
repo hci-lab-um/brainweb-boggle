@@ -13,7 +13,8 @@ class fbcca_config:
     # samplingRate = 512
 
     # correlationThreshold = 0.5
-    correlationThreshold = 0.85
+    correlationThreshold = 0.9
+    # correlationThreshold = 0.85
     # correlationThreshold = 0.7
 
     # Timing

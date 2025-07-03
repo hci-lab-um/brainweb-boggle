@@ -8,13 +8,16 @@ function run_fbcca(eeg, scenId) {
     scenarioId = scenId;
     const eegData = eeg.slice(0, fbccaConfiguration.totalDataPointCount());
     const stimuliFrequencies = getStimuliFrequencies();
+    console.log('Stimuli Frequencies:', stimuliFrequencies);
 
     let selectedButtonId;
     if (any(eegData) && all(stimuliFrequencies)) {
         const freqIdx = test_fbcca(eegData, stimuliFrequencies);
+        console.log('Frequency Index:', freqIdx);
 
         // We are using the index of the frequency to get the button ID in that same index
         selectedButtonId = getSelectedButtonId(freqIdx);
+        console.log('Selected Button ID:', selectedButtonId);
     } else {
         selectedButtonId = fbccaConfiguration.idleStateLabel;
     }
@@ -37,6 +40,7 @@ function getSelectedButtonId(freqIdx) {
     let selectedButtonId;
     if (freqIdx !== fbccaConfiguration.idleStateLabel) {
         selectedButtonId = scenarioConfig[`scenario_${scenarioId}`].buttonIds[freqIdx];
+        console.log('Button IDs', scenarioConfig[`scenario_${scenarioId}`].buttonIds);
     } else {
         selectedButtonId = freqIdx;
     }

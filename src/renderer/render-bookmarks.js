@@ -9,3 +9,11 @@ const { initialise } = require('../utils/tabsAndBookmarksRendererHelper');
 ipcRenderer.on('bookmarks-loaded', async (event, overlayData, isReload = false) => {
     initialise(overlayData, isReload, ViewNames.BOOKMARKS);
 });
+
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});

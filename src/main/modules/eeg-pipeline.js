@@ -3,7 +3,7 @@ const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
 const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
-const Configuration = require('../../ssvep/fbcca-js/fbcca_config');
+const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 const { browserConfig } = require('../../../configs/browserConfig');
 
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
@@ -71,12 +71,15 @@ function connectWebSocket() {
 }
 
 // Function to handle incoming WebSocket data
-async function processDataWithFbcca(currentScenarioID) {
+async function processDataWithFbcca(currentScenarioID, viewsList) {
     if (messageResult.data) {
         // Initialize an array to hold data by channel
-        const eegData = Array.from({ length: Configuration.channels }, () => []);
+        const eegData = Array.from({ length: fbccaConfiguration.channels }, () => []);
+
 
         const dataPoints = messageResult['data'];
+        // console.log("Received data points:", dataPoints);
+        console.log("EEGDATA:", eegData);
 
         // Populate the eegData array, where each row corresponds to a channel
         dataPoints.forEach(point => {
@@ -113,7 +116,7 @@ async function processDataWithFbcca(currentScenarioID) {
             return new Promise((resolve, reject) => {
                 let scriptPath = path.join(__dirname, '../../ssvep/fbcca-py/run_fbcca.py');
                 let shell = new PythonShell(scriptPath, { mode: 'json' });
-                
+
                 console.log('Sending Scenario ID and EEG data to Python:', currentScenarioID);
 
                 // Send both eegData and scenario_id in a single JSON message

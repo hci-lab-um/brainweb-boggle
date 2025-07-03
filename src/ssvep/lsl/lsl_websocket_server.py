@@ -358,7 +358,7 @@ def fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch):
 async def lsl_to_websocket(websocket):
     inlet = initialize_lsl_inlet()
 
-    fs = 500  # Sample rate - THIS SHOULD USE THE FBCCA_CONFIG.PY
+    fs = 300  # Sample rate - THIS SHOULD USE THE FBCCA_CONFIG.PY
     lowcut = 2.0
     highcut = 100.0
     notch_freq = 50.0

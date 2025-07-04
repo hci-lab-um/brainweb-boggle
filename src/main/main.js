@@ -327,6 +327,10 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 // but the first tab might not be the active one, and so there might not be an 
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
+                    // Resetting the navigationEventHandled flag since this event is triggered after navigation events.
+                    // This is important to ensure that the navigation buttons are updated correctly.
+                    navigationEventHandled = false;
+
                     // Active tab was chosen because when any tab is created, it is set as active.
                     // The tabs loaded from the database will already have a snapshot.
                     // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
@@ -343,15 +347,35 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                     if (activeTab.lastNavigationTitle !== title) {
                         activeTab.lastNavigationTitle = title; // Update with last loaded title
                         mainWindowContent.webContents.send('omniboxText-update', title);
-
-                        // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
-                        let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
-                        updateNavigationButtons(thisTabView, stopManager);
                     }
                 }
             } catch (err) {
                 logger.error('Error during tabview stop loading:', err.message);
             }
+        });
+
+        // Debounce logic to ensure only one navigation event handler runs
+        let navigationEventHandled = false;
+        function handleNavigationEvent() {
+            if (navigationEventHandled) return;
+            navigationEventHandled = true;
+            try {
+                let activeTab = tabsList.find(tab => tab.isActive === true);
+                if (activeTab && thisTabView === activeTab.webContentsView) {
+                    let stopManager = true;
+                    updateNavigationButtons(thisTabView, stopManager);
+                }
+            } catch (err) {
+                logger.error('Error during tabview navigation event:', err.message);
+            }
+        }
+
+        thisTabView.webContents.on('did-navigate-in-page', () => {
+            handleNavigationEvent()
+        });
+
+        thisTabView.webContents.on('did-navigate', () => {
+            handleNavigationEvent()
         });
 
         // This is the handler for when a new tab is opened from the tabview such as when the user 

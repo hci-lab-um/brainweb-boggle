@@ -34,7 +34,10 @@ function registerIpcHandlers(context) {
             // Tabs that were saved in the database but not yet loaded will have webContentsView set to null.
             // and therefore, won't update the snapshot, title, and URL to the latest values - because there is no latest value.
             if (tab.webContentsView) {
-                tab.webContentsView.setBounds(webpageBounds);
+                updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
+                    webpageBounds = webpageBounds;
+                    tab.webContentsView.setBounds(webpageBounds);
+                });
                 tab.title = (await tab.webContentsView.webContents.getTitle()) || tab.title;
                 tab.url = (await tab.webContentsView.webContents.getURL()) || tab.url;
                 tab.snapshot = await captureSnapshot(tab) || tab.snapshot; // Mutates the snapshot in tabsList

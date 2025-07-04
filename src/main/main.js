@@ -169,6 +169,14 @@ function createMainWindow() {
             }
         });
 
+        mainWindow.on('moved', () => {
+            try {
+                resizeMainWindow();
+            } catch (err) {
+                logger.error('Error moving main window:', err.message);
+            }
+        });
+
         mainWindow.on('maximize', () => {
             try {
                 resizeMainWindow();

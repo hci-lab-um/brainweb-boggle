@@ -319,6 +319,7 @@ import json
 import gc  # Garbage collector interface
 from pylsl import StreamInlet, resolve_stream
 from scipy.signal import butter, lfilter, iirnotch
+from fbcca_config import fbcca_config
 
 # Function to initialize the LSL stream inlet
 def initialize_lsl_inlet():
@@ -358,7 +359,7 @@ def fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch):
 async def lsl_to_websocket(websocket):
     inlet = initialize_lsl_inlet()
 
-    fs = 300  # Sample rate - THIS SHOULD USE THE FBCCA_CONFIG.PY
+    fs = fbcca_config.samplingRate
     lowcut = 2.0
     highcut = 100.0
     notch_freq = 50.0

@@ -1,6 +1,7 @@
 const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
 const { ViewNames } = require('../utils/constants/enums')
 const path = require('path')
+const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
@@ -512,91 +513,122 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
 function handleLoadError(errorCode, attemptedURL, responseBody = null) {
     try {
-        // Storing the active tab's original URL before the error page is loaded.
         let activeTab = tabsList.find(tab => tab.isActive === true);
         activeTab.originalURL = attemptedURL;
         activeTab.isErrorPage = true;
 
         if (!responseBody) {
-            // If the server does not respond with a custom error page, load the browser's error page instead
-            activeTab.webContentsView.webContents.loadURL(path.join(__dirname, '../pages/html/error.html')).then(() => {
-                try {
-                    activeTab.webContentsView.webContents.executeJavaScript(`    
-                        // Update the content based on the error code
-                        const errorTitle = document.getElementById('error-title');
-                        const errorMessage = document.getElementById('error-message');
-            
-                        switch (${errorCode}) {
-                            case 402:
-                                errorTitle.textContent = '402 Payment Required';
-                                errorMessage.textContent = 'Payment is required to access this resource.';
-                                break;
-                            case 403:
-                                errorTitle.textContent = '403 Forbidden';
-                                errorMessage.textContent = 'You do not have permission to access this resource.';
-                                break;
-                            case 404:
-                                errorTitle.textContent = '404 Not Found';
-                                errorMessage.textContent = 'The requested resource could not be found.';
-                                break;
-                            case 408:
-                                errorTitle.textContent = '408 Request Timeout';
-                                errorMessage.textContent = 'The server timed out waiting for the request.';
-                                break;
-                            case 425:
-                                errorTitle.textContent = '425 Page Not Working';
-                                errorMessage.textContent = 'If the problem continues, contact the site owner.';
-                                break;
-                            case 500:
-                                errorTitle.textContent = '500 Internal Server Error';
-                                errorMessage.textContent = 'The server encountered an internal error.';
-                                break;
-                            case 501:
-                                errorTitle.textContent = '501 Not Implemented';
-                                errorMessage.textContent = 'The server does not support the functionality required to fulfill the request.';
-                                break;
-                            case 502:
-                                errorTitle.textContent = '502 Bad Gateway';
-                                errorMessage.textContent = 'The server received an invalid response from the upstream server.';
-                                break;
-                            case 503:
-                                errorTitle.textContent = '503 Service Unavailable';
-                                errorMessage.textContent = 'The server is currently unable to handle the request due to temporary overloading or maintenance.';
-                                break;
-                            case 504:
-                                errorTitle.textContent = '504 Gateway Timeout';
-                                errorMessage.textContent = 'The server did not receive a timely response from the upstream server.';
-                                break;
-                            case -6:
-                                errorTitle.textContent = 'File Not Found';
-                                errorMessage.textContent = 'It may have been moved, edited or deleted.';
-                                break;
-                            case -105:
-                                errorTitle.textContent = 'Address Not Found';
-                                errorMessage.textContent = 'DNS Error. The website address could not be found.';
-                                break;
-                            case -106:
-                                errorTitle.textContent = 'Network Error';
-                                errorMessage.textContent = 'There was a problem connecting to the network.';
-                                break;
-                            default:
-                                errorTitle.textContent = 'Error';
-                                errorMessage.textContent = 'An unexpected error occurred.';
-                                break;
-                        }
+            const errorHtmlPath = path.join(__dirname, '../pages/html/error.html');
+            const errorCssPath = path.join(__dirname, '../pages/css/error.css');
+            const logoPath = path.join(__dirname, '../../resources/boggle_logo.png');
 
-                        // Add event listener to the reload button
-                        const reloadButton = document.querySelector('button[aria-label="Reload the page"]');
-                        if (reloadButton) {
-                            reloadButton.addEventListener('click', () => {
-                                window.location.href = '${attemptedURL}';
-                            });
-                        }
-                    `);
-                } catch (err) {
-                    logger.error('Error during error page processing:', err.message);
+            let errorHtml = '';
+            let errorCss = '';
+            let logoDataUrl = '';
+
+            try {
+                errorHtml = fs.readFileSync(errorHtmlPath, 'utf8');
+            } catch (readErr) {
+                logger.error('Failed to read error.html:', readErr.message);
+                errorHtml = '<h1 id="error-title">Error</h1><p id="error-message">An unexpected error occurred.</p>';
+            }
+
+            try {
+                errorCss = fs.readFileSync(errorCssPath, 'utf8');
+            } catch (cssErr) {
+                logger.error('Failed to read error.css:', cssErr.message);
+                errorCss = '';
+            }
+
+            try {
+                const logoBase64 = fs.readFileSync(logoPath, 'base64');
+                logoDataUrl = `data:image/png;base64,${logoBase64}`;
+            } catch (logoErr) {
+                logger.error('Failed to read boggle_logo.png:', logoErr.message);
+                logoDataUrl = '';
+            }
+
+            const safeHtml = errorHtml.replace(/`/g, '\\`');
+            const safeCss = errorCss.replace(/`/g, '\\`');
+
+            activeTab.webContentsView.webContents.executeJavaScript(`
+                document.documentElement.innerHTML = '<style>' + ${JSON.stringify(safeCss)} + '</style>' + ${JSON.stringify(safeHtml)};
+
+                var errorTitle = document.getElementById('error-title');
+                var errorMessage = document.getElementById('error-message');
+                var logoImage = document.querySelector('.error-box_logo');
+                if (logoImage) {
+                    logoImage.src = '${logoDataUrl}';
                 }
-            });
+
+                switch (${errorCode}) {
+                    case 402:
+                        errorTitle.textContent = '402 Payment Required';
+                        errorMessage.textContent = 'Payment is required to access this resource.';
+                        break;
+                    case 403:
+                        errorTitle.textContent = '403 Forbidden';
+                        errorMessage.textContent = 'You do not have permission to access this resource.';
+                        break;
+                    case 404:
+                        errorTitle.textContent = '404 Not Found';
+                        errorMessage.textContent = 'The requested resource could not be found.';
+                        break;
+                    case 408:
+                        errorTitle.textContent = '408 Request Timeout';
+                        errorMessage.textContent = 'The server timed out waiting for the request.';
+                        break;
+                    case 425:
+                        errorTitle.textContent = '425 Page Not Working';
+                        errorMessage.textContent = 'If the problem continues, contact the site owner.';
+                        break;
+                    case 500:
+                        errorTitle.textContent = '500 Internal Server Error';
+                        errorMessage.textContent = 'The server encountered an internal error.';
+                        break;
+                    case 501:
+                        errorTitle.textContent = '501 Not Implemented';
+                        errorMessage.textContent = 'The server does not support the functionality required to fulfill the request.';
+                        break;
+                    case 502:
+                        errorTitle.textContent = '502 Bad Gateway';
+                        errorMessage.textContent = 'The server received an invalid response from the upstream server.';
+                        break;
+                    case 503:
+                        errorTitle.textContent = '503 Service Unavailable';
+                        errorMessage.textContent = 'The server is currently unable to handle the request due to temporary overloading or maintenance.';
+                        break;
+                    case 504:
+                        errorTitle.textContent = '504 Gateway Timeout';
+                        errorMessage.textContent = 'The server did not receive a timely response from the upstream server.';
+                        break;
+                    case -6:
+                        errorTitle.textContent = 'File Not Found';
+                        errorMessage.textContent = 'It may have been moved, edited or deleted.';
+                        break;
+                    case -105:
+                        errorTitle.textContent = 'Address Not Found';
+                        errorMessage.textContent = 'DNS Error. The website address could not be found.';
+                        break;
+                    case -106:
+                        errorTitle.textContent = 'Network Error';
+                        errorMessage.textContent = 'There was a problem connecting to the network.';
+                        break;
+                    default:
+                        errorTitle.textContent = 'Error';
+                        errorMessage.textContent = 'An unexpected error occurred.';
+                        break;
+                }
+
+                var reloadButton = document.querySelector('button[aria-label="Reload the page"]');
+                if (reloadButton) {
+                    reloadButton.addEventListener('click', () => {
+                        window.location.href = '${attemptedURL}';
+                    });
+                }
+            `);
+
+            updateNavigationButtons(activeTab.webContentsView, false);
         }
     } catch (err) {
         logger.error('Error handling load error:', err.message);

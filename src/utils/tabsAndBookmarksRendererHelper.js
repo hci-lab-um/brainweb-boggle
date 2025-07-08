@@ -149,7 +149,7 @@ function initialiseItemsOverlay() {
 
                     const buttonUrl = document.createElement('span');
                     buttonUrl.classList.add('button__url');
-                    buttonUrl.textContent = item.url;
+                    buttonUrl.textContent = item.isErrorPage ? item.originalURL : item.url;
                     itemButton.appendChild(buttonUrl);
 
                     return itemButton;
@@ -366,7 +366,7 @@ async function showItemActionPopup(item) {
 
         const urlSpan = document.createElement('span');
         urlSpan.classList.add('popup__url', 'popup__url--itemAction');
-        urlSpan.textContent = item.url;
+        urlSpan.textContent = item.isErrorPage ? item.originalURL : item.url;
         snapshotContainer.appendChild(urlSpan);
 
         if (item.snapshot) {

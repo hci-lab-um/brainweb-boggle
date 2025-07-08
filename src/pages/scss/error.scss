@@ -36,7 +36,7 @@ body {
         background: black;
         border-radius: 9px;
         border: 2px;
-        padding: 40px 70px 70px 70px;
+        padding: 40px 70px 60px 70px;
         box-sizing: border-box;
 
         &_contents {
@@ -51,7 +51,7 @@ body {
 
         &_logo {
             width: auto;
-            height: 147px;
+            height: 160px;
             font-weight: normal;
         }
 
@@ -59,18 +59,21 @@ body {
             justify-items: flex-start;
 
             h1 {
-                font-size: 3.75rem;
-                color: white;
+                color: colors.$white;
                 font-weight: normal;
-                margin-bottom: 10px;
+                margin-bottom: 20px;
                 text-align: left;
+                font-size: clamp(2rem, 5vw, 3rem);
+                line-height: 1.1;
+                max-width: 100%;
             }
 
             p {
                 font-size: 1.5rem;
                 margin-top: 0;
-                color: white;
+                color: colors.$white;
                 text-align: left;
+                width: 90%;
             }
         }
 

@@ -313,7 +313,12 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
             // Getting the maximum tabId from the tabsList and incrementing it by 1 to assign a new tabId
             const maxTabId = tabsList.reduce((maxId, tab) => Math.max(maxId, tab.tabId), 0);
-            tabsList.push({ tabId: maxTabId + 1, webContentsView: thisTabView, isActive: true });
+            tabsList.push({
+                tabId: maxTabId + 1,
+                webContentsView: thisTabView,
+                isActive: true,
+                isErrorPage: false,
+            });
         }
 
         // ------------------------------------------
@@ -487,12 +492,16 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         // ---------------
         // Loading the URL
         // ---------------
-        if (!tabDataFromDB) {
-            await thisTabView.webContents.loadURL(url);
-        } else if (tabDataFromDB.isErrorPage) {
-            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
-        } else {
-            await thisTabView.webContents.loadURL(tabDataFromDB.url);
+        try {
+            if (!tabDataFromDB) {
+                await thisTabView.webContents.loadURL(url);
+            } else if (tabDataFromDB.isErrorPage) {
+                await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
+            } else {
+                await thisTabView.webContents.loadURL(tabDataFromDB.url);
+            }
+        } catch (err) {
+            logger.error('Error loading URL:', err.message);
         }
 
         thisTabView.webContents.openDevTools();

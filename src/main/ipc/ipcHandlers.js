@@ -9,6 +9,7 @@ const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 
 const defaultUrl = 'https://www.google.com';
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
+let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////
@@ -49,6 +50,8 @@ function registerIpcHandlers(context) {
                 snapshot: tab.snapshot,
                 title: tab.title,
                 url: tab.url,
+                isErrorPage: tab.isErrorPage,
+                originalURL: tab.originalURL
             };
         }));
     }
@@ -94,7 +97,11 @@ function registerIpcHandlers(context) {
         const activeTab = tabsList.find(tab => tab.isActive);
 
         if (elementProperties && elementProperties.id === 'omnibox') {
-            elementProperties.value = await activeTab.webContentsView.webContents.getURL();
+            if (activeTab.isErrorPage) {
+                elementProperties.value = activeTab.originalURL; // If the tab is an error page, we use the original URL
+            } else {
+                elementProperties.value = await activeTab.webContentsView.webContents.getURL();
+            }
         }
 
         let overlayData = {
@@ -128,7 +135,7 @@ function registerIpcHandlers(context) {
      * keybord overlay (i.e. 83) and send it to the keyboard so that the same buttons that were flickering before the arrow
      * keys overlay was opened, start flickering again.
      */
-    ipcMain.on('overlay-closeAndGetPreviousScenario', (event, overlayName) => {
+    ipcMain.on('overlay-closeAndGetPreviousScenario', async (event, overlayName) => {
         // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
         try {
             mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
@@ -142,6 +149,14 @@ function registerIpcHandlers(context) {
             let lastScenarioId = scenarioIdDict[topMostView.name].pop();
             topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
             topMostView.webContentsView.webContents.focus();
+
+            if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
+                shouldCreateTabView = false; // Resetting the flag after creating the tab view
+                let activeTab = tabsList.find(tab => tab.isActive);
+                await createTabView(activeTab.url, false, activeTab);
+                activeTab.webContentsView = tabsList.find(tab => tab.tabId === activeTab.tabId).webContentsView;
+                updateNavigationButtons(activeTab.webContentsView);
+            }
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
         }
@@ -156,7 +171,7 @@ function registerIpcHandlers(context) {
      * of the time). Therefore, the exact scenario that is needed is calculated through a function 'getScenarioNumber()' that
      * is found in the render-keybaord.js file.
      */
-    ipcMain.on('overlay-close', (event, overlayName) => {
+    ipcMain.on('overlay-close', async (event, overlayName) => {
         try {
             mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
 
@@ -165,6 +180,14 @@ function registerIpcHandlers(context) {
 
             let topMostView = viewsList[viewsList.length - 1];
             topMostView.webContentsView.webContents.focus();
+
+            if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
+                shouldCreateTabView = false; // Resetting the flag after creating the tab view
+                let activeTab = tabsList.find(tab => tab.isActive);
+                await createTabView(activeTab.url, false, activeTab);
+                activeTab.webContentsView = tabsList.find(tab => tab.tabId === activeTab.tabId).webContentsView;
+                updateNavigationButtons(activeTab.webContentsView);
+            }
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
         }
@@ -504,7 +527,7 @@ function registerIpcHandlers(context) {
             let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
             if (tabToVisit) {
 
-                // If the selected tab was not yet created (because it was the last active tab), we create it.
+                // If the selected tab was not yet created (because it was not the last active tab before closing), we create it.
                 let createNewTab = !tabToVisit.webContentsView;
                 if (createNewTab) {
                     await createTabView(tabToVisit.url, false, tabToVisit);
@@ -572,11 +595,15 @@ function registerIpcHandlers(context) {
                     newActiveTab = tabsList[tabsList.length - 1];
                     newActiveTab.isActive = true;
 
-                    // Updating the omnibox with the URL of the previous tab
-                    let title = newActiveTab.webContentsView.webContents.getTitle();
-                    if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
-                    mainWindowContent.webContents.send('omniboxText-update', title);
-                    updateNavigationButtons(newActiveTab.webContentsView);
+                    // Updating the omnibox with the URL of the previous tab if it has been created
+                    if (newActiveTab.webContentsView) {
+                        let title = newActiveTab.webContentsView.webContents.getTitle();
+                        if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
+                        mainWindowContent.webContents.send('omniboxText-update', title);
+                        updateNavigationButtons(newActiveTab.webContentsView);
+                    } else {
+                        shouldCreateTabView = true; // If the new active tab was not yet created, we will create it upon closing the MORE overlays
+                    }
                 }
 
                 const topMostView = viewsList[viewsList.length - 1];

@@ -147,16 +147,16 @@ function registerIpcHandlers(context) {
             // Hence we are using our viewsList.
             let topMostView = viewsList[viewsList.length - 1];
             let lastScenarioId = scenarioIdDict[topMostView.name].pop();
-            topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
-            topMostView.webContentsView.webContents.focus();
 
             if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
                 shouldCreateTabView = false; // Resetting the flag after creating the tab view
                 let activeTab = tabsList.find(tab => tab.isActive);
                 await createTabView(activeTab.url, false, activeTab);
-                activeTab.webContentsView = tabsList.find(tab => tab.tabId === activeTab.tabId).webContentsView;
-                updateNavigationButtons(activeTab.webContentsView);
+            } else {
+                topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
             }
+            
+            topMostView.webContentsView.webContents.focus();
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
         }
@@ -185,8 +185,6 @@ function registerIpcHandlers(context) {
                 shouldCreateTabView = false; // Resetting the flag after creating the tab view
                 let activeTab = tabsList.find(tab => tab.isActive);
                 await createTabView(activeTab.url, false, activeTab);
-                activeTab.webContentsView = tabsList.find(tab => tab.tabId === activeTab.tabId).webContentsView;
-                updateNavigationButtons(activeTab.webContentsView);
             }
         } catch (err) {
             logger.error('Error closing overlay:', err.message);

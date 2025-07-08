@@ -635,7 +635,7 @@ function handleLoadError(errorCode, attemptedURL, responseBody = null) {
     }
 }
 
-function updateNavigationButtons(thisTabView, stopManager) {
+function updateNavigationButtons(thisTabView, stopManager = false) {
     let activeTab = tabsList.find(tab => tab.isActive === true);
 
     if (activeTab && thisTabView === activeTab.webContentsView) {

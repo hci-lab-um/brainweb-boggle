@@ -182,7 +182,7 @@ function attachEventListeners() {
                 ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-moveCursor', buttonText);
             } else if (buttonId === 'cancelBtn') {
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
             } else if (!['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
                 ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-populate', buttonText);

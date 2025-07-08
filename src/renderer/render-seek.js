@@ -47,6 +47,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.SEEK);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }
@@ -519,7 +520,7 @@ function attachEventListeners() {
                         initSeekOverlay(`Element ${currentScrollableElement.labelNumber}`, currentScrollableElement);
                     } else {
                         ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
                     }
                     break;
                 case "readBtn":

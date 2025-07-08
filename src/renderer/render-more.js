@@ -29,6 +29,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }
@@ -53,19 +54,19 @@ function attachEventListeners() {
                         ipcRenderer.send('overlay-create', ViewNames.BOOKMARKS, -1);
                         break;
                     case "refreshBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-refresh');
                         break;
                     case "zoomInBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-zoomIn');
                         break;
                     case "zoomOutBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-zoomOut');
                         break;
                     case "zoomResetBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-zoomReset');
                         break;
                     case "settingsBtn":
@@ -78,7 +79,7 @@ function attachEventListeners() {
                         ipcRenderer.send('app-exit');
                         break;
                     case "closeMoreBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);

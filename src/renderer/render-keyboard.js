@@ -43,6 +43,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }
@@ -332,7 +333,7 @@ function attachEventListeners() {
 
                 switch (buttonId) {
                     case "closeKeyboardBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'numbersBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 92, 'numbersBtn', isUpperCase);

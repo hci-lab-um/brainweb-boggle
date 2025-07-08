@@ -29,6 +29,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
 ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }

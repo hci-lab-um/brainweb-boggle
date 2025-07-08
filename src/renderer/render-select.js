@@ -375,7 +375,7 @@ function attachEventListeners() {
             // Handle clicking of element
             else if (button.classList.contains('isElementButton')) {
                 removeLabelsAndHighlightFromElements(currentElements);
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
 
                 const elementToClick = currentElements.find(element => element.labelNumber === Number(button.innerHTML));
                 const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
@@ -442,8 +442,8 @@ function attachEventListeners() {
                             x: clickX,
                             y: clickY
                         }
-
-                        ipcRenderer.send('mouse-click-nutjs', coordinates);
+                           
+                        ipcRenderer.send('mouse-click-nutjs', coordinates);                        
                         ipcRenderer.send('elementsInDom-removeBoggleId');
                     } catch (error) {
                         logger.error('Error calculating the coordinates of the element', error);
@@ -467,7 +467,7 @@ function attachEventListeners() {
                 } else {
                     // No previous state, exit overlay
                     ipcRenderer.send('elementsInDom-removeBoggleId');
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                 }
                 return;
             }

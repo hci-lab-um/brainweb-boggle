@@ -239,9 +239,9 @@ function showItemAddedPopup() {
             message: overlayName === ViewNames.BOOKMARKS ? 'Bookmark added successfully' : 'Tab added successfully',
             icon: overlayName === ViewNames.BOOKMARKS ? createMaterialIcon('m', 'bookmark_added') : createMaterialIcon('m', 'check'),
             timeout: 1750,
-            onClose: () => {
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+            onClose: async () => {
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
             }
         });
     } catch (error) {
@@ -263,7 +263,7 @@ function showItemDeletedPopup(url, tabId) {
 
                     // If there are no tabs left, a new tab is created with the default URL
                     if (itemsList.length - 1 === 0) {
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                         ipcRenderer.send('overlay-close', ViewNames.MORE);
                         await ipcRenderer.invoke('tab-add');
                     }
@@ -282,10 +282,10 @@ function showDeleteAllSuccessPopup() {
             icon: createMaterialIcon('m', 'delete_forever'),
             timeout: 1750,
             onClose: async () => {
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
 
                 if (overlayName === ViewNames.BOOKMARKS) {
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                 }
 
                 if (overlayName === ViewNames.TABS) {
@@ -384,14 +384,14 @@ async function showItemActionPopup(item) {
         visitBtn.textContent = 'Visit';
         visitBtn.onclick = () => {
             addButtonSelectionAnimation(visitBtn);
-            setTimeout(() => {
+            setTimeout(async () => {
                 popupElements.close();
                 if (overlayName === ViewNames.BOOKMARKS) {
                     ipcRenderer.send('url-load', item.url);
                 } else {
                     ipcRenderer.send('tab-visit', item.tabId);
                 }
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                 ipcRenderer.send('overlay-close', ViewNames.MORE);
             }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
@@ -484,7 +484,7 @@ function attachEventListeners() {
                     }
                 }
                 if (buttonId === 'cancelBtn') {
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                 }
                 else if (buttonId === 'addBtn') {
                     if (overlayName === ViewNames.BOOKMARKS) {
@@ -499,7 +499,7 @@ function attachEventListeners() {
                         // Creates a short pop-up message to indicate that the item has been added then closes the overlay
                         showItemAddedPopup();
                     } else if (overlayName === ViewNames.TABS) {
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                         ipcRenderer.send('overlay-close', ViewNames.MORE);
                         await ipcRenderer.invoke('tab-add');
                     }

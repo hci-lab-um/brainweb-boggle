@@ -135,7 +135,7 @@ function registerIpcHandlers(context) {
      * keybord overlay (i.e. 83) and send it to the keyboard so that the same buttons that were flickering before the arrow
      * keys overlay was opened, start flickering again.
      */
-    ipcMain.on('overlay-closeAndGetPreviousScenario', async (event, overlayName) => {
+    ipcMain.handle('overlay-closeAndGetPreviousScenario', async (event, overlayName) => {
         // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
         try {
             mainWindow.wasCloseAndGetPreviousScenarioCalled = true
@@ -154,12 +154,25 @@ function registerIpcHandlers(context) {
                 let activeTab = tabsList.find(tab => tab.isActive);
                 await createTabView(activeTab.url, false, activeTab);
             } else {
-                topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+                // Send scenarioId-update and wait for renderer acknowledgment before returning true
+                await new Promise((resolve, reject) => {
+                    const ackChannel = 'scenarioId-update-complete';
+                    const ackHandler = (event, ackScenarioId) => {
+                        if (ackScenarioId === lastScenarioId) {
+                            ipcMain.removeListener(ackChannel, ackHandler);
+                            resolve();
+                        }
+                    };
+                    ipcMain.on(ackChannel, ackHandler);
+                    topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+                });
             }
-            
+
             topMostView.webContentsView.webContents.focus();
+            return true; // Indicate completion
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
+            throw err;
         }
     });
 

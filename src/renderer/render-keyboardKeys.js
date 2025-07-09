@@ -61,7 +61,11 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     keysAndArrowsContainer.classList.add('keyboard__keysAndArrowsContainer');
                     break;
                 case 'arrowKeysBtn':
+                case 'numericArrowKeysBtn':
                     keys = ['first_page', 'keyboard_arrow_up', 'last_page', 'keyboard_arrow_left', 'keyboard_arrow_down', 'keyboard_arrow_right'];
+                    break;
+                case 'numericSymbolsBtn':
+                    keys = `+-.`.split('');
                     break;
                 default:
                     keys = buttonId.replace('Btn', '').split('');
@@ -75,7 +79,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     key.classList.add('button', 'keyboard__key', 'keyboard__key--large');
                     key.setAttribute('id', `${idSuffix}KeyBtn`);
 
-                    if (buttonId === 'arrowKeysBtn') {
+                    if (buttonId === 'arrowKeysBtn' || buttonId === 'numericArrowKeysBtn') {
                         keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
                         key.innerHTML = createMaterialIcon('l', keyValue);
                         key.classList.add('arrowKeyBtn');

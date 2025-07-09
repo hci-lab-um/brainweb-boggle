@@ -6,7 +6,7 @@
 body {
     background-color: colors.$bg-dark-blue;
     columns: colors.$text-muted;
-}
+} 
 
 .keyboard {
     padding: 20px;
@@ -16,6 +16,30 @@ body {
     box-sizing: border-box;
     justify-content: space-between;
 
+    &__columnContainer {
+        display: flex;
+        flex-direction: row;
+        gap: 4vw;
+    }
+
+    &__column {
+        display: flex;
+        flex-direction: column;
+        gap: 4vh;
+        width: 100%;
+
+        &--left {
+            flex: 1;
+            justify-content: center;
+        }
+        &--middle {
+            flex: 3;
+        }
+        &--right {
+            flex: 1;
+        }
+    }
+
     &__row {
         display: flex;
         width: 100%;
@@ -23,6 +47,10 @@ body {
 
         &--first {
             flex: 0.5;
+        }
+
+        &--largeGap {
+            gap: 4vh;
         }
     }
 
@@ -58,6 +86,10 @@ body {
 
         &--wide {
             flex: 2;
+        }
+
+        &--center {
+            height: 100%;
         }
 
         &--activatable::after {
@@ -156,5 +188,9 @@ button {
 
     &--four-keys {
         flex-grow: 2;
+    }
+
+    &--numeric {
+        padding: 10px;
     }
 }

@@ -7,26 +7,58 @@ const path = require('path')
 const logger = require('../main/modules/logger');
 
 let buttons = [];
-let textarea;
+let inputField;
 let corpusWords = null;
 let isUpperCase = false;
 let elementProperties;
 let suggestion = '';
 let autoCompleteButton;
+let needsNumpad;
+let inputFieldValue = '';
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
         ({ elementProperties } = overlayData)
 
+        const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week']; // revise these
+        const elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
+        console.log('Element type:', elementTypeAttribute);
+        needsNumpad = NUMPAD_REQUIRED_ELEMENTS.indexOf(elementTypeAttribute) !== -1;
+
+        const alphaKeyboard = document.querySelector('.keyboard');
+        const numericKeyboard = document.querySelector('.keyboard--numeric');
+
+        if (needsNumpad) {
+            alphaKeyboard.style.display = 'none';
+            numericKeyboard.style.display = '';
+            inputField = document.querySelector('#numericTextarea');
+            inputField.type = elementTypeAttribute;
+        } else {
+            alphaKeyboard.style.display = '';
+            numericKeyboard.style.display = 'none';
+            inputField = document.querySelector('#textarea');
+        }
+
+        if (needsNumpad) {
+            inputField.addEventListener('input', (e) => {
+                console.log('Input field value changed:', e.target.value);
+                console.log('inputfield.value:', inputField.value);
+                inputFieldValue = e.target.value;
+
+                getScenarioNumber().then(scenarioNumber => {
+                    updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                });
+            });
+        }
+
         buttons = document.querySelectorAll('button');
-        textarea = document.querySelector('#textarea');
         autoCompleteButton = document.getElementById('autoCompleteBtn');
 
 
-        textarea.value = elementProperties.value;
+        inputField.value = elementProperties.value;
         // Ensuring textarea stays focused by refocusing it if focus is lost
-        textarea.addEventListener("focusout", (event) => {
-            setTimeout(() => textarea.focus(), 0);
+        inputField.addEventListener("focusout", (event) => {
+            setTimeout(() => inputField.focus(), 0);
         });
 
         updateAutoCompleteButton();
@@ -59,7 +91,8 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
 
 ipcRenderer.on('textarea-populate', (event, text) => {
     try {
-        updateTextareaAtCursor(text);
+        if (!needsNumpad) updateTextareaAtCursor(text);
+        else updateNumericTextareaAtCursor(text);
     } catch (error) {
         logger.error('Error in textarea-populate handler:', error);
     }
@@ -91,7 +124,7 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
         updateAutoCompleteButton();
         let scenarioNumber = await getScenarioNumber();
         await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-        textarea.focus();
+        inputField.focus();
     } catch (error) {
         logger.error('Error in textarea-moveCursor handler:', error);
     }
@@ -117,28 +150,40 @@ function toggleLetterCase(toUpper) {
 }
 
 function updateTextareaAtCursor(insertText = null) {
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const value = textarea.value;
+    if (!inputField) return;
+    const start = inputField.selectionStart;
+    const end = inputField.selectionEnd;
+    const value = inputField.value;
     insertText = isUpperCase ? insertText.toUpperCase() : insertText;
 
     if (insertText) {
-        textarea.value = value.slice(0, start) + insertText + value.slice(end);
-        textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+        inputField.value = value.slice(0, start) + insertText + value.slice(end);
+        inputField.selectionStart = inputField.selectionEnd = start + insertText.length;
     } else if (start === end && start > 0) {
         // No selection, remove character before cursor
-        textarea.value = value.slice(0, start - 1) + value.slice(end);
-        textarea.selectionStart = textarea.selectionEnd = start - 1;
+        inputField.value = value.slice(0, start - 1) + value.slice(end);
+        inputField.selectionStart = inputField.selectionEnd = start - 1;
     }
 
-    updateAutoCompleteButton();
+    if (!needsNumpad) updateAutoCompleteButton();
 
     getScenarioNumber().then(scenarioNumber => {
         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
     });
 
-    textarea.focus();
+    inputField.focus();
+}
+
+async function updateNumericTextareaAtCursor(insertText = null) {
+    if (!inputField) return;
+
+    await ipcRenderer.invoke('numericKeyboard-type-nutjs', insertText);
+
+    getScenarioNumber().then(scenarioNumber => {
+        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+    });
+
+    inputField.focus();
 }
 
 async function loadCorpus() {
@@ -154,10 +199,10 @@ async function loadCorpus() {
 
 async function isSuggestionAvailable() {
     // If the textarea is empty or the cursor is not at the end, there will be no suggestion available
-    if (!textarea || textarea.selectionStart !== textarea.value.length) return false;
+    if (!inputField || inputField.selectionStart !== inputField.value.length) return false;
     const words = await loadCorpus();
     // Get the last word after the last whitespace
-    const input = textarea.value;
+    const input = inputField.value;
     const lastWord = input.split(/\s+/).pop().toLowerCase();
     if (!lastWord) return false;
     return words.some(word => word.toLowerCase().startsWith(lastWord) && word.toLowerCase() !== lastWord);
@@ -172,13 +217,13 @@ function getSuggestion(partialWord, corpus) {
 }
 
 async function updateAutoCompleteButton() {
-    const text = textarea.value;
+    const text = inputField.value;
     const words = await loadCorpus();
     const parts = text.split(/\s+/);
     const lastWord = parts.pop();
     suggestion = getSuggestion(lastWord, words);
 
-    if (textarea.selectionStart === textarea.value.length && suggestion && lastWord) {
+    if (inputField.selectionStart === inputField.value.length && suggestion && lastWord) {
         // Display the complete suggested word, not just the completion part
         const fullSuggestedWord = lastWord + suggestion;
         const displaySuggestion = isUpperCase ? fullSuggestedWord.toUpperCase() : fullSuggestedWord;
@@ -195,29 +240,43 @@ async function updateAutoCompleteButton() {
 }
 
 async function getScenarioNumber() {
-    const suggestionAvailable = await isSuggestionAvailable();
-    const textAreaPopulated = textarea.value.length > 0;
-    const cursorAtStart = textarea.selectionStart === 0;
-    const cursorAtEnd = textarea.selectionStart === textarea.value.length;
+    if (needsNumpad) {
+        console.log('inputField.Value:', inputField.value);
+        const textAreaPopulated = inputFieldValue.toString().length > 0;
+        console.log('Text area populated:', textAreaPopulated);
 
-    if (!textAreaPopulated) {
-        return 80; // Scenario: No text in search field
+        if (!textAreaPopulated) {
+            return 85; // Scenario: No numbers in input field
+        } else {
+            return 84; // Scenario: Numbers in input field
+        }
+
+    } else {
+        const suggestionAvailable = await isSuggestionAvailable();
+        const textAreaPopulated = input.value.toString().length > 0;
+        const cursorAtStart = inputField.selectionStart === 0;
+        const cursorAtEnd = inputField.selectionStart === inputField.value.length;
+
+        if (!textAreaPopulated) {
+            return 80; // Scenario: No text in search field
+        }
+
+        if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
+            return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
+        }
+
+        if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
+            // It doesn't matter if suggestion is available or not because the cursor is at the start position
+            return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
+        }
+
+        if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
+            return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
+        }
+
+        logger.error("No matching scenario");
+
     }
-
-    if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
-        return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
-    }
-
-    if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
-        // It doesn't matter if suggestion is available or not because the cursor is at the start position
-        return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
-    }
-
-    if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
-        return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
-    }
-
-    logger.error("No matching scenario");
 }
 
 async function fetchValidTLDs() {
@@ -333,6 +392,7 @@ function attachEventListeners() {
 
                 switch (buttonId) {
                     case "closeKeyboardBtn":
+                    case "numericCloseKeyboardBtn":
                         await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'numbersBtn':
@@ -376,17 +436,20 @@ function attachEventListeners() {
                         updateTextareaAtCursor('\n');
                         break;
                     case 'clearAllBtn':
-                        textarea.value = '';
-                        updateAutoCompleteButton();
+                    case 'numericClearAllBtn':
+                        inputField.value = '';
+                        inputFieldValue = '';
+                        if (!needsNumpad) updateAutoCompleteButton();
 
                         getScenarioNumber().then(scenarioNumber => {
                             updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
                         });
 
-                        textarea.focus();
+                        inputField.focus();
                         break;
                     case 'keyboardSendBtn':
-                        const input = textarea.value.trim();
+                    case 'numericKeyboardSendBtn':
+                        const input = inputField.value.trim();
                         if (!input) break;
 
                         if (elementProperties.id === 'omnibox') {
@@ -409,14 +472,59 @@ function attachEventListeners() {
                     case 'arrowKeysBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');
                         break;
+                    case 'numericArrowKeysBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'numericArrowKeysBtn');
+                        break;
                     case 'backspaceBtn':
                         updateTextareaAtCursor();
                         break;
                     case 'autoCompleteBtn':
-                        if (suggestion && textarea.selectionStart === textarea.value.length) {
+                        if (suggestion && inputField.selectionStart === inputField.value.length) {
                             updateTextareaAtCursor(suggestion);
                             suggestion = '';
                         }
+                        break;
+
+                    // The following are the keys inside the NUMERIC keyboard
+
+                    case 'numericSymbolsBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn');
+                        break;
+                    case 'numericBackspaceBtn':
+                        updateNumericTextareaAtCursor('backspace');
+                        break;
+                    case 'numericSpaceBtn':
+                        updateNumericTextareaAtCursor('space');
+                        break;
+                    case 'oneBtn':
+                        updateNumericTextareaAtCursor('1');
+                        break;
+                    case 'twoBtn':
+                        updateNumericTextareaAtCursor('2');
+                        break;
+                    case 'threeBtn':
+                        updateNumericTextareaAtCursor('3');
+                        break;
+                    case 'fourBtn':
+                        updateNumericTextareaAtCursor('4');
+                        break;
+                    case 'fiveBtn':
+                        updateNumericTextareaAtCursor('5');
+                        break;
+                    case 'sixBtn':
+                        updateNumericTextareaAtCursor('6');
+                        break;
+                    case 'sevenBtn':
+                        updateNumericTextareaAtCursor('7');
+                        break;
+                    case 'eightBtn':
+                        updateNumericTextareaAtCursor('8');
+                        break;
+                    case 'nineBtn':
+                        updateNumericTextareaAtCursor('9');
+                        break;
+                    case 'zeroBtn':
+                        updateNumericTextareaAtCursor('0');
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);

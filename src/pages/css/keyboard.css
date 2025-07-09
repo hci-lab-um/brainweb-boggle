@@ -321,6 +321,27 @@ body {
   box-sizing: border-box;
   justify-content: space-between;
 }
+.keyboard__columnContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 4vw;
+}
+.keyboard__column {
+  display: flex;
+  flex-direction: column;
+  gap: 4vh;
+  width: 100%;
+}
+.keyboard__column--left {
+  flex: 1;
+  justify-content: center;
+}
+.keyboard__column--middle {
+  flex: 3;
+}
+.keyboard__column--right {
+  flex: 1;
+}
 .keyboard__row {
   display: flex;
   width: 100%;
@@ -328,6 +349,9 @@ body {
 }
 .keyboard__row--first {
   flex: 0.5;
+}
+.keyboard__row--largeGap {
+  gap: 4vh;
 }
 .keyboard__textarea {
   position: relative;
@@ -358,6 +382,9 @@ body {
 }
 .keyboard__key--wide {
   flex: 2;
+}
+.keyboard__key--center {
+  height: 100%;
 }
 .keyboard__key--activatable::after {
   content: "";
@@ -486,6 +513,9 @@ button {
 }
 .button--four-keys {
   flex-grow: 2;
+}
+.button--numeric {
+  padding: 10px;
 }
 
 /*# sourceMappingURL=keyboard.css.map */

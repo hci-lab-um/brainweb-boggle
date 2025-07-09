@@ -628,68 +628,102 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
-        // Always update webpageBounds before clicking
-        webpageBounds = await updateWebpageBounds(mainWindowContent.webContents);
+        try {
+            // Always update webpageBounds before clicking
+            webpageBounds = await updateWebpageBounds(mainWindowContent.webContents);
 
-        const win = BaseWindow.getFocusedWindow();
-        const bounds = win.getBounds();
-        const contentBounds = win.getContentBounds();
-        const display = screen.getDisplayMatching(bounds);
-        const scaleFactor = display.scaleFactor;
+            const win = BaseWindow.getFocusedWindow();
+            const bounds = win.getBounds();
+            const contentBounds = win.getContentBounds();
+            const display = screen.getDisplayMatching(bounds);
+            const scaleFactor = display.scaleFactor;
 
-        // Correct for frame offset
-        const frameOffsetX = contentBounds.x - bounds.x;
-        const frameOffsetY = contentBounds.y - bounds.y;
+            // Correct for frame offset
+            const frameOffsetX = contentBounds.x - bounds.x;
+            const frameOffsetY = contentBounds.y - bounds.y;
 
-        // Get global screen coordinates of window
-        const windowScreenX = bounds.x + frameOffsetX;
-        const windowScreenY = bounds.y + frameOffsetY;
+            // Get global screen coordinates of window
+            const windowScreenX = bounds.x + frameOffsetX;
+            const windowScreenY = bounds.y + frameOffsetY;
 
-        const webpageX = windowScreenX + webpageBounds.x;
-        const webpageY = windowScreenY + webpageBounds.y;
+            const webpageX = windowScreenX + webpageBounds.x;
+            const webpageY = windowScreenY + webpageBounds.y;
 
-        let activeTab = tabsList.find(tab => tab.isActive);
-        const zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
+            let activeTab = tabsList.find(tab => tab.isActive);
+            const zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
 
-        // Get the element's position within the tab (taking the zoom level into consideration)
-        const elementX = webpageX + (coordinates.x * zoomFactor);
-        const elementY = webpageY + (coordinates.y * zoomFactor);
+            // Get the element's position within the tab (taking the zoom level into consideration)
+            const elementX = webpageX + (coordinates.x * zoomFactor);
+            const elementY = webpageY + (coordinates.y * zoomFactor);
 
-        // Convert to physical pixels if needed
-        const finalX = elementX * scaleFactor;
-        const finalY = elementY * scaleFactor;
+            // Convert to physical pixels if needed
+            const finalX = elementX * scaleFactor;
+            const finalY = elementY * scaleFactor;
 
-        const targetPoint = new Point(finalX, finalY)
-        mouse.move(targetPoint).then(() => mouse.leftClick());
+            const targetPoint = new Point(finalX, finalY)
+            mouse.move(targetPoint).then(() => mouse.leftClick());
+        } catch (err) {
+            logger.error('Error clicking mouse with Nut.js:', err.message);
+        }
     });
 
     ipcMain.handle('keyboard-arrow-nutjs', async (event, direction) => {
-        const keyMap = {
-            up: Key.Up,
-            down: Key.Down,
-            left: Key.Left,
-            right: Key.Right,
-            home: Key.Home,
-            end: Key.End,
-        };
-        const key = keyMap[direction];
-        if (key) {
-            await keyboard.pressKey(key);
-            await keyboard.releaseKey(key);
-            return true; // Indicate success
+        try {
+            const keyMap = {
+                up: Key.Up,
+                down: Key.Down,
+                left: Key.Left,
+                right: Key.Right,
+                home: Key.Home,
+                end: Key.End,
+            };
+            const key = keyMap[direction];
+            if (key) {
+                await keyboard.pressKey(key);
+                await keyboard.releaseKey(key);
+                return true; // Indicate success
+            }
+        } catch (err) {
+            logger.error('Error handling keyboard arrow with Nut.js:', err.message);
+            return false; // Indicate failure
         }
     });
 
     ipcMain.on('keyboard-type-nutjs', async (event, value) => {
-        // Erases everything: Ctrl+A then Backspace
-        await keyboard.pressKey(Key.LeftControl, Key.A);
-        await keyboard.releaseKey(Key.A, Key.LeftControl);
-        await keyboard.pressKey(Key.Backspace);
-        await keyboard.releaseKey(Key.Backspace);
+        try {
+            // Erases everything: Ctrl+A then Backspace
+            await keyboard.pressKey(Key.LeftControl, Key.A);
+            await keyboard.releaseKey(Key.A, Key.LeftControl);
+            await keyboard.pressKey(Key.Backspace);
+            await keyboard.releaseKey(Key.Backspace);
 
-        // Types the new value
-        if (value) {
-            await keyboard.type(value);
+            // Types the new value
+            if (value) {
+                await keyboard.type(value);
+            }
+        } catch (err) {
+            logger.error('Error typing with Nut.js:', err.message);
+        }
+    });
+
+    ipcMain.handle('numericKeyboard-type-nutjs', async (event, value) => {
+        try {
+            if (value === 'backspace') {
+                // Presses backspace
+                await keyboard.pressKey(Key.Backspace);
+                await keyboard.releaseKey(Key.Backspace);
+            } else if (value === 'space') {
+                // Presses space
+                await keyboard.pressKey(Key.Space);
+                await keyboard.releaseKey(Key.Space);
+            } else {
+                await keyboard.type(value);
+            }
+
+            return true; // Indicating success
+        } catch (err) {
+            logger.error('Error typing numeric keyboard with Nut.js:', err.message);
+            return false; // Indicating failure
         }
     });
 

@@ -138,7 +138,6 @@ function registerIpcHandlers(context) {
     ipcMain.handle('overlay-closeAndGetPreviousScenario', async (event, overlayName) => {
         // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
         try {
-            mainWindow.wasCloseAndGetPreviousScenarioCalled = true
             mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
 
             // Deleting the dictionary entry for the closed overlay

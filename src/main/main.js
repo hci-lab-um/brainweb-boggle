@@ -381,11 +381,6 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         });
 
         thisTabView.webContents.on('did-navigate', () => {
-            if (mainWindow.wasCloseAndGetPreviousScenarioCalled) {
-                mainWindow.wasCloseAndGetPreviousScenarioCalled = false; // Reset the flag after handling
-                return;
-            }
-
             handleNavigationEvent()
         });
 

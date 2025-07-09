@@ -241,15 +241,7 @@ async function updateAutoCompleteButton() {
 
 async function getScenarioNumber() {
     if (needsNumpad) {
-        console.log('inputField.Value:', inputField.value);
-        const textAreaPopulated = inputFieldValue.toString().length > 0;
-        console.log('Text area populated:', textAreaPopulated);
-
-        if (!textAreaPopulated) {
-            return 85; // Scenario: No numbers in input field
-        } else {
-            return 84; // Scenario: Numbers in input field
-        }
+        return 84;
 
     } else {
         const suggestionAvailable = await isSuggestionAvailable();

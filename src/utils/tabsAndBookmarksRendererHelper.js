@@ -386,13 +386,14 @@ async function showItemActionPopup(item) {
             addButtonSelectionAnimation(visitBtn);
             setTimeout(async () => {
                 popupElements.close();
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                ipcRenderer.send('overlay-close', ViewNames.MORE);
+                
                 if (overlayName === ViewNames.BOOKMARKS) {
                     ipcRenderer.send('url-load', item.url);
                 } else {
                     ipcRenderer.send('tab-visit', item.tabId);
                 }
-                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
-                ipcRenderer.send('overlay-close', ViewNames.MORE);
             }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 

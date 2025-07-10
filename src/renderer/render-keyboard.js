@@ -35,6 +35,26 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             numericKeyboard.style.display = '';
             inputField = document.querySelector('#numericTextarea');
             inputField.type = elementTypeAttribute;
+
+            // Checks if the element type is "month" and display the month name next to the key
+            if (elementTypeAttribute === "month") {
+                const monthNames = [
+                    "January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November", "December"
+                ];
+
+                const numKeys = document.querySelectorAll('.numKey');
+                numKeys.forEach(keyElement => {
+                    // Parses the key as a number and uses it to get the month name
+                    const key = keyElement.textContent.trim();                    
+                    const monthIndex = parseInt(key, 10) - 1; // Subtract 1 because months are 0-indexed
+
+                    // Checks if the key is a valid month index (1-12)
+                    if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
+                        keyElement.textContent = `${key} (${monthNames[monthIndex]})`;
+                    }
+                });
+            }
         } else {
             alphaKeyboard.style.display = '';
             numericKeyboard.style.display = 'none';

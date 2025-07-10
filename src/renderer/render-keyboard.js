@@ -5,12 +5,14 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const fs = require('original-fs')
 const path = require('path')
 const logger = require('../main/modules/logger');
+const { getCenterCoordinates } = require('../utils/utilityFunctions');
 
 let buttons = [];
 let inputField;
 let corpusWords = null;
 let isUpperCase = false;
-let elementProperties;
+let elementProperties;      // This is set when the keyboard is loaded
+let webpageBounds = null;   // This is set when the keyboard is loaded
 let suggestion = '';
 let autoCompleteButton;
 let needsNumpad;
@@ -18,7 +20,7 @@ let inputFieldValue = '';
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
-        ({ elementProperties } = overlayData)
+        ({ elementProperties, webpageBounds } = overlayData)
 
         const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week']; // revise these
         const elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
@@ -245,7 +247,7 @@ async function getScenarioNumber() {
 
     } else {
         const suggestionAvailable = await isSuggestionAvailable();
-        const textAreaPopulated = input.value.toString().length > 0;
+        const textAreaPopulated = inputField.value.toString().length > 0;
         const cursorAtStart = inputField.selectionStart === 0;
         const cursorAtEnd = inputField.selectionStart === inputField.value.length;
 
@@ -450,10 +452,7 @@ function attachEventListeners() {
                         } else if (elementProperties.id === 'findInPage') {
                             ipcRenderer.send('text-findInPage', input);
                         } else {
-                            const coordinates = {
-                                x: elementProperties.x + elementProperties.width / 2,
-                                y: elementProperties.y + elementProperties.height / 2
-                            }
+                            const coordinates = getCenterCoordinates(elementProperties, webpageBounds);
 
                             ipcRenderer.send('mouse-click-nutjs', coordinates);
                             ipcRenderer.send('keyboard-type-nutjs', input);

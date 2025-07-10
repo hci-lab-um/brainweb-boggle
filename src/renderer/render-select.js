@@ -2,7 +2,7 @@ const { ipcRenderer } = require('electron');
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
-const { createMaterialIcon } = require('../utils/utilityFunctions');
+const { createMaterialIcon, getCenterCoordinates } = require('../utils/utilityFunctions');
 const logger = require('../main/modules/logger');
 
 // Prefix used for generating button IDs
@@ -418,30 +418,7 @@ function attachEventListeners() {
                     try {
                         // Calculate intersection of element and visible bounds
                         webpageBounds = await webpage.getBoundingClientRect();
-                        const elemLeft = elementToClick.x;
-                        const elemTop = elementToClick.y;
-                        const elemRight = elemLeft + elementToClick.width;
-                        const elemBottom = elemTop + elementToClick.height;
-
-                        const visibleLeft = Math.max(elemLeft, 0);
-                        const visibleTop = Math.max(elemTop, 0);
-                        const visibleRight = Math.min(elemRight, webpageBounds.width);
-                        const visibleBottom = Math.min(elemBottom, webpageBounds.height);
-
-                        // If element is not visible at all, fallback to clicking on the centre of the element
-                        let clickX, clickY;
-                        if (visibleLeft < visibleRight && visibleTop < visibleBottom) {
-                            clickX = (visibleLeft + visibleRight) / 2;
-                            clickY = (visibleTop + visibleBottom) / 2;
-                        } else {
-                            clickX = Math.max(0, Math.min(elemLeft + elementToClick.width / 2, webpageBounds.width));
-                            clickY = Math.max(0, Math.min(elemTop + elementToClick.height / 2, webpageBounds.height));
-                        }
-
-                        const coordinates = {
-                            x: clickX,
-                            y: clickY
-                        }
+                        const coordinates = getCenterCoordinates(elementToClick, webpageBounds)
                            
                         ipcRenderer.send('mouse-click-nutjs', coordinates);                        
                         ipcRenderer.send('elementsInDom-removeBoggleId');

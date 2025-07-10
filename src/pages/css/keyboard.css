@@ -408,6 +408,14 @@ body {
   resize: none;
   font-size: 40px;
 }
+.textarea--numeric {
+  text-align: center;
+}
+.textarea--numeric[type=date]::-webkit-calendar-picker-indicator, .textarea--numeric[type=datetime-local]::-webkit-calendar-picker-indicator, .textarea--numeric[type=month]::-webkit-calendar-picker-indicator, .textarea--numeric[type=week]::-webkit-calendar-picker-indicator, .textarea--numeric[type=number]::-webkit-inner-spin-button, .textarea--numeric[type=number]::-webkit-outer-spin-button, .textarea--numeric[type=time]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
 
 .keyboard__keysContainer {
   display: flex;

@@ -6,7 +6,7 @@
 body {
     background-color: colors.$bg-dark-blue;
     columns: colors.$text-muted;
-} 
+}
 
 .keyboard {
     padding: 20px;
@@ -116,6 +116,22 @@ body {
     width: 669px;
     resize: none;
     font-size: 40px;
+
+    &--numeric {
+        text-align: center;
+
+        &[type="date"]::-webkit-calendar-picker-indicator,
+        &[type="datetime-local"]::-webkit-calendar-picker-indicator,
+        &[type="month"]::-webkit-calendar-picker-indicator,
+        &[type="week"]::-webkit-calendar-picker-indicator,
+        &[type="number"]::-webkit-inner-spin-button,
+        &[type="number"]::-webkit-outer-spin-button,
+        &[type="time"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
 }
 
 .keyboard__keysContainer {

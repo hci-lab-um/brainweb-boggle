@@ -59,6 +59,29 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             alphaKeyboard.style.display = '';
             numericKeyboard.style.display = 'none';
             inputField = document.querySelector('#textarea');
+
+            const passwordToggleBtn = document.getElementById('showHidePasswordBtn');
+            const autoCompleteBtn = document.getElementById('autoCompleteBtn');
+
+            if (elementTypeAttribute === "password") {
+                // Replacing the textarea with an input element for password fields
+                const oldTextarea = document.getElementById('textarea');
+                if (oldTextarea) {
+                    const inputElement = document.createElement('input');
+                    inputElement.type = 'password';
+                    inputElement.id = 'textarea';
+                    inputElement.className = 'textarea textarea--numeric';
+                    inputElement.autocomplete = 'off';
+                    oldTextarea.parentNode.replaceChild(inputElement, oldTextarea);
+                    inputField = inputElement;
+                }
+
+                passwordToggleBtn.style.display = 'block';
+                autoCompleteBtn.style.display = 'none';
+            } else {
+                passwordToggleBtn.style.display = 'none';
+                autoCompleteBtn.style.display = 'block';
+            }
         }
 
         if (needsNumpad) {
@@ -80,7 +103,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         inputField.value = elementProperties.value;
         // Ensuring textarea stays focused by refocusing it if focus is lost
         inputField.addEventListener("focusout", (event) => {
-            setTimeout(() => inputField.focus(), 0);
+            // setTimeout(() => inputField.focus(), 0);
         });
 
         updateAutoCompleteButton();
@@ -495,9 +518,26 @@ function attachEventListeners() {
                             suggestion = '';
                         }
                         break;
+                    case 'showHidePasswordBtn':
+                        const showHidePasswordBtn = document.getElementById('showHidePasswordBtn');
+                        const icon = showHidePasswordBtn.querySelector('.keyboard__key i');
+
+                        if (inputField.type === 'password') {
+                            inputField.type = 'text';
+                            icon.innerText = 'visibility_off';
+                        } else {
+                            inputField.type = 'password';
+                            icon.innerText = 'visibility';
+                        }
+
+                        getScenarioNumber().then(scenarioNumber => {
+                            updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                        });
+
+                        inputField.focus();
+                        break;
 
                     // The following are the keys inside the NUMERIC keyboard
-
                     case 'numericSymbolsBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn');
                         break;

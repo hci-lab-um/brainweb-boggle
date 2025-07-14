@@ -6,6 +6,7 @@ const { captureSnapshot } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
+const { isError } = require('util');
 
 const defaultUrl = 'https://www.google.com';
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
@@ -564,6 +565,10 @@ function registerIpcHandlers(context) {
                     if (tabToVisit.isErrorPage) {
                         // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
                         tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
+
+                        // Updating the omnibox with the original URL of the tab - this does not clash with the updating of the URL found
+                        // in the did-stop-loading event of the webContentsView because we are reloading and hence the URL will be the same.
+                        mainWindowContent.webContents.send('omniboxText-update', tabToVisit.originalURL, true);
                     } else {
                         let title = tabToVisit.webContentsView.webContents.getTitle();
                         if (!title) title = tabToVisit.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
@@ -625,7 +630,7 @@ function registerIpcHandlers(context) {
                     if (newActiveTab.webContentsView) {
                         let title = newActiveTab.webContentsView.webContents.getTitle();
                         if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
-                        mainWindowContent.webContents.send('omniboxText-update', title);
+                        mainWindowContent.webContents.send('omniboxText-update', title, newActiveTab.isErrorPage);
                         updateNavigationButtons(newActiveTab.webContentsView);
                     } else {
                         shouldCreateTabView = true; // If the new active tab was not yet created, we will create it upon closing the MORE overlays

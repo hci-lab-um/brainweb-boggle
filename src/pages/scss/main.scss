@@ -62,8 +62,12 @@ body {
     font-size: 25px;
 }
 
-#favicon {
+.favicon {
     color: colors.$bright-green;
+
+    &--error {
+        color: colors.$secondary-muted;
+    }
 }
 
 #brainLoader {

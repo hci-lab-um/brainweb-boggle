@@ -352,7 +352,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                     // Only run if the title has changed since last time
                     if (activeTab.lastNavigationTitle !== title) {
                         activeTab.lastNavigationTitle = title; // Update with last loaded title
-                        mainWindowContent.webContents.send('omniboxText-update', title);
+                        mainWindowContent.webContents.send('omniboxText-update', title, activeTab.isErrorPage);
                     }
                 }
             } catch (err) {

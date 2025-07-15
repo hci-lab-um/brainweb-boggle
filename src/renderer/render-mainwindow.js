@@ -67,6 +67,10 @@ function updateOmniboxText(title) {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
             addButtonSelectionAnimation(button);
             const buttonId = button.getAttribute('id');
 

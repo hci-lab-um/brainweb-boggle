@@ -167,6 +167,10 @@ function attachEventListeners() {
         const button = event.target.closest('button');
         if (!button) return;
 
+        // Disable the button immediately to prevent multiple clicks
+        button.disabled = true;
+        setTimeout(() => { button.disabled = false; }, 1500);
+
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
         const buttonText = button.textContent.trim();

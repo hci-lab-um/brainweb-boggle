@@ -324,6 +324,10 @@ function attachEventListeners() {
         const button = event.target.closest('button');
         if (!button) return;
 
+        // Disable the button immediately to prevent multiple clicks
+        button.disabled = true;
+        setTimeout(() => { button.disabled = false; }, 1500);
+
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
         const buttonText = button.textContent.trim();
@@ -419,8 +423,8 @@ function attachEventListeners() {
                         // Calculate intersection of element and visible bounds
                         webpageBounds = await webpage.getBoundingClientRect();
                         const coordinates = getCenterCoordinates(elementToClick, webpageBounds)
-                           
-                        ipcRenderer.send('mouse-click-nutjs', coordinates);                        
+
+                        ipcRenderer.send('mouse-click-nutjs', coordinates);
                         ipcRenderer.send('elementsInDom-removeBoggleId');
                     } catch (error) {
                         logger.error('Error calculating the coordinates of the element', error);

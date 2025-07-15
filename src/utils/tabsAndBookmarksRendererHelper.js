@@ -388,7 +388,7 @@ async function showItemActionPopup(item) {
                 popupElements.close();
                 await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                 ipcRenderer.send('overlay-close', ViewNames.MORE);
-                
+
                 if (overlayName === ViewNames.BOOKMARKS) {
                     ipcRenderer.send('url-load', item.url);
                 } else {
@@ -454,6 +454,10 @@ function attachEventListeners() {
         try {
             const button = event.target.closest('button');
             if (!button) return;
+
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
 
             const buttonId = button.id;
             addButtonSelectionAnimation(button);

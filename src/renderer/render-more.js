@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants  } = require('../utils/constants/enums');
+const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
@@ -38,6 +38,10 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
             addButtonSelectionAnimation(button)
             const buttonId = button.getAttribute('id');
 

@@ -46,7 +46,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
                 const numKeys = document.querySelectorAll('.numKey');
                 numKeys.forEach(keyElement => {
                     // Parses the key as a number and uses it to get the month name
-                    const key = keyElement.textContent.trim();                    
+                    const key = keyElement.textContent.trim();
                     const monthIndex = parseInt(key, 10) - 1; // Subtract 1 because months are 0-indexed
 
                     // Checks if the key is a valid month index (1-12)
@@ -420,6 +420,10 @@ async function processUrlInput(input) {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
             addButtonSelectionAnimation(button);
             const buttonId = button.getAttribute('id');
 

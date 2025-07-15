@@ -6,6 +6,7 @@ const { captureSnapshot } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
+const { isError } = require('util');
 
 const defaultUrl = 'https://www.google.com';
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
@@ -138,37 +139,45 @@ function registerIpcHandlers(context) {
     ipcMain.handle('overlay-closeAndGetPreviousScenario', async (event, overlayName) => {
         // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
         try {
-            mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
+            let poppedView = viewsList[viewsList.length - 1]; // Gets the last view in the list
+            console.log('viewsList:', viewsList);
+            if (poppedView?.name !== ViewNames.MAIN_WINDOW) {
+                poppedView = viewsList.pop();
+                mainWindow.contentView.removeChildView(poppedView.webContentsView);
 
-            // Deleting the dictionary entry for the closed overlay
-            delete scenarioIdDict[overlayName];
+                // Deleting the dictionary entry for the closed overlay
+                delete scenarioIdDict[overlayName];
 
-            // This was done because the contentView does not have a function that returns the top most child view.
-            // Hence we are using our viewsList.
-            let topMostView = viewsList[viewsList.length - 1];
-            let lastScenarioId = scenarioIdDict[topMostView.name].pop();
+                // This was done because the contentView does not have a function that returns the top most child view.
+                // Hence we are using our viewsList.
+                let topMostView = viewsList[viewsList.length - 1];
+                let lastScenarioId = scenarioIdDict[topMostView.name].pop();
 
-            if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
-                shouldCreateTabView = false; // Resetting the flag after creating the tab view
-                let activeTab = tabsList.find(tab => tab.isActive);
-                await createTabView(activeTab.url, false, activeTab);
+                if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
+                    shouldCreateTabView = false; // Resetting the flag after creating the tab view
+                    let activeTab = tabsList.find(tab => tab.isActive);
+                    await createTabView(activeTab.url, false, activeTab);
+                } else {
+                    // Send scenarioId-update and wait for renderer acknowledgment before returning true
+                    await new Promise((resolve, reject) => {
+                        const ackChannel = 'scenarioId-update-complete';
+                        const ackHandler = (event, ackScenarioId) => {
+                            if (ackScenarioId === lastScenarioId) {
+                                ipcMain.removeListener(ackChannel, ackHandler);
+                                resolve();
+                            }
+                        };
+                        ipcMain.on(ackChannel, ackHandler);
+                        topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+                    });
+                }
+
+                topMostView.webContentsView.webContents.focus();
+                return true; // Indicate completion
             } else {
-                // Send scenarioId-update and wait for renderer acknowledgment before returning true
-                await new Promise((resolve, reject) => {
-                    const ackChannel = 'scenarioId-update-complete';
-                    const ackHandler = (event, ackScenarioId) => {
-                        if (ackScenarioId === lastScenarioId) {
-                            ipcMain.removeListener(ackChannel, ackHandler);
-                            resolve();
-                        }
-                    };
-                    ipcMain.on(ackChannel, ackHandler);
-                    topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
-                });
+                logger.error('No view to pop or the popped view is the main window.');
+                return false; // Indicate failure
             }
-
-            topMostView.webContentsView.webContents.focus();
-            return true; // Indicate completion
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
             throw err;
@@ -186,18 +195,25 @@ function registerIpcHandlers(context) {
      */
     ipcMain.on('overlay-close', async (event, overlayName) => {
         try {
-            mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
+            let poppedView = viewsList[viewsList.length - 1]; // Gets the last view in the list
+            if (poppedView?.name !== ViewNames.MAIN_WINDOW) {
+                poppedView = viewsList.pop();
+                mainWindow.contentView.removeChildView(poppedView.webContentsView);
 
-            // Deleting the dictionary entry for the closed overlay
-            delete scenarioIdDict[overlayName];
+                // Deleting the dictionary entry for the closed overlay
+                delete scenarioIdDict[overlayName];
 
-            let topMostView = viewsList[viewsList.length - 1];
-            topMostView.webContentsView.webContents.focus();
+                let topMostView = viewsList[viewsList.length - 1];
+                topMostView.webContentsView.webContents.focus();
 
-            if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
-                shouldCreateTabView = false; // Resetting the flag after creating the tab view
-                let activeTab = tabsList.find(tab => tab.isActive);
-                await createTabView(activeTab.url, false, activeTab);
+                if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
+                    shouldCreateTabView = false; // Resetting the flag after creating the tab view
+                    let activeTab = tabsList.find(tab => tab.isActive);
+                    await createTabView(activeTab.url, false, activeTab);
+                }
+            } else {
+                logger.error('No view to pop or the popped view is the main window.');
+                return false; // Indicate failure
             }
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
@@ -549,6 +565,10 @@ function registerIpcHandlers(context) {
                     if (tabToVisit.isErrorPage) {
                         // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
                         tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
+
+                        // Updating the omnibox with the original URL of the tab - this does not clash with the updating of the URL found
+                        // in the did-stop-loading event of the webContentsView because we are reloading and hence the URL will be the same.
+                        mainWindowContent.webContents.send('omniboxText-update', tabToVisit.originalURL, true);
                     } else {
                         let title = tabToVisit.webContentsView.webContents.getTitle();
                         if (!title) title = tabToVisit.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
@@ -610,7 +630,7 @@ function registerIpcHandlers(context) {
                     if (newActiveTab.webContentsView) {
                         let title = newActiveTab.webContentsView.webContents.getTitle();
                         if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
-                        mainWindowContent.webContents.send('omniboxText-update', title);
+                        mainWindowContent.webContents.send('omniboxText-update', title, newActiveTab.isErrorPage);
                         updateNavigationButtons(newActiveTab.webContentsView);
                     } else {
                         shouldCreateTabView = true; // If the new active tab was not yet created, we will create it upon closing the MORE overlays

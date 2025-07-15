@@ -362,8 +362,11 @@ body {
   font-size: 25px;
 }
 
-#favicon {
+.favicon {
   color: #08FF00;
+}
+.favicon--error {
+  color: #913412;
 }
 
 #brainLoader {

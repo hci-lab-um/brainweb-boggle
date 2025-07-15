@@ -8,6 +8,7 @@ const { browserConfig } = require('../../../configs/browserConfig');
 
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
 let messageResult = { data: [] };
+let ws = null;
 
 // Function used to run the LSL WebSocket Server
 async function startLslWebSocket() {
@@ -34,7 +35,7 @@ async function startLslWebSocket() {
 }
 
 function connectWebSocket() {
-    const ws = new WebSocket('ws://localhost:8765');
+    ws = new WebSocket('ws://localhost:8765');
 
     ws.on('open', () => {
         console.log('Connected to WebSocket server');
@@ -68,6 +69,13 @@ function connectWebSocket() {
             setTimeout(connectWebSocket, 1000);  // Retry after 1 second
         }
     });
+}
+
+function disconnectWebSocket() {
+    if (ws) {
+        ws.close();
+        ws = null;
+    }
 }
 
 // Function to handle incoming WebSocket data
@@ -159,5 +167,6 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
 module.exports = {
     startLslWebSocket,
     connectWebSocket,
+    disconnectWebSocket,
     processDataWithFbcca
 };

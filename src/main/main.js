@@ -6,7 +6,7 @@ const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
 const logger = require('./modules/logger');
-const { startLslWebSocket, connectWebSocket } = require('./modules/eeg-pipeline');
+const { startLslWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
@@ -53,6 +53,9 @@ app.on('window-all-closed', async () => {
             // Prevent deleting and inserting tabs if the main window is not loaded 
             await deleteAndInsertAllTabs();
         }
+        
+        // Disconnect the LSL WebSocket
+        disconnectWebSocket();
 
         // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
         if (process.platform !== 'darwin') {

@@ -62,6 +62,11 @@
     justify-content: center;
 }
 
+.navbar--opaque {
+    background-color: colors.$bg-dark;
+    gap: 2%;
+}
+
 #webpage {
     flex: 88%;
     width: 100%;

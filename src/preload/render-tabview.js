@@ -306,6 +306,28 @@ ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, be
     }
 });
 
+ipcRenderer.on('videoAudioElement-handle', (event, action, elementBoggleId) => {
+    let element = document.querySelector(`[data-boggle-id="${elementBoggleId}"]`);
+
+    if (element) {
+        switch (action) {
+            case "play-pause":
+                console.log(element.paused);
+                element.paused = element.paused ? element.play() : element.pause();
+                break;
+            case "mute-unmute":
+                element.muted = !element.muted;
+                break;
+            case "seek-forward":
+                element.currentTime += 10; // Seek forward by 10 seconds
+                break;
+            case "seek-backward":
+                element.currentTime -= 10; // Seek backward by 10 seconds
+                break;
+        }
+    }
+});
+
 function stretchBodyFromBottomCenter(duration = 500) {
     const body = document.body;
     body.style.overflow = 'hidden'; // prevents scrolling during animation

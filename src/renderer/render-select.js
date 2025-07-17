@@ -15,11 +15,12 @@ let zoomFactor;
 let sidebar;
 let navbar;
 let webpage;
-let elementsInTabView = [];         // These are all the interactive elements visible in the current tab
-let currentElements = [];           // These are a subset of the interactive elements. They pertain to the selected region/group
-let previousElementsStack = [];     // This contains a history of current elements. It is used when pressing the BACK button
-let startIndex;                     // This is used when clicking the 'Toggle Numbers Visibility' button. It is updated in the renderNumericalButtonsInSidebar function
-let isRegionSplitView = false;      // This is used to determine if the current view is split into regions or not
+let elementsInTabView = [];                 // These are all the interactive elements visible in the current tab
+let currentElements = [];                   // These are a subset of the interactive elements. They pertain to the selected region/group
+let previousElementsStack = [];             // This contains a history of current elements. It is used when pressing the BACK button
+let startIndex;                             // This is used when clicking the 'Toggle Numbers Visibility' button. It is updated in the renderNumericalButtonsInSidebar function
+let isRegionSplitView = false;              // This is used to determine if the current view is split into regions or not
+let selectedSpecialElementBoggleId = null;  // This is used to store the boggleId of the video/audio element that is currently selected
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
@@ -312,6 +313,45 @@ async function reInitialiseSelectOverlay() {
     }
 }
 
+async function initSpecialInteractiveElements(elementType) {
+    try {
+        sidebar.innerHTML = '';
+        navbar.innerHTML = '';
+
+        const navbarTitle = document.createElement('div');
+        navbarTitle.classList.add('navbar-title');
+        navbar.appendChild(navbarTitle);
+        navbar.classList.add('navbar--opaque');
+
+        previousElementsStack.length = 0;
+        const closeSelectBtnIcon = document.getElementById('closeSelectBtn').querySelector('i');
+        closeSelectBtnIcon.innerText = previousElementsStack.length > 1 ? 'arrow_back' : 'close';
+
+        if (elementType === 'video' || elementType === 'audio') {
+            if (elementType === 'video') navbarTitle.innerHTML = `Video`;
+            else navbarTitle.innerHTML = `Audio`;
+
+            const buttonLabels = ['Pause/Play', 'Mute/Unmute', '10 secs', '10 secs'];
+            const buttonIcons = ['play_pause', 'no_sound', 'fast_forward', 'fast_rewind'];
+
+            for (let idx = 1; idx < 5; idx++) {
+                const button = document.createElement('button');
+                button.setAttribute('id', `${idPrefix[idx - 1]}Btn`);
+                button.classList.add('button');
+                button.classList.add('isVideoAudioButton');
+                button.innerHTML = `${buttonLabels[idx - 1]} ${createMaterialIcon('sm', buttonIcons[idx - 1])}`;
+                sidebar.appendChild(button);
+            }
+
+            await updateScenarioId(43, buttons, ViewNames.SELECT);
+        } else if (elementType === 'range') {
+
+        }
+    } catch (error) {
+        logger.error('Error in initSpecialInteractiveElements:', error);
+    }
+}
+
 function attachEventListeners() {
     const overlay = document.getElementById('selectOverlay')
     if (!overlay) return;
@@ -346,10 +386,10 @@ function attachEventListeners() {
                 return;
             }
 
-            await stopManager();
-
             // Handle region button click (A, B, C...)
             if (button.classList.contains('isRegionButton')) {
+                await stopManager();
+
                 const gridContainer = document.getElementById('webpage');
                 if (gridContainer) gridContainer.innerHTML = '';
 
@@ -366,6 +406,8 @@ function attachEventListeners() {
             }
             // Handle grouped element buttons (1–6, 7–12, etc.)
             else if (button.classList.contains('isGroupButton')) {
+                await stopManager();
+
                 const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
                 if (groupIdx !== -1) {
                     const startIdx = groupIdx * 6;
@@ -379,11 +421,17 @@ function attachEventListeners() {
             // Handle clicking of element
             else if (button.classList.contains('isElementButton')) {
                 removeLabelsAndHighlightFromElements(currentElements);
-                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
 
                 const elementToClick = currentElements.find(element => element.labelNumber === Number(button.innerHTML));
                 const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
-                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : null;
+                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : null
+
+                console.log(`Element to click: ${elementToClick.boggleId}, Tag: ${elementTagName}, Type: ${elementTypeAttribute}`);
+
+                if (elementTagName !== 'video' && elementTagName !== 'audio') {
+                    await stopManager();
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                }
 
                 let loadKeyboard = false;
 
@@ -409,6 +457,11 @@ function attachEventListeners() {
                                 break;
                         }
                         break;
+                    case 'audio':
+                    case 'video':
+                        selectedSpecialElementBoggleId = elementToClick.boggleId;
+                        initSpecialInteractiveElements(elementTagName);
+                        break;
                 }
 
                 if (loadKeyboard) {
@@ -425,15 +478,38 @@ function attachEventListeners() {
                         const coordinates = getCenterCoordinates(elementToClick, webpageBounds)
 
                         ipcRenderer.send('mouse-click-nutjs', coordinates);
-                        ipcRenderer.send('elementsInDom-removeBoggleId');
+                        if (elementTagName !== 'video' && elementTagName !== 'audio') {
+                            ipcRenderer.send('elementsInDom-removeBoggleId');
+                        }
                     } catch (error) {
                         logger.error('Error calculating the coordinates of the element', error);
                     }
                 }
                 return;
             }
+            else if (button.classList.contains('isVideoAudioButton')) {
+                const buttonId = button.getAttribute('id');
+
+                switch (buttonId) {
+                    case "firstBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'play-pause', selectedSpecialElementBoggleId);
+                        break;
+                    case "secondBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'mute-unmute', selectedSpecialElementBoggleId);
+                        break;
+                    case "thirdBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'seek-forward', selectedSpecialElementBoggleId);
+                        break;
+                    case "fourthBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'seek-backward', selectedSpecialElementBoggleId);
+                        break;
+                }
+            }
+
             // Handle the CLOSE/BACK button
             else if (buttonId === 'closeSelectBtn') {
+                await stopManager();
+
                 removeLabelsAndHighlightFromElements(currentElements);
                 if (previousElementsStack.length > 1) {
                     previousElementsStack.pop();

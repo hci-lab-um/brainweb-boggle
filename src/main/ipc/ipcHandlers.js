@@ -453,6 +453,15 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('videoAudioElement-handle', (event, action, elementBoggleId) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('videoAudioElement-handle', action, elementBoggleId);
+        } catch (err) {
+            logger.error('Error handling video audio action:', err.message);
+        }
+    });
+
     ipcMain.on('elementsInDom-removeBoggleId', (event, elements) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

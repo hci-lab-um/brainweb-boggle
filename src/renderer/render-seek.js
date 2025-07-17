@@ -27,6 +27,7 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
         ({ webpageBounds, zoomFactor } = overlayData);
         sidebar = document.getElementById('sidebar-buttons');
         navbar = document.getElementById('navbar');
+        navbar.classList.add('navbar--opaque');
         webpage = document.getElementById('webpage');
 
         webpageBounds = webpage.getBoundingClientRect();

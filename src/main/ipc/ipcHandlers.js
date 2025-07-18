@@ -462,10 +462,10 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('rangeElement-handle', (event, value, elementBoggleId) => {
+    ipcMain.on('rangeElement-setValue', (event, value, elementBoggleId) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
-            activeTab.webContentsView.webContents.send('rangeElement-handle', value, elementBoggleId);
+            activeTab.webContentsView.webContents.send('rangeElement-setValue', value, elementBoggleId);
         } catch (err) {
             logger.error('Error handling range element action:', err.message);
         }

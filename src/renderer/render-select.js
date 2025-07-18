@@ -344,55 +344,6 @@ async function initSpecialInteractiveElements(elementType) {
             }
 
             await updateScenarioId(43, buttons, ViewNames.SELECT);
-        } else if (elementType === 'range') {
-            navbarTitle.innerHTML = `Range`;
-
-            // Creating range buttons based on the range object of the selected element
-            const rangeElement = currentElements.find(element => element.boggleId === selectedSpecialElementBoggleId);
-            if (!rangeElement) {
-                logger.error('Range element not found:', selectedSpecialElementBoggleId);
-                return;
-            }
-
-            let { min, max, step } = rangeElement.rangeObject;
-            // Setting default values if not provided
-            min = (typeof min === 'number') ? min : 0;
-            max = (typeof max === 'number') ? max : 100;
-            step = (typeof step === 'number') ? step : 1;
-
-            // Helper to snap a value to the nearest valid step
-            function snapToStep(val) {
-                const steps = Math.round((val - min) / step);
-                return min + steps * step;
-            }
-
-            // Calculate the 5 button values: min, 1/4, 1/2, 3/4, max
-            const positions = [0, 0.25, 0.5, 0.75, 1];
-            const values = positions.map(p => {
-                const raw = min + p * (max - min);
-                let snapped = snapToStep(raw);
-                // Clamp to min/max
-                if (snapped < min) snapped = min;
-                if (snapped > max) snapped = max;
-                return snapped;
-            });
-
-            // Ensure uniqueness and strictly increasing order (in case of coarse step)
-            for (let i = 1; i < values.length; i++) {
-                if (values[i] <= values[i - 1]) values[i] = values[i - 1] + step;
-                if (values[i] > max) values[i] = max;
-            }
-
-            for (let idx = 0; idx < 5; idx++) {
-                const button = document.createElement('button');
-                button.setAttribute('id', `${idPrefix[idx]}Btn`);
-                button.classList.add('button');
-                button.classList.add('isRangeButton');
-                button.textContent = `${values[idx]}`;
-                sidebar.appendChild(button);
-            }
-
-            await updateScenarioId(44, buttons, ViewNames.SELECT);
         }
     } catch (error) {
         logger.error('Error in initSpecialInteractiveElements:', error);
@@ -475,7 +426,7 @@ function attachEventListeners() {
 
                 console.log(`Element to click: ${elementToClick.boggleId}, Tag: ${elementTagName}, Type: ${elementTypeAttribute}`);
 
-                if (elementTagName !== 'video' && elementTagName !== 'audio' && elementTypeAttribute !== 'range') {
+                if (elementTagName !== 'video' && elementTagName !== 'audio') {
                     await stopManager();
                     await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                 }
@@ -500,11 +451,8 @@ function attachEventListeners() {
                             case 'time':
                             case 'month':
                             case 'week':
-                                loadKeyboard = true;
-                                break;
                             case 'range':
-                                selectedSpecialElementBoggleId = elementToClick.boggleId;
-                                initSpecialInteractiveElements(elementTypeAttribute);
+                                loadKeyboard = true;
                                 break;
                         }
                         break;
@@ -528,7 +476,7 @@ function attachEventListeners() {
                         webpageBounds = await webpage.getBoundingClientRect();
                         const coordinates = getCenterCoordinates(elementToClick, webpageBounds)
 
-                        if (elementTagName !== 'video' && elementTagName !== 'audio' && elementTypeAttribute !== 'range') {
+                        if (elementTagName !== 'video' && elementTagName !== 'audio') {
                             ipcRenderer.send('mouse-click-nutjs', coordinates);
                             ipcRenderer.send('elementsInDom-removeBoggleId');
                         }
@@ -538,6 +486,7 @@ function attachEventListeners() {
                 }
                 return;
             }
+            // Handle special buttons for video/audio elements
             else if (button.classList.contains('isVideoAudioButton')) {
                 const buttonId = button.getAttribute('id');
 
@@ -556,11 +505,6 @@ function attachEventListeners() {
                         break;
                 }
             }
-            else if (button.classList.contains('isRangeButton')) {
-                const buttonValue = button.textContent.trim();
-                ipcRenderer.send('rangeElement-handle', buttonValue, selectedSpecialElementBoggleId);
-            }
-
             // Handle the CLOSE/BACK button
             else if (buttonId === 'closeSelectBtn') {
                 await stopManager();

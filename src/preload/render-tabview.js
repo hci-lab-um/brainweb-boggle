@@ -328,7 +328,7 @@ ipcRenderer.on('videoAudioElement-handle', (event, action, elementBoggleId) => {
     }
 });
 
-ipcRenderer.on('rangeElement-handle', (event, value, elementBoggleId) => {
+ipcRenderer.on('rangeElement-setValue', (event, value, elementBoggleId) => {
     let element = document.querySelector(`[data-boggle-id="${elementBoggleId}"]`);
 
     if (element) {

@@ -17,13 +17,14 @@ let suggestion = '';
 let autoCompleteButton;
 let needsNumpad;
 let inputFieldValue = '';
+let elementTypeAttribute = null;
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
         ({ elementProperties, webpageBounds } = overlayData)
 
-        const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week']; // revise these
-        const elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
+        const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week', 'range'];
+        elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
         console.log('Element type:', elementTypeAttribute);
         needsNumpad = NUMPAD_REQUIRED_ELEMENTS.indexOf(elementTypeAttribute) !== -1;
 
@@ -34,7 +35,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             alphaKeyboard.style.display = 'none';
             numericKeyboard.style.display = '';
             inputField = document.querySelector('#numericTextarea');
-            inputField.type = elementTypeAttribute;
+            if (elementTypeAttribute !== 'range') inputField.type = elementTypeAttribute;
 
             // Checks if the element type is "month" and display the month name next to the key
             if (elementTypeAttribute === "month") {
@@ -103,7 +104,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         inputField.value = elementProperties.value;
         // Ensuring textarea stays focused by refocusing it if focus is lost
         inputField.addEventListener("focusout", (event) => {
-            // setTimeout(() => inputField.focus(), 0);
+            setTimeout(() => inputField.focus(), 0);
         });
 
         updateAutoCompleteButton();
@@ -498,6 +499,8 @@ function attachEventListeners() {
                             ipcRenderer.send('url-load', processedInput);
                         } else if (elementProperties.id === 'findInPage') {
                             ipcRenderer.send('text-findInPage', input);
+                        } else if (elementTypeAttribute === 'range') {
+                            ipcRenderer.send('rangeElement-setValue', input, elementProperties.boggleId);
                         } else {
                             const coordinates = getCenterCoordinates(elementProperties, webpageBounds);
 
@@ -543,7 +546,8 @@ function attachEventListeners() {
 
                     // The following are the keys inside the NUMERIC keyboard
                     case 'numericSymbolsBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn');
+                        if (elementTypeAttribute !== 'range') ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn');
+                        else ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn', null, { isRange : true });
                         break;
                     case 'numericBackspaceBtn':
                         updateNumericTextareaAtCursor('backspace');

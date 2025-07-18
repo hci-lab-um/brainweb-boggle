@@ -6,10 +6,12 @@ const { createMaterialIcon, createNavigationButton, updatePaginationIndicators, 
 const logger = require('../main/modules/logger');
 
 let buttons = [];
+let elementProperties = {};
 
 ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     try {
-        const { scenarioId, buttonId, isUpperCase } = overlayData;
+        const { scenarioId, buttonId, isUpperCase, elementProperties: newElementProperties } = overlayData;
+        elementProperties = newElementProperties;
 
         await initKeyboardKeys(buttonId, isUpperCase);
         buttons = document.querySelectorAll('button');
@@ -175,6 +177,11 @@ function attachEventListeners() {
         const buttonId = button.getAttribute('id');
         const buttonText = button.textContent.trim();
         const isArrowKey = button.classList.contains('arrowKeyBtn');
+
+        // Block + and - for range input
+        if ((buttonText === '+' || buttonText === '-') && elementProperties.isRange) {
+            return; // Block input
+        }
 
         // Navigation buttons (pagination) should NOT be delayed
         if (['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {

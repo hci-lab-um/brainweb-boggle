@@ -328,6 +328,14 @@ ipcRenderer.on('videoAudioElement-handle', (event, action, elementBoggleId) => {
     }
 });
 
+ipcRenderer.on('rangeElement-handle', (event, value, elementBoggleId) => {
+    let element = document.querySelector(`[data-boggle-id="${elementBoggleId}"]`);
+
+    if (element) {
+        element.value = value;
+    }
+});
+
 function stretchBodyFromBottomCenter(duration = 500) {
     const body = document.body;
     body.style.overflow = 'hidden'; // prevents scrolling during animation
@@ -470,7 +478,12 @@ function serialiseElement(element, iframe) {
             width: rect.width,
             height: rect.height,
             inIframe: !!iframe,
-            iframeBounds
+            iframeBounds,
+            rangeObject: {
+                min: element.getAttribute('min'),
+                max: element.getAttribute('max'),
+                step: element.getAttribute('step')
+            }
         };
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);

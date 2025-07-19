@@ -37,6 +37,12 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             inputField = document.querySelector('#numericTextarea');
             if (elementTypeAttribute !== 'range') inputField.type = elementTypeAttribute;
 
+            // When the type is 'range', the plus and minus buttons are hidden
+            if (elementTypeAttribute === 'range') {
+                document.getElementById('numericSymbolMinus').style.display = 'none';
+                document.getElementById('numericSymbolPlus').style.display = 'none';
+            }
+
             // Checks if the element type is "month" and display the month name next to the key
             if (elementTypeAttribute === "month") {
                 const monthNames = [
@@ -547,7 +553,7 @@ function attachEventListeners() {
                     // The following are the keys inside the NUMERIC keyboard
                     case 'numericSymbolsBtn':
                         if (elementTypeAttribute !== 'range') ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn');
-                        else ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn', null, { isRange : true });
+                        else updateNumericTextareaAtCursor('.');
                         break;
                     case 'numericBackspaceBtn':
                         updateNumericTextareaAtCursor('backspace');

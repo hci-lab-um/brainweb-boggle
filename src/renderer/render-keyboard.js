@@ -178,7 +178,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             }
 
             // Create mask overlay element
-            const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
+            let maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
             if (maskTemplate) {
                 maskOverlay = document.createElement('div');
                 maskOverlay.id = 'maskOverlay';
@@ -711,8 +711,14 @@ function attachEventListeners() {
                         break;
                     case 'keyboardSendBtn':
                     case 'numericKeyboardSendBtn':
-                        const input = inputField.value.trim();
+                        let input = inputField.value.trim();
                         if (!input) break;
+
+                        // For date/time/month types, replace spaces with right arrow before sending
+                        let sendValue = input;
+                        if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
+                            sendValue = input.replace(/ /g, '→');
+                        }
 
                         if (elementProperties.id === 'omnibox') {
                             let processedInput = await processUrlInput(input)
@@ -725,7 +731,7 @@ function attachEventListeners() {
                             const coordinates = getCenterCoordinates(elementProperties, webpageBounds);
 
                             ipcRenderer.send('mouse-click-nutjs', coordinates);
-                            ipcRenderer.send('keyboard-type-nutjs', input, needsNumpad);
+                            ipcRenderer.send('keyboard-type-nutjs', sendValue, needsNumpad, elementTypeAttribute);
                         }
 
                         ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);

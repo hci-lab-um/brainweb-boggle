@@ -727,10 +727,20 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('keyboard-type-nutjs', async (event, value, isDate) => {
+    ipcMain.on('keyboard-type-nutjs', async (event, value, isDate, elementTypeAttribute) => {
         try {
             if (isDate) {
-                for (let i = 0; i < 5; i++) { // 5 because the longest date format has 5 spaces
+                // Calculate the amount of left arrow presses needed to move the cursor to the start of the date input
+                let upperBound;
+                if (elementTypeAttribute === 'month' || elementTypeAttribute === 'week' || elementTypeAttribute === 'time') {
+                    upperBound = 2;
+                } else if (elementTypeAttribute === 'datetime-local') {
+                    upperBound = 5;
+                } else if (elementTypeAttribute === 'date') {
+                    upperBound = 3;
+                }
+
+                for (let i = 1; i <= upperBound; i++) {
                     await keyboard.pressKey(Key.Delete);
                     await keyboard.releaseKey(Key.Delete);
                     await keyboard.pressKey(Key.Left);
@@ -745,8 +755,17 @@ function registerIpcHandlers(context) {
                 await keyboard.releaseKey(Key.Backspace);
             }
 
-            // Types the new value
-            if (value) {
+            // Types the new value, handling right arrow (→) as Key.Right
+            if (value && isDate) {
+                for (let char of value) {
+                    if (char === '→') {
+                        await keyboard.pressKey(Key.Right);
+                        await keyboard.releaseKey(Key.Right);
+                    } else {
+                        await keyboard.type(char);
+                    }
+                }
+            } else if (value) {
                 await keyboard.type(value);
             }
         } catch (err) {

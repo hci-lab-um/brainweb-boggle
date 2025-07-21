@@ -19,31 +19,148 @@ let needsNumpad;
 let inputFieldValue = '';
 let elementTypeAttribute = null;
 
+// ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
+//     try {
+//         ({ elementProperties, webpageBounds } = overlayData)
+
+//         const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week', 'range'];
+//         elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
+//         console.log('Element type:', elementTypeAttribute);
+//         needsNumpad = NUMPAD_REQUIRED_ELEMENTS.indexOf(elementTypeAttribute) !== -1;
+
+//         const alphaKeyboard = document.querySelector('.keyboard');
+//         const numericKeyboard = document.querySelector('.keyboard--numeric');
+
+//         if (needsNumpad) {
+//             alphaKeyboard.style.display = 'none';
+//             numericKeyboard.style.display = '';
+//             inputField = document.querySelector('#numericTextarea');
+
+//             // When the type is 'range', the plus and minus buttons are hidden
+//             if (elementTypeAttribute === 'range') {
+//                 document.getElementById('numericSymbolMinus').style.display = 'none';
+//                 document.getElementById('numericSymbolPlus').style.display = 'none';
+//             }
+
+//             // Checks if the element type is "month" and display the month name next to the key
+//             if (elementTypeAttribute === "month") {
+//                 const monthNames = [
+//                     "January", "February", "March", "April", "May", "June",
+//                     "July", "August", "September", "October", "November", "December"
+//                 ];
+
+//                 const numKeys = document.querySelectorAll('.numKey');
+//                 numKeys.forEach(keyElement => {
+//                     // Parses the key as a number and uses it to get the month name
+//                     const key = keyElement.textContent.trim();
+//                     const monthIndex = parseInt(key, 10) - 1; // Subtract 1 because months are 0-indexed
+
+//                     // Checks if the key is a valid month index (1-12)
+//                     if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
+//                         keyElement.textContent = `${key} (${monthNames[monthIndex]})`;
+//                     }
+//                 });
+//             }
+//         } else {
+//             alphaKeyboard.style.display = '';
+//             numericKeyboard.style.display = 'none';
+//             inputField = document.querySelector('#textarea');
+
+//             const passwordToggleBtn = document.getElementById('showHidePasswordBtn');
+//             const autoCompleteBtn = document.getElementById('autoCompleteBtn');
+
+//             if (elementTypeAttribute === "password") {
+//                 // Replacing the textarea with an input element for password fields
+//                 const oldTextarea = document.getElementById('textarea');
+//                 if (oldTextarea) {
+//                     const inputElement = document.createElement('input');
+//                     inputElement.type = 'password';
+//                     inputElement.id = 'textarea';
+//                     inputElement.className = 'textarea textarea--numeric';
+//                     inputElement.autocomplete = 'off';
+//                     oldTextarea.parentNode.replaceChild(inputElement, oldTextarea);
+//                     inputField = inputElement;
+//                 }
+
+//                 passwordToggleBtn.style.display = 'block';
+//                 autoCompleteBtn.style.display = 'none';
+//             } else {
+//                 passwordToggleBtn.style.display = 'none';
+//                 autoCompleteBtn.style.display = 'block';
+//             }
+//         }
+
+//         if (needsNumpad) {
+//             inputField.addEventListener('input', (e) => {
+//                 console.log('Input field value changed:', e.target.value);
+//                 console.log('inputfield.value:', inputField.value);
+//                 inputFieldValue = e.target.value;
+
+//                 getScenarioNumber().then(scenarioNumber => {
+//                     updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+//                 });
+//             });
+//         }
+
+//         buttons = document.querySelectorAll('button');
+//         autoCompleteButton = document.getElementById('autoCompleteBtn');
+
+
+//         inputField.value = elementProperties.value;
+//         // Ensuring textarea stays focused by refocusing it if focus is lost
+//         inputField.addEventListener("focusout", (event) => {
+//             setTimeout(() => inputField.focus(), 0);
+//         });
+
+//         updateAutoCompleteButton();
+
+//         getScenarioNumber().then(async scenarioNumber => {
+//             await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+//             attachEventListeners();
+//         });
+//     } catch (error) {
+//         logger.error('Error in keyboard-loaded handler:', error);
+//     }
+// });
+
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
         ({ elementProperties, webpageBounds } = overlayData)
 
         const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week', 'range'];
+        const INPUT_MASKS = {
+            'date': 'dd/mm/yyyy',
+            'time': 'hh:mm',
+            'datetime-local': 'dd/mm/yyyy hh:mm',
+            'month': 'mm/yyyy',
+            'week': 'ww-yyyy',
+            'tel': '(___) ___-____',
+            'number': '',
+            'range': '',
+        };
+
         elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
         console.log('Element type:', elementTypeAttribute);
-        needsNumpad = NUMPAD_REQUIRED_ELEMENTS.indexOf(elementTypeAttribute) !== -1;
+        needsNumpad = NUMPAD_REQUIRED_ELEMENTS.includes(elementTypeAttribute);
 
         const alphaKeyboard = document.querySelector('.keyboard');
         const numericKeyboard = document.querySelector('.keyboard--numeric');
+
+        let maskOverlay;
 
         if (needsNumpad) {
             alphaKeyboard.style.display = 'none';
             numericKeyboard.style.display = '';
             inputField = document.querySelector('#numericTextarea');
-            if (elementTypeAttribute !== 'range') inputField.type = elementTypeAttribute;
+            inputField.type = 'textarea'
 
-            // When the type is 'range', the plus and minus buttons are hidden
+            // Hide +/- buttons for range
             if (elementTypeAttribute === 'range') {
                 document.getElementById('numericSymbolMinus').style.display = 'none';
                 document.getElementById('numericSymbolPlus').style.display = 'none';
             }
 
-            // Checks if the element type is "month" and display the month name next to the key
+            // Add month name labels
             if (elementTypeAttribute === "month") {
                 const monthNames = [
                     "January", "February", "March", "April", "May", "June",
@@ -52,16 +169,120 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
 
                 const numKeys = document.querySelectorAll('.numKey');
                 numKeys.forEach(keyElement => {
-                    // Parses the key as a number and uses it to get the month name
                     const key = keyElement.textContent.trim();
-                    const monthIndex = parseInt(key, 10) - 1; // Subtract 1 because months are 0-indexed
-
-                    // Checks if the key is a valid month index (1-12)
+                    const monthIndex = parseInt(key, 10) - 1;
                     if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
                         keyElement.textContent = `${key} (${monthNames[monthIndex]})`;
                     }
                 });
             }
+
+            // Create mask overlay element
+            const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
+            if (maskTemplate) {
+                maskOverlay = document.createElement('div');
+                maskOverlay.id = 'maskOverlay';
+                maskOverlay.style.position = 'absolute';
+                maskOverlay.style.top = inputField.offsetTop + 'px';
+                maskOverlay.style.left = inputField.offsetLeft + 'px';
+                maskOverlay.style.pointerEvents = 'none';
+                maskOverlay.style.color = '#888';
+                maskOverlay.style.opacity = '0.5';
+                maskOverlay.style.fontSize = window.getComputedStyle(inputField).fontSize;
+                maskOverlay.style.padding = '0.5em';
+                maskOverlay.style.whiteSpace = 'pre';
+                maskOverlay.style.zIndex = '10';
+
+                inputField.parentNode.style.position = 'relative';
+                inputField.parentNode.appendChild(maskOverlay);
+
+                // Function to apply mask to input
+                function applyInputMask(value, mask) {
+                    let maskedValue = '';
+                    let valIndex = 0;
+                    for (let i = 0; i < mask.length && valIndex < value.length; i++) {
+                        if (mask[i].match(/[a-zA-Z]/)) {
+                            maskedValue += value[valIndex];
+                            valIndex++;
+                        } else {
+                            maskedValue += mask[i];
+                        }
+                    }
+                    return maskedValue;
+                }
+
+                inputField.addEventListener('input', (e) => {
+                    const rawValue = e.target.value.replace(/\D/g, '');
+                    const maskedValue = applyInputMask(rawValue, maskTemplate);
+                    inputField.value = maskedValue;
+                    inputFieldValue = maskedValue;
+
+                    const paddedMask = applyInputMask(rawValue + '_'.repeat(maskTemplate.length), maskTemplate);
+                    maskOverlay.textContent = paddedMask;
+
+                    getScenarioNumber().then(scenarioNumber => {
+                        updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+                    });
+                });
+
+                // Initial mask display
+                let initialValue = elementProperties.value || '';
+                let initialRawValue = '';
+
+                // Special handling for date input: parse yyyy-mm-dd and rearrange to ddmmyyyy
+                if (elementTypeAttribute === 'date' && initialValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    // yyyy-mm-dd -> ddmmyyyy
+                    const [year, month, day] = initialValue.split('-');
+                    initialRawValue = day + month + year;
+
+                } else if (elementTypeAttribute === 'month' && initialValue.match(/^\d{4}-\d{2}$/)) {
+                    // yyyy-mm -> mmyyyy
+                    const [year, month] = initialValue.split('-');
+                    initialRawValue = month + year;
+
+                } else if (elementTypeAttribute === 'time' && initialValue.match(/^\d{2}:\d{2}$/)) {
+                    // hh:mm -> hhmm
+                    const [hour, minute] = initialValue.split(':');
+                    initialRawValue = hour + minute;
+
+                } else if (elementTypeAttribute === 'datetime-local' && initialValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+                    // yyyy-mm-ddThh:mm -> ddmmyyyyhhmm
+                    const [datePart, timePart] = initialValue.split('T');
+                    const [year, month, day] = datePart.split('-');
+                    const [hour, minute] = timePart.split(':');
+                    initialRawValue = day + month + year + hour + minute;
+
+                } else if (elementTypeAttribute === 'week' && initialValue.match(/^\d{4}-W\d{2}$/)) {
+                    // yyyy-Www -> wwyyyy
+                    const [year, week] = initialValue.split('-W');
+                    initialRawValue = week + year;
+
+                } else {
+                    initialRawValue = initialValue.replace(/\D/g, '');
+                }
+
+                let initialMaskedValue = applyInputMask(initialRawValue, maskTemplate);
+                inputField.value = initialMaskedValue;
+                inputFieldValue = initialMaskedValue;
+
+                // Updating the textarea's value property for correct visible value
+                if (['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
+                    elementProperties.value = initialMaskedValue;
+                }
+
+                if (initialMaskedValue.length === maskTemplate.length && initialMaskedValue.replace(/[^a-zA-Z0-9]/g, '').length === maskTemplate.replace(/[^a-zA-Z]/g, '').length) {
+                    // Value is full and matches mask
+                    maskOverlay.textContent = initialMaskedValue;
+                } else if (!initialMaskedValue) {
+                    // Value is empty, show the mask template
+                    maskOverlay.textContent = maskTemplate;
+                } else {
+                    // Show mask with remaining placeholders
+                    const paddedMask = applyInputMask(initialRawValue + '_'.repeat(maskTemplate.length), maskTemplate);
+                    maskOverlay.textContent = paddedMask;
+                }
+            }
+
         } else {
             alphaKeyboard.style.display = '';
             numericKeyboard.style.display = 'none';
@@ -71,7 +292,6 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             const autoCompleteBtn = document.getElementById('autoCompleteBtn');
 
             if (elementTypeAttribute === "password") {
-                // Replacing the textarea with an input element for password fields
                 const oldTextarea = document.getElementById('textarea');
                 if (oldTextarea) {
                     const inputElement = document.createElement('input');
@@ -91,24 +311,17 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             }
         }
 
-        if (needsNumpad) {
-            inputField.addEventListener('input', (e) => {
-                console.log('Input field value changed:', e.target.value);
-                console.log('inputfield.value:', inputField.value);
-                inputFieldValue = e.target.value;
-
-                getScenarioNumber().then(scenarioNumber => {
-                    updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-                });
-            });
-        }
-
         buttons = document.querySelectorAll('button');
         autoCompleteButton = document.getElementById('autoCompleteBtn');
 
+        // Ensure inputField.value is always in the correct format for date-like types
+        if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
+            inputField.value = elementProperties.value;
+        } else {
+            inputField.value = elementProperties.value;
+        }
 
-        inputField.value = elementProperties.value;
-        // Ensuring textarea stays focused by refocusing it if focus is lost
+        // Prevent losing focus
         inputField.addEventListener("focusout", (event) => {
             setTimeout(() => inputField.focus(), 0);
         });
@@ -119,6 +332,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
             attachEventListeners();
         });
+
     } catch (error) {
         logger.error('Error in keyboard-loaded handler:', error);
     }
@@ -511,7 +725,7 @@ function attachEventListeners() {
                             const coordinates = getCenterCoordinates(elementProperties, webpageBounds);
 
                             ipcRenderer.send('mouse-click-nutjs', coordinates);
-                            ipcRenderer.send('keyboard-type-nutjs', input);
+                            ipcRenderer.send('keyboard-type-nutjs', input, needsNumpad);
                         }
 
                         ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);

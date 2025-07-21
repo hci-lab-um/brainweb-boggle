@@ -727,13 +727,23 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('keyboard-type-nutjs', async (event, value) => {
+    ipcMain.on('keyboard-type-nutjs', async (event, value, isDate) => {
         try {
-            // Erases everything: Ctrl+A then Backspace
-            await keyboard.pressKey(Key.LeftControl, Key.A);
-            await keyboard.releaseKey(Key.A, Key.LeftControl);
-            await keyboard.pressKey(Key.Backspace);
-            await keyboard.releaseKey(Key.Backspace);
+            if (isDate) {
+                for (let i = 0; i < 5; i++) { // 5 because the longest date format has 5 spaces
+                    await keyboard.pressKey(Key.Delete);
+                    await keyboard.releaseKey(Key.Delete);
+                    await keyboard.pressKey(Key.Left);
+                    await keyboard.releaseKey(Key.Left);
+                }
+            }
+            else {
+                // Erases everything: Ctrl+A then Backspace
+                await keyboard.pressKey(Key.LeftControl, Key.A);
+                await keyboard.releaseKey(Key.A, Key.LeftControl);
+                await keyboard.pressKey(Key.Backspace);
+                await keyboard.releaseKey(Key.Backspace);
+            }
 
             // Types the new value
             if (value) {

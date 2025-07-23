@@ -16,8 +16,19 @@ let webpageBounds = null;   // This is set when the keyboard is loaded
 let suggestion = '';
 let autoCompleteButton;
 let needsNumpad;
-let inputFieldValue = '';
 let elementTypeAttribute = null;
+let maskOverlay = null; // Reference to the mask overlay
+
+const INPUT_MASKS = {
+    'date': 'dd/mm/yyyy',
+    'time': 'hh:mm',
+    'datetime-local': 'dd/mm/yyyy hh:mm',
+    'month': 'mm yyyy',
+    'week': 'ww yyyy',
+    'tel': '(___) ___-____',
+    'number': '',
+    'range': '',
+};
 
 // ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
 //     try {
@@ -128,16 +139,6 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         ({ elementProperties, webpageBounds } = overlayData)
 
         const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week', 'range'];
-        const INPUT_MASKS = {
-            'date': 'dd/mm/yyyy',
-            'time': 'hh:mm',
-            'datetime-local': 'dd/mm/yyyy hh:mm',
-            'month': 'mm/yyyy',
-            'week': 'ww-yyyy',
-            'tel': '(___) ___-____',
-            'number': '',
-            'range': '',
-        };
 
         elementTypeAttribute = elementProperties.type ? elementProperties.type.toLowerCase() : null;
         console.log('Element type:', elementTypeAttribute);
@@ -149,12 +150,12 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         if (needsNumpad) {
             setupNumericKeyboard(alphaKeyboard, numericKeyboard);
             handleRangeType(elementTypeAttribute);
-            addMonthLabels(elementTypeAttribute);
-            setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
+            maskOverlay = setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
         } else {
             setupAlphaKeyboard(alphaKeyboard, numericKeyboard);
             inputField = document.querySelector('#textarea');
             setupPasswordAndAutoComplete(elementTypeAttribute);
+            maskOverlay = null;
         }
 
         buttons = document.querySelectorAll('button');
@@ -271,23 +272,6 @@ function handleRangeType(elementTypeAttribute) {
     }
 }
 
-function addMonthLabels(elementTypeAttribute) {
-    if (elementTypeAttribute === "month") {
-        const monthNames = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-        ];
-        const numKeys = document.querySelectorAll('.numKey');
-        numKeys.forEach(keyElement => {
-            const key = keyElement.textContent.trim();
-            const monthIndex = parseInt(key, 10) - 1;
-            if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
-                keyElement.textContent = `${key} (${monthNames[monthIndex]})`;
-            }
-        });
-    }
-}
-
 function setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties) {
     let maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
     if (!maskTemplate) return null;
@@ -312,7 +296,6 @@ function setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, el
         const rawValue = e.target.value.replace(/\D/g, '');
         const maskedValue = applyInputMask(rawValue, maskTemplate);
         inputField.value = maskedValue;
-        inputFieldValue = maskedValue;
 
         const paddedMask = applyInputMask(rawValue + '_'.repeat(maskTemplate.length), maskTemplate);
         maskOverlay.textContent = paddedMask;
@@ -328,7 +311,6 @@ function setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, el
 
     let initialMaskedValue = applyInputMask(initialRawValue, maskTemplate);
     inputField.value = initialMaskedValue;
-    inputFieldValue = initialMaskedValue;
 
     // Updating the textarea's value property for correct visible value
     if (["date", "month", "time", "datetime-local", "week"].includes(elementTypeAttribute)) {
@@ -445,6 +427,12 @@ async function updateNumericTextareaAtCursor(insertText = null) {
     if (!inputField) return;
 
     await ipcRenderer.invoke('numericKeyboard-type-nutjs', insertText);
+
+    // Update mask overlay if present and the input field is empty
+    if (maskOverlay && inputField.value === '') {
+        const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
+        maskOverlay.textContent = maskTemplate;
+    }
 
     getScenarioNumber().then(scenarioNumber => {
         updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
@@ -701,8 +689,13 @@ function attachEventListeners() {
                     case 'clearAllBtn':
                     case 'numericClearAllBtn':
                         inputField.value = '';
-                        inputFieldValue = '';
                         if (!needsNumpad) updateAutoCompleteButton();
+
+                        // Update mask overlay if present
+                        if (maskOverlay) {
+                            const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
+                            maskOverlay.textContent = maskTemplate;
+                        }
 
                         getScenarioNumber().then(scenarioNumber => {
                             updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);

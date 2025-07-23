@@ -192,6 +192,7 @@
 
 .button {
   color: #ffffff;
+  text-shadow: 3px 2px 3px black;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;

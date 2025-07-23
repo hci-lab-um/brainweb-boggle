@@ -192,6 +192,7 @@
 
 .button {
   color: #ffffff;
+  text-shadow: 3px 2px 3px black;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;
@@ -365,6 +366,7 @@ body {
 }
 .keyboard__key {
   color: #ffffff;
+  text-shadow: 3px 2px 3px black;
   height: 9.5vh;
   flex-grow: 1;
   border-radius: 4px;
@@ -415,12 +417,26 @@ body {
   font-size: 40px;
 }
 .textarea--numeric {
-  text-align: center;
+  padding: 0 60px;
+  border: none;
 }
 .textarea--numeric[type=date]::-webkit-calendar-picker-indicator, .textarea--numeric[type=datetime-local]::-webkit-calendar-picker-indicator, .textarea--numeric[type=month]::-webkit-calendar-picker-indicator, .textarea--numeric[type=week]::-webkit-calendar-picker-indicator, .textarea--numeric[type=number]::-webkit-inner-spin-button, .textarea--numeric[type=number]::-webkit-outer-spin-button, .textarea--numeric[type=time]::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
   margin: 0;
+}
+
+.maskOverlay {
+  position: absolute;
+  pointer-events: none;
+  color: rgba(0, 0, 0, 0.7);
+  opacity: 0.5;
+  white-space: pre;
+  z-index: 10;
+  text-align: start;
+  align-content: center;
+  font-family: arial;
+  padding: 0 60px;
 }
 
 .keyboard__keysContainer {

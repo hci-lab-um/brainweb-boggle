@@ -146,13 +146,11 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         const alphaKeyboard = document.querySelector('.keyboard');
         const numericKeyboard = document.querySelector('.keyboard--numeric');
 
-        let maskOverlay;
-
         if (needsNumpad) {
             setupNumericKeyboard(alphaKeyboard, numericKeyboard);
             handleRangeType(elementTypeAttribute);
             addMonthLabels(elementTypeAttribute);
-            maskOverlay = setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
+            setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
         } else {
             setupAlphaKeyboard(alphaKeyboard, numericKeyboard);
             inputField = document.querySelector('#textarea');

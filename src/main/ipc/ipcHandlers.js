@@ -731,16 +731,16 @@ function registerIpcHandlers(context) {
         try {
             if (isDate) {
                 // Calculate the amount of left arrow presses needed to move the cursor to the start of the date input
-                let upperBound;
+                let numOfLeftArrows;
                 if (elementTypeAttribute === 'month' || elementTypeAttribute === 'week' || elementTypeAttribute === 'time') {
-                    upperBound = 2;
+                    numOfLeftArrows = 2;
                 } else if (elementTypeAttribute === 'datetime-local') {
-                    upperBound = 5;
+                    numOfLeftArrows = 5;
                 } else if (elementTypeAttribute === 'date') {
-                    upperBound = 3;
+                    numOfLeftArrows = 3;
                 }
 
-                for (let i = 1; i <= upperBound; i++) {
+                for (let i = 1; i <= numOfLeftArrows; i++) {
                     await keyboard.pressKey(Key.Delete);
                     await keyboard.releaseKey(Key.Delete);
                     await keyboard.pressKey(Key.Left);

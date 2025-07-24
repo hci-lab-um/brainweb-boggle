@@ -140,12 +140,73 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
 });
 
 // Function to apply mask to input
-function applyInputMask(value, mask) {
+function applyInputMask(value, mask, type = '') {
     let maskedValue = '';
     let valIndex = 0;
     for (let i = 0; i < mask.length && valIndex < value.length; i++) {
-        if (mask[i].match(/[a-zA-Z]/)) {
-            maskedValue += value[valIndex];
+        if (/[a-zA-Z]/.test(mask[i])) {
+            let char = value[valIndex];
+            // Validate based on position and type
+            if (type === 'date' || type === 'datetime-local') {
+                // DAY
+                if (i === 0 && parseInt(char) > 3) { // If first digit of day is greater than 3, pad with zero
+                    char = `0${char}`;
+                    i += 1; // skips a digit because we padded with zero
+                }
+                if (i === 1 && maskedValue[0] === '3' && parseInt(char) > 1) char = '1'; // If greater than 31, set to 31
+
+                // MONTH
+                if (i === 3 && parseInt(char) > 1) { // If first digit of month is greater than 1, pad with zero
+                    char = `0${char}`;
+                    i += 1; // skips a digit because we padded with zero
+                }
+                if (i === 4 && maskedValue[3] === '1' && parseInt(char) > 2) char = '2'; // If greater than 12, set to 12
+
+                // YEAR - no validation needed, just append
+
+                if (i > 9) { // This is for datetime-local, after the date part
+                    // HOUR
+                    if (i === 11 && parseInt(char) > 2) { // If first digit of hour is greater than 2, pad with zero
+                        char = `0${char}`;
+                        i += 1; // skips a digit because we padded with zero
+                    }
+                    if (i === 12 && maskedValue[11] === '2' && parseInt(char) > 3) char = '3'; // If greater than 23, set to 23
+
+                    // MINUTE
+                    if (i === 14 && parseInt(char) > 5) { // If first digit of minute is greater than 5, pad with zero
+                        char = `0${char}`;
+                        i += 1; // skips a digit because we padded with zero
+                    }
+                    if (i === 15 && maskedValue[14] === '5' && parseInt(char) > 9) char = '9'; // If greater than 59, set to 59
+                }
+            } else if (type === 'time') {
+                // HOUR
+                if (i === 0 && parseInt(char) > 2) { // If first digit of hour is greater than 2, pad with zero
+                    char = `0${char}`;
+                    i += 1; // skips a digit because we padded with zero
+                }
+                if (i === 1 && maskedValue[0] === '2' && parseInt(char) > 3) char = '3'; // If greater than 23, set to 23
+
+                // MINUTE
+                if (i === 3 && parseInt(char) > 5) { // If first digit of minute is greater than 5, pad with zero
+                    char = `0${char}`;
+                    i += 1; // skips a digit because we padded with zero
+                }
+                if (i === 4 && maskedValue[2] === '5' && parseInt(char) > 9) char = '9'; // If greater than 59, set to 59
+            } else if (type === 'month') {
+                if (i === 0 && parseInt(char) > 1) { // If first digit of month is greater than 1, pad with zero
+                    char = `0${char}`;
+                    i += 1; // skips a digit because we padded with zero
+                }
+                if (i === 1 && maskedValue[0] === '1' && parseInt(char) > 2) char = '2'; // If greater than 12, set to 12
+            } else if (type === 'week') {
+                if (i === 0 && parseInt(char) > 5) { // If first digit of week is greater than 5, pad with zero
+                    char = `0${char}`;
+                    i += 1; // skips a digit because we padded with zero
+                }
+                if (i === 1 && maskedValue[0] === '5' && parseInt(char) > 3) char = '3'; // If greater than 53, set to 53
+            }
+            maskedValue += char;
             valIndex++;
         } else {
             maskedValue += mask[i];
@@ -183,11 +244,12 @@ function setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, el
     inputField.parentNode.appendChild(maskOverlay);
 
     inputField.addEventListener('input', (e) => {
-        const rawValue = e.target.value.replace(/\D/g, '');
-        const maskedValue = applyInputMask(rawValue, maskTemplate);
+        let rawValue = e.target.value.replace(/\D/g, '');
+        const maskedValue = applyInputMask(rawValue, maskTemplate, elementTypeAttribute);
         inputField.value = maskedValue;
 
-        const paddedMask = applyInputMask(rawValue + '_'.repeat(maskTemplate.length), maskTemplate);
+        // Show remaining mask with placeholders
+        const paddedMask = applyInputMask(rawValue + '_'.repeat(maskTemplate.length), maskTemplate, elementTypeAttribute);
         maskOverlay.textContent = paddedMask;
 
         getScenarioNumber().then(scenarioNumber => {
@@ -317,6 +379,16 @@ async function updateNumericTextareaAtCursor(insertText = null) {
     if (!inputField) return;
 
     await ipcRenderer.invoke('numericKeyboard-type-nutjs', insertText);
+
+    if (maskOverlay && ['date', 'time', 'month', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
+        const raw = inputField.value.replace(/\D/g, '');
+        const mask = INPUT_MASKS[elementTypeAttribute];
+        const masked = applyInputMask(raw, mask, elementTypeAttribute);
+        inputField.value = masked;
+
+        const padded = applyInputMask(raw + '_'.repeat(mask.length), mask, elementTypeAttribute);
+        maskOverlay.textContent = padded;
+    }
 
     // Update mask overlay if present and the input field is empty
     if (maskOverlay && inputField.value === '') {

@@ -10,7 +10,8 @@ const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 const defaultUrl = 'https://www.google.com';
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
-keyboard.config.autoDelayMs = 50; // Disable auto delay for faster typing
+mouse.config.autoDelayMs = 0;       // Disables auto delay for faster clicking
+keyboard.config.autoDelayMs = 50;   // Disables auto delay for faster typing
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////

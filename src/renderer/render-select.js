@@ -422,7 +422,7 @@ function attachEventListeners() {
 
                 const elementToClick = currentElements.find(element => element.labelNumber === Number(button.innerHTML));
                 const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
-                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : null
+                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : elementToClick.role ? elementToClick.role.toLowerCase() : null;
 
                 console.log(`Element to click: ${elementToClick.boggleId}, Tag: ${elementTagName}, Type: ${elementTypeAttribute}`);
 
@@ -452,6 +452,7 @@ function attachEventListeners() {
                             case 'month':
                             case 'week':
                             case 'range':
+                            case 'combobox':
                                 loadKeyboard = true;
                                 break;
                         }

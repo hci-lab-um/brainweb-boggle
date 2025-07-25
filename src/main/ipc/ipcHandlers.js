@@ -6,11 +6,11 @@ const { captureSnapshot } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
-const { isError } = require('util');
 
 const defaultUrl = 'https://www.google.com';
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
+keyboard.config.autoDelayMs = 50; // Disable auto delay for faster typing
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////
@@ -773,7 +773,7 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.handle('numericKeyboard-type-nutjs', async (event, value) => {
+    ipcMain.handle('keyboardOverlay-type-nutjs', async (event, value) => {
         try {
             if (value === 'backspace') {
                 // Presses backspace

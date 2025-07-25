@@ -378,7 +378,7 @@ function updateTextareaAtCursor(insertText = null) {
 async function updateNumericTextareaAtCursor(insertText = null) {
     if (!inputField) return;
 
-    await ipcRenderer.invoke('numericKeyboard-type-nutjs', insertText);
+    await ipcRenderer.invoke('keyboardOverlay-type-nutjs', insertText);
 
     if (maskOverlay && ['date', 'time', 'month', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
         const raw = inputField.value.replace(/\D/g, '');

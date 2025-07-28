@@ -116,6 +116,7 @@ function registerIpcHandlers(context) {
             zoomFactor: await activeTab.webContentsView.webContents.getZoomFactor(),
             bookmarksList: bookmarksList,
             tabsList: serialisableTabsList,
+            optionsList: elementProperties ? elementProperties.options : null,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -469,6 +470,15 @@ function registerIpcHandlers(context) {
             activeTab.webContentsView.webContents.send('rangeElement-setValue', value, elementBoggleId);
         } catch (err) {
             logger.error('Error handling range element action:', err.message);
+        }
+    });
+
+    ipcMain.on('selectElement-setValue', (event, value, parentElementBoggleId) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('selectElement-setValue', value, parentElementBoggleId);
+        } catch (err) {
+            logger.error('Error handling select element action:', err.message);
         }
     });
 

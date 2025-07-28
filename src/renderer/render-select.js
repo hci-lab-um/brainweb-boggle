@@ -432,6 +432,7 @@ function attachEventListeners() {
                 }
 
                 let loadKeyboard = false;
+                let loadDropdownOverlay = false;
 
                 switch (elementTagName) {
                     case 'textarea':
@@ -462,6 +463,9 @@ function attachEventListeners() {
                         selectedSpecialElementBoggleId = elementToClick.boggleId;
                         initSpecialInteractiveElements(elementTagName);
                         break;
+                    case 'select':
+                        loadDropdownOverlay = true;
+                        break;
                 }
 
                 if (loadKeyboard) {
@@ -470,6 +474,12 @@ function attachEventListeners() {
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, elementToClick);
                     } catch (error) {
                         logger.error('Error creating keyboard overlay:', error);
+                    }
+                } else if (loadDropdownOverlay) {
+                    try {
+                        ipcRenderer.send('overlay-create', ViewNames.DROPDOWN, -1, null, null, elementToClick);
+                    } catch (error) {
+                        logger.error('Error creating dropdown overlay:', error);
                     }
                 } else {
                     try {

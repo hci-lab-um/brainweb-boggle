@@ -336,6 +336,25 @@ ipcRenderer.on('rangeElement-setValue', (event, value, elementBoggleId) => {
     }
 });
 
+ipcRenderer.on('selectElement-setValue', (event, value, parentElementBoggleId) => {
+    let parentElement = document.querySelector(`[data-boggle-id="${parentElementBoggleId}"]`);
+
+    if (parentElement) {
+        parentElement.value = value;
+
+        // Ensure the correct option is selected if setting value alone doesn’t work
+        const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === value);
+        if (optionToSelect) {
+            optionToSelect.selected = true;
+        }
+
+        // Trigger change event to make sure it's registered
+        parentElement.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+        logger.warn(`Parent element with boggleId ${parentElementBoggleId} not found in the DOM.`);
+    }
+});
+
 function stretchBodyFromBottomCenter(duration = 500) {
     const body = document.body;
     body.style.overflow = 'hidden'; // prevents scrolling during animation
@@ -483,7 +502,16 @@ function serialiseElement(element, iframe) {
                 min: element.getAttribute('min'),
                 max: element.getAttribute('max'),
                 step: element.getAttribute('step')
-            }
+            },
+            options: element.options ? Array.from(element.options).map(option => {
+                return {
+                    value: option.value,
+                    selected: option.selected,
+                    title: option.textContent,
+                    parentElementId: element.dataset.boggleId,
+                    type: 'option'
+                };
+            }) : null,
         };
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);

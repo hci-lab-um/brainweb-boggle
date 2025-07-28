@@ -404,6 +404,7 @@ body {
   background-color: rgba(183, 255, 0, 0.702);
   width: min-content;
   border-radius: 0 0 6px;
+  text-shadow: none;
 }
 
 .noItemsMessage {

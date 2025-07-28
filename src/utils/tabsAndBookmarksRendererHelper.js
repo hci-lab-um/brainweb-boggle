@@ -23,9 +23,14 @@ async function initialise(overlayData, isReload = false, name) {
         else if (overlayName === ViewNames.TABS) {
             let { tabsList } = overlayData;
             itemsList = tabsList;
+        } else if (overlayName === ViewNames.DROPDOWN) {
+            let { optionsList } = overlayData;
+            itemsList = optionsList;
         }
 
-        const activeIndex = itemsList.findIndex(tab => tab.isActive);
+        const activeIndex = calculateActiveIndex();
+
+        // This is to set the current page based on the active index
         if (activeIndex !== -1) {
             currentPage = Math.floor(activeIndex / pageSize);
         } else {
@@ -65,6 +70,23 @@ async function initialise(overlayData, isReload = false, name) {
     } catch (error) {
         logger.error('Error in items-loaded handler:', error);
     }
+}
+
+/**
+ * Calculates the index of the active item in the itemsList array.
+ * If the overlay is a dropdown, it finds the index of the selected option.
+ * Otherwise, it finds the index of the active tab.
+ */
+function calculateActiveIndex() {
+    let activeIndex = -1;
+
+    if (overlayName === ViewNames.DROPDOWN) {
+        activeIndex = itemsList.findIndex(option => option.selected);
+    } else {
+        activeIndex = itemsList.findIndex(tab => tab.isActive);
+    }
+
+    return activeIndex;
 }
 
 function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
@@ -133,12 +155,13 @@ function initialiseItemsOverlay() {
                     itemButton.setAttribute('id', `${idSuffix}ItemBtn`);
                     itemButton.classList.add('button');
 
-                    if (overlayName === ViewNames.TABS && item.isActive) {
+                    if ((overlayName === ViewNames.TABS && item.isActive) || (overlayName === ViewNames.DROPDOWN && item.selected)) {
                         itemButton.classList.add('accent');
 
                         const labelDiv = document.createElement('div');
                         labelDiv.classList.add('button__label');
-                        labelDiv.textContent = 'ACTIVE';
+                        if (overlayName === ViewNames.DROPDOWN) labelDiv.textContent = 'SELECTED';
+                        else labelDiv.textContent = 'ACTIVE';
                         itemButton.appendChild(labelDiv);
                     }
 
@@ -147,10 +170,13 @@ function initialiseItemsOverlay() {
                     buttonTitle.textContent = item.title;
                     itemButton.appendChild(buttonTitle);
 
-                    const buttonUrl = document.createElement('span');
-                    buttonUrl.classList.add('button__url');
-                    buttonUrl.textContent = item.isErrorPage ? item.originalURL : item.url;
-                    itemButton.appendChild(buttonUrl);
+                    // Only add URL if it's not a dropdown option
+                    if (overlayName !== ViewNames.DROPDOWN) {
+                        const buttonUrl = document.createElement('span');
+                        buttonUrl.classList.add('button__url');
+                        buttonUrl.textContent = item.isErrorPage ? item.originalURL : item.url;
+                        itemButton.appendChild(buttonUrl);
+                    }
 
                     return itemButton;
                 } catch (error) {
@@ -484,7 +510,12 @@ function attachEventListeners() {
                         const itemIndex = currentPage * pageSize + pageIndex;
                         const item = itemsList[itemIndex];
                         if (item) {
-                            showItemActionPopup(item);
+                            if (overlayName === ViewNames.DROPDOWN) {
+                                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                                ipcRenderer.send('selectElement-setValue', item.value, item.parentElementId);
+                            } else {
+                                showItemActionPopup(item);
+                            }
                         }
                     }
                 }

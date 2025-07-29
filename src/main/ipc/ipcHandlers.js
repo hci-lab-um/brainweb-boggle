@@ -92,7 +92,7 @@ function registerIpcHandlers(context) {
         mainWindow.contentView.addChildView(overlayContent)
         overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
         overlayContent.webContents.focus();
-        overlayContent.webContents.openDevTools();
+        // overlayContent.webContents.openDevTools();
 
         // Extracts the serialisable properties from tabsList
         const serialisableTabsList = await getSerialisableTabsList(tabsList);

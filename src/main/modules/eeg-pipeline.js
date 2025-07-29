@@ -7,29 +7,42 @@ const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 const { browserConfig } = require('../../../configs/browserConfig');
 
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
+const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
 let messageResult = { data: [] };
 let ws = null;
 
-// Function used to run the LSL WebSocket Server
-async function startLslWebSocket() {
+// Function used to run the LSL or Emotiv WebSocket Server
+async function startEegWebSocket() {
     return new Promise((resolve, reject) => {
-        const pythonScriptPath = path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
+        let pythonScriptPath;
+
+        console.log(`Starting ${eegDataSource.toUpperCase()} EEG WebSocket server...`);
+
+        // Choose the appropriate Python script based on configuration
+        if (eegDataSource === 'emotiv') {
+            pythonScriptPath = path.join(__dirname, '../../ssvep/lsl/emotiv_websocket_server.py');
+        } else {
+            pythonScriptPath = path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
+        }
+
         const pythonProcess = spawn('python', ['-u', pythonScriptPath]); // -u was used to disable output buffering (allow logs to pass in stdout)
 
         pythonProcess.stdout.on('data', (data) => {
             const message = data.toString().trim();
+            console.log(`${eegDataSource.toUpperCase()} Server:`, message);
 
             if (message === 'READY') {  // Wait for the 'READY' message from Python
+                console.log(`${eegDataSource.toUpperCase()} WebSocket server is ready!`);
                 resolve(pythonProcess);   // Resolve the promise with the running Python process
             }
         });
 
         pythonProcess.stderr.on('data', (data) => {
-            console.error(`Python Error: ${data}`);
+            console.error(`${eegDataSource.toUpperCase()} Python Error:`, data.toString());
         });
 
         pythonProcess.on('close', (code) => {
-            console.log(`lsl_websocket_server.py process exited with code ${code}`);
+            console.log(`${eegDataSource}_websocket_server.py process exited with code ${code}`);
         });
     });
 }
@@ -38,7 +51,7 @@ function connectWebSocket() {
     ws = new WebSocket('ws://localhost:8765');
 
     ws.on('open', () => {
-        console.log('Connected to WebSocket server');
+        console.log(`Connected to ${eegDataSource.toUpperCase()} WebSocket server`);
     });
 
     ws.on('message', function incoming(data) {
@@ -53,7 +66,20 @@ function connectWebSocket() {
             try {
                 // Parse the string as JSON
                 const jsonData = JSON.parse(dataString);
-                messageResult.data.push(jsonData);
+
+                // Handle different data formats based on the EEG data source
+                if (eegDataSource === 'emotiv') {
+                    // Emotiv data format: {time: timestamp, values: [ch1, ch2, ...]}
+                    if (jsonData.time && jsonData.values) {
+                        // console.log(`[DEBUG] Adding Emotiv data: time=${jsonData.time}, channels=${jsonData.values.length}`);
+                        messageResult.data.push(jsonData);
+                    } else {
+                        console.log('[DEBUG] Emotiv data missing time or values:', jsonData);
+                    }
+                } else {
+                    // LSL data format: {time: timestamp, values: [ch1, ch2, ...]}
+                    messageResult.data.push(jsonData);
+                }
             } catch (error) {
                 console.error("Failed to parse JSON:", error);
             }
@@ -61,11 +87,11 @@ function connectWebSocket() {
     });
 
     ws.on('error', (error) => {
-        console.error('WebSocket error:', error.message);
+        console.error(`${eegDataSource.toUpperCase()} WebSocket error:`, error.message);
 
         // Retry on ECONNREFUSED error
         if (error.message.includes('ECONNREFUSED')) {
-            console.log('Retrying WebSocket connection in 1 second...');
+            console.log(`Retrying ${eegDataSource.toUpperCase()} WebSocket connection in 1 second...`);
             setTimeout(connectWebSocket, 1000);  // Retry after 1 second
         }
     });
@@ -80,22 +106,32 @@ function disconnectWebSocket() {
 
 // Function to handle incoming WebSocket data
 async function processDataWithFbcca(currentScenarioID, viewsList) {
-    if (messageResult.data) {
-        // Initialize an array to hold data by channel
-        const eegData = Array.from({ length: fbccaConfiguration.channels }, () => []);
-
+    if (messageResult.data && messageResult.data.length > 0) {
+        console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${eegDataSource.toUpperCase()}`);
 
         const dataPoints = messageResult['data'];
-        // console.log("Received data points:", dataPoints);
-        console.log("EEGDATA:", eegData);
+        console.log("Sample data point:", dataPoints[0]);
 
+        // Determine the actual number of channels from the first data point
+        const actualChannelCount = fbccaConfiguration.channels;
+        console.log(`[DEBUG] Detected ${actualChannelCount} channels in the data`);
+
+        // Initialize an array to hold data by channel (use actual channel count)
+        const eegData = Array.from({ length: actualChannelCount }, () => []);
+        
         // Populate the eegData array, where each row corresponds to a channel
-        dataPoints.forEach(point => {
+        dataPoints.forEach((point, idx) => {
             const values = point['values'];
-            values.forEach((value, i) => {
-                eegData[i].push(value);
-            });
-        });
+            if (values && values.length > 0) {
+                values.forEach((value, i) => {
+                    if (i < eegData.length) {  // Make sure we don't exceed channel count
+                        eegData[i].push(value);
+                    }
+                });
+            } else {
+                console.log(`[WARNING] Data point ${idx} missing values:`, point);
+            }
+        }); console.log(`[DEBUG] Processed data - Channel 0 has ${eegData[0] ? eegData[0].length : 0} samples`);
 
         // !!!!!!!!!!! CHECK THIS !!!!!!!!!!! 
         // Slice the first 200 samples from each channel DUE TO VISUAL LATENCY
@@ -159,13 +195,16 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
                 });
             });
         }
+    } else {
+        console.log(`[DEBUG] No EEG data available for processing. messageResult.data length: ${messageResult.data ? messageResult.data.length : 'undefined'}`);
     }
 
     messageResult.data = [];
 }
 
 module.exports = {
-    startLslWebSocket,
+    startEegWebSocket,
+    startLslWebSocket: startEegWebSocket, // Maintain backward compatibility
     connectWebSocket,
     disconnectWebSocket,
     processDataWithFbcca

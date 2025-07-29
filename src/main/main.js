@@ -6,7 +6,7 @@ const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
 const logger = require('./modules/logger');
-const { startLslWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
+const { startEegWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
@@ -23,7 +23,7 @@ let isMainWindowLoaded = false; // This is a flag to track if main window is ful
 
 app.whenReady().then(async () => {
     try {
-        await startLslWebSocket();
+        await startEegWebSocket();
         connectWebSocket();
     } catch (err) {
         logger.error('Error starting LSL WebSocket:', err.message);
@@ -53,7 +53,7 @@ app.on('window-all-closed', async () => {
             // Prevent deleting and inserting tabs if the main window is not loaded 
             await deleteAndInsertAllTabs();
         }
-        
+
         // Disconnect the LSL WebSocket
         disconnectWebSocket();
 
@@ -195,7 +195,7 @@ function createMainWindow() {
                 if (splashWindow) {
                     splashWindow.close();
                 }
-                mainWindowContent.webContents.openDevTools();
+                // mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
                 logger.error('Error showing main window:', err.message);
@@ -508,7 +508,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             logger.error('Error loading URL:', err.message);
         }
 
-        thisTabView.webContents.openDevTools();
+        // thisTabView.webContents.openDevTools();
     } catch (err) {
         logger.error('Error creating tab view:', err.message);
     }

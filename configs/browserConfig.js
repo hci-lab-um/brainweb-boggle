@@ -1,8 +1,8 @@
 const browserConfig = {
     // fbccaLanguage: 'python', // 'javascript' or 'python'
     fbccaLanguage: 'javascript',
-    // eegDataSource: 'lsl', // 'lsl' or 'emotiv' 
-    eegDataSource: 'emotiv',
+    eegDataSource: 'lsl', // 'lsl' or 'emotiv' 
+    // eegDataSource: 'emotiv',
     stimuli: {
         maxConcurrentStimuli: 18,
         customSetup: {

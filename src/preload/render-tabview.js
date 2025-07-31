@@ -336,23 +336,81 @@ ipcRenderer.on('rangeElement-setValue', (event, value, elementBoggleId) => {
     }
 });
 
-ipcRenderer.on('selectElement-setValue', (event, value, parentElementBoggleId) => {
-    let parentElement = document.querySelector(`[data-boggle-id="${parentElementBoggleId}"]`);
+// ipcRenderer.on('selectElement-setValue', (event, value, parentElementId) => {
+//     let parentElement = document.querySelector(`[data-boggle-id="${parentElementId}"]`) || document.getElementById(parentElementId);
 
-    if (parentElement) {
-        parentElement.value = value;
+//     if (parentElement) {
+//         parentElement.value = value;
 
-        // Ensure the correct option is selected if setting value alone doesn’t work
-        const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === value);
-        if (optionToSelect) {
-            optionToSelect.selected = true;
-        }
+//         // Ensure the correct option is selected if setting value alone doesn’t work
+//         const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === value);
+//         if (optionToSelect) {
+//             optionToSelect.selected = true;
+//         }
 
-        // Trigger change event to make sure it's registered
-        parentElement.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-        logger.warn(`Parent element with boggleId ${parentElementBoggleId} not found in the DOM.`);
+//         // Trigger change event to make sure it's registered
+//         parentElement.dispatchEvent(new Event('change', { bubbles: true }));
+//     } else {
+//         logger.warn(`Parent element with boggleId ${parentElementId} not found in the DOM.`);
+//     }
+// });
+
+ipcRenderer.on('selectElement-setValue', (event, value, parentElementId) => {
+  let parentElement = document.querySelector(`[data-boggle-id="${parentElementId}"]`) 
+                   || document.getElementById(parentElementId);
+
+  if (!parentElement) {
+    console.warn(`Parent element with boggleId ${parentElementId} not found in the DOM.`);
+    return;
+  }
+
+  // Handle native <select> elements
+  if (parentElement.tagName === 'SELECT') {
+    parentElement.value = value;
+
+    const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === value);
+    if (optionToSelect) {
+      optionToSelect.selected = true;
     }
+
+    parentElement.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+
+  // Fallback: Handle ARIA-based combobox
+  const role = parentElement.getAttribute('role');
+  if (role === 'listbox' || role === 'combobox') {
+    const listboxId = parentElement.getAttribute('aria-controls');
+    console.log(`Listbox ID for ${role}: ${listboxId}`);
+    const listbox = listboxId ? document.getElementById(listboxId) : null;
+    console.log(`Listbox found: ${!!listbox} for ID ${listboxId}`);
+
+    if (!listbox) {
+      console.warn(`Listbox with ID ${listboxId} not found for ${role}.`);
+      return;
+    }
+
+    const options = Array.from(listbox.querySelectorAll('[role="option"]'));
+    const optionToSelect = options.find(opt => opt.textContent.trim() === value);
+
+    if (!optionToSelect) {
+      console.warn(`Option with text "${value}" not found in combobox.`);
+      return;
+    }
+
+    // Clear any previously selected options
+    options.forEach(opt => opt.setAttribute('aria-selected', 'false'));
+
+    // Set new selection
+    optionToSelect.setAttribute('aria-selected', 'true');
+    parentElement.setAttribute('aria-activedescendant', optionToSelect.id);
+    parentElement.textContent = optionToSelect.textContent;
+
+    // Optional: dispatch custom event if needed
+    parentElement.dispatchEvent(new Event('change', { bubbles: true }));
+  } else {
+    console.warn(`Element with ID ${parentElementId} is neither <select>, ARIA combobox, nor listbox.`);
+  }
 });
 
 function stretchBodyFromBottomCenter(duration = 500) {
@@ -511,10 +569,33 @@ function serialiseElement(element, iframe) {
                     parentElementId: element.dataset.boggleId,
                     type: 'option'
                 };
-            }) : null,
+            }) : getComboboxOptions(element),
         };
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);
         return null;
     }
+}
+
+function getComboboxOptions(comboboxElement) {
+    if (!comboboxElement || comboboxElement.getAttribute("role") !== "combobox") return [];
+
+    const listboxId = comboboxElement.getAttribute("aria-controls");
+    if (!listboxId) return [];
+
+    const listbox = document.getElementById(listboxId);
+    if (!listbox || listbox.getAttribute("role") !== "listbox") return [];
+
+    const options = listbox.querySelectorAll('[role="option"]');
+    let optionsObject = Array.from(options).map(option => {
+        return {
+            value: option.textContent,
+            selected: option.getAttribute('aria-selected') === 'true',
+            title: option.textContent,
+            parentElementId: comboboxElement.dataset.boggleId,
+            type: 'option'
+        };
+    });
+    console.log(`!!!!!!!!!!Combobox options for ${comboboxElement.id}:`, optionsObject);
+    return optionsObject;
 }

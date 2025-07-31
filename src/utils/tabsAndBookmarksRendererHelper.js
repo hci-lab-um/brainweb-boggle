@@ -18,14 +18,13 @@ async function initialise(overlayData, isReload = false, name) {
 
         if (overlayName === ViewNames.BOOKMARKS) {
             let { bookmarksList } = overlayData;
-            itemsList = bookmarksList;
-        }
-        else if (overlayName === ViewNames.TABS) {
+            itemsList = bookmarksList ? bookmarksList : [];
+        } else if (overlayName === ViewNames.TABS) {
             let { tabsList } = overlayData;
-            itemsList = tabsList;
+            itemsList = tabsList ? tabsList : [];
         } else if (overlayName === ViewNames.DROPDOWN) {
             let { optionsList } = overlayData;
-            itemsList = optionsList;
+            itemsList = optionsList ? optionsList : [];
         }
 
         const activeIndex = calculateActiveIndex();
@@ -142,6 +141,8 @@ function initialiseItemsOverlay() {
                     noItemsMessage.innerHTML = 'No bookmarks found :(';
                 } else if (overlayName === ViewNames.TABS) {
                     noItemsMessage.innerHTML = 'No tabs found :(';
+                } else if (overlayName === ViewNames.DROPDOWN) {
+                    noItemsMessage.innerHTML = 'No options found :(';
                 }
 
                 itemsAndArrowsContainer.appendChild(noItemsMessage);

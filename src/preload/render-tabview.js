@@ -366,18 +366,34 @@ ipcRenderer.on('selectElement-setValue', (event, value, parentElementId) => {
 
   // Handle native <select> elements
   if (parentElement.tagName === 'SELECT') {
-    parentElement.value = value;
-
-    const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === value);
-    if (optionToSelect) {
-      optionToSelect.selected = true;
+    if (parentElement.multiple) {
+      // Handle multiple select - value should be an array
+      const valuesToSelect = Array.isArray(value) ? value : [value];
+      
+      // Clear all selections first
+      Array.from(parentElement.options).forEach(opt => opt.selected = false);
+      
+      // Select the specified options
+      valuesToSelect.forEach(val => {
+        const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === val);
+        if (optionToSelect) {
+          optionToSelect.selected = true;
+        }
+      });
+    } else {
+      // Handle single select
+      parentElement.value = value;
+      const optionToSelect = Array.from(parentElement.options).find(opt => opt.value === value);
+      if (optionToSelect) {
+        optionToSelect.selected = true;
+      }
     }
 
     parentElement.dispatchEvent(new Event('change', { bubbles: true }));
     return;
   }
 
-  // Fallback: Handle ARIA-based combobox
+  // Fallback: Handle ARIA-based combobox/listbox
   const role = parentElement.getAttribute('role');
   if (role === 'listbox' || role === 'combobox') {
     const listboxId = parentElement.getAttribute('aria-controls');
@@ -391,22 +407,51 @@ ipcRenderer.on('selectElement-setValue', (event, value, parentElementId) => {
     }
 
     const options = Array.from(listbox.querySelectorAll('[role="option"]'));
-    const optionToSelect = options.find(opt => opt.textContent.trim() === value);
+    const isMultipleSelect = listbox.getAttribute('aria-multiselectable') === 'true';
 
-    if (!optionToSelect) {
-      console.warn(`Option with text "${value}" not found in combobox.`);
-      return;
+    if (isMultipleSelect) {
+      // Handle multiple selection for ARIA listbox
+      const valuesToSelect = Array.isArray(value) ? value : [value];
+      
+      // Clear all selections first
+      options.forEach(opt => opt.setAttribute('aria-selected', 'false'));
+      
+      // Select the specified options
+      valuesToSelect.forEach(val => {
+        const optionToSelect = options.find(opt => opt.textContent.trim() === val);
+        if (optionToSelect) {
+          optionToSelect.setAttribute('aria-selected', 'true');
+        }
+      });
+
+      // For multiple select, update the combobox text to show selected count or values
+      const selectedOptions = options.filter(opt => opt.getAttribute('aria-selected') === 'true');
+      if (selectedOptions.length > 1) {
+        parentElement.textContent = `${selectedOptions.length} items selected`;
+      } else if (selectedOptions.length === 1) {
+        parentElement.textContent = selectedOptions[0].textContent;
+      } else {
+        parentElement.textContent = '';
+      }
+    } else {
+      // Handle single selection for ARIA combobox
+      const optionToSelect = options.find(opt => opt.textContent.trim() === value);
+
+      if (!optionToSelect) {
+        console.warn(`Option with text "${value}" not found in combobox.`);
+        return;
+      }
+
+      // Clear any previously selected options
+      options.forEach(opt => opt.setAttribute('aria-selected', 'false'));
+
+      // Set new selection
+      optionToSelect.setAttribute('aria-selected', 'true');
+      parentElement.setAttribute('aria-activedescendant', optionToSelect.id);
+      parentElement.textContent = optionToSelect.textContent;
     }
 
-    // Clear any previously selected options
-    options.forEach(opt => opt.setAttribute('aria-selected', 'false'));
-
-    // Set new selection
-    optionToSelect.setAttribute('aria-selected', 'true');
-    parentElement.setAttribute('aria-activedescendant', optionToSelect.id);
-    parentElement.textContent = optionToSelect.textContent;
-
-    // Optional: dispatch custom event if needed
+    // Dispatch custom event
     parentElement.dispatchEvent(new Event('change', { bubbles: true }));
   } else {
     console.warn(`Element with ID ${parentElementId} is neither <select>, ARIA combobox, nor listbox.`);
@@ -570,6 +615,7 @@ function serialiseElement(element, iframe) {
                     type: 'option'
                 };
             }) : getComboboxOptions(element),
+            multiple: element.hasAttribute('multiple') || element.multiple,
         };
     } catch (error) {
         console.error(`Error serializing element: ${error.message}`);

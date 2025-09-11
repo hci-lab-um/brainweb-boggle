@@ -1,6 +1,6 @@
 const fbccaConfiguration = {
     // Class attributes (constants)
-    channels: 14,  // Updated to support all Emotiv EPOC X channels (was 6)
+    channels: 4,
     subBands: 5,
     harmonics: 5,
     idleStateLabel: -1,

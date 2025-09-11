@@ -1,5 +1,4 @@
 import asyncio
-import os
 import websockets
 import json
 import ssl
@@ -20,50 +19,6 @@ HIGHCUT = 100.0
 NOTCH_FREQ = 50.0
 FILTER_ORDER = 5
 NOTCH_Q = 30.0
-EMOTIV_CHANNEL_NAMES = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"] # Emotiv Epoc X channel names always in this order
-APPLY_FILTERING = False      # Set to True/False to enable/disable bandpass and notch filters
-SAVE_RAW_DATA = True        # Set to True/False to enable/disable saving raw data to JSON files
-
-# === ELECTRODE CONFIGURATION ===
-# Epoc X electrode layout: AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4
-# For SSVEP applications, occipital and parietal channels are most relevant
-USE_SSVEP_CHANNELS_ONLY = True  # Set to False to use all channels
-
-
-# Function to save raw EEG sample to JSON in the format:
-# { "eegData": [ [], [], ... ] }
-RAW_JSON_FILENAME = "datasets/RAW-eeg-data.json"
-
-# Buffer for raw samples
-RAW_SAMPLE_BUFFER = []
-RAW_SAMPLE_BUFFER_SIZE = 1000
-
-def save_raw_sample_to_json(sample, filename=RAW_JSON_FILENAME):
-    """
-    Buffer raw EEG samples and write to JSON file once every 1000 samples.
-    """
-    global RAW_SAMPLE_BUFFER
-    RAW_SAMPLE_BUFFER.append(sample)
-    if len(RAW_SAMPLE_BUFFER) >= RAW_SAMPLE_BUFFER_SIZE:
-        try:
-            folder = os.path.dirname(filename)
-            if folder and not os.path.exists(folder):
-                os.makedirs(folder, exist_ok=True)
-            try:
-                with open(filename, "r") as f:
-                    file_data = json.load(f)
-                eeg_data = file_data.get("eegData", [])
-            except (FileNotFoundError, json.JSONDecodeError):
-                eeg_data = [[] for _ in range(len(sample))]
-            # Append buffered samples
-            for buffered_sample in RAW_SAMPLE_BUFFER:
-                for i, value in enumerate(buffered_sample):
-                    eeg_data[i].append(value)
-            with open(filename, "w") as f:
-                json.dump({"eegData": eeg_data}, f, indent=2)
-            RAW_SAMPLE_BUFFER = []
-        except Exception as e:
-            print(f"Error saving raw EEG samples: {e}")
 
 # Design filters
 def butter_bandpass(lowcut, highcut, fs, order=5):
@@ -98,8 +53,6 @@ class EmotivEEGClient:
         self.headset_id = None
         self.session_id = None
         self.connected_clients = set()  # Track connected WebSocket clients
-        self.latest_device_data = None
-        self.latest_quality_data = None
 
     def on_message(self, ws, message):
         try:
@@ -107,12 +60,9 @@ class EmotivEEGClient:
             # print(f"[DEBUG] Received: {data}")  # Add debug output
             if 'id' in data:
                 self.handle_response(data)
-            elif 'eeg' in data:
+            elif 'eeg' in str(data).lower():
+                # print("[EEG] ", data)
                 self.handle_eeg_data(data)
-            elif 'dev' in data:
-                self.handle_device_data(data)
-            elif 'eq' in data:
-                self.handle_quality_data(data)
         except json.JSONDecodeError as e:
             print(f"[ERROR] Failed to parse JSON: {e}")
             print(f"[ERROR] Raw message: {message}")
@@ -167,7 +117,7 @@ class EmotivEEGClient:
             if 'result' in data and 'id' in data['result']:
                 self.session_id = data['result']['id']
                 print(f"[INFO] Session created: {self.session_id}")
-                self.subscribe(['eeg', 'dev', 'eq'])  # Subscribe to all three streams
+                self.subscribe(['eeg'])
             else:
                 print("[ERROR] Failed to create session - no session ID received")
 
@@ -181,60 +131,24 @@ class EmotivEEGClient:
                 # Take all EEG channels (excluding the last few elements which might be quality indicators)
                 # Typically the structure is: [sequence, unknown, ...EEG_channels..., quality_indicators, metadata]
                 
-                if USE_SSVEP_CHANNELS_ONLY:
-                    # === SSVEP-SPECIFIC ELECTRODES ONLY ===
-                    # Epoc X electrode order: AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4
-                    # SSVEP optimal channels: P7(5), O1(6), O2(7), P8(8) - using 0-based indexing after skipping first 2 elements
-                    # These channels are positioned over occipital and parietal regions, optimal for SSVEP signal detection
-                    
-                    ssvep_channel_indices = [5, 6, 7, 8]                # P7, O1, O2, P8  --> HEADSET NORMAL
-                    # ssvep_channel_indices = [0, 13, 1, 12, 2, 11, 3, 10]  # AF3, AF4, F7, F8, F3, F4, FC5, FC6  --> HEADSET UPSIDE DOWN
-
-                    eeg_channels = []
-                    for idx in ssvep_channel_indices:
-                        channel_pos = idx + 2  # Add 2 to account for sequence number and unknown at start
-                        if channel_pos < len(eeg_data) and isinstance(eeg_data[channel_pos], (int, float)):
-                            eeg_channels.append(eeg_data[channel_pos])
-                    
-                    # print(f"[DEBUG] Using SSVEP channels only: {len(eeg_channels)} channels (P7, O1, O2, P8)")
-                else:
-                    # === ORIGINAL CODE - ALL ELECTRODES ===
-                    # Find the actual EEG channels (exclude non-numeric values at the end)
-                    eeg_channels = []
-                    for i in range(2, len(eeg_data)):
-                        if isinstance(eeg_data[i], (int, float)) and eeg_data[i] != 0.0:
-                            eeg_channels.append(eeg_data[i])
-                        elif isinstance(eeg_data[i], list):  # Stop when we hit arrays/lists (metadata)
-                            break
-                    
-                    # print(f"[DEBUG] Using all available channels: {len(eeg_channels)} channels")
+                # Find the actual EEG channels (exclude non-numeric values at the end)
+                eeg_channels = []
+                for i in range(2, len(eeg_data)):
+                    if isinstance(eeg_data[i], (int, float)) and eeg_data[i] != 0.0:
+                        eeg_channels.append(eeg_data[i])
+                    elif isinstance(eeg_data[i], list):  # Stop when we hit arrays/lists (metadata)
+                        break
                 
                 if len(eeg_channels) > 0:
                     raw_values = np.array(eeg_channels)
-
-                    # Select channel names corresponding to SSVEP indices
-                    if USE_SSVEP_CHANNELS_ONLY:
-                        channel_names = [EMOTIV_CHANNEL_NAMES[idx] for idx in ssvep_channel_indices]
-                    else:
-                        channel_names = EMOTIV_CHANNEL_NAMES
-
-                    # Save raw data before filtering
-                    if SAVE_RAW_DATA:
-                        save_raw_sample_to_json(raw_values.tolist())
-
+                    
                     # Apply filters
-                    if APPLY_FILTERING:
-                        filtered_values = apply_filter(raw_values, b_band, a_band)
-                        filtered_values = apply_filter(filtered_values, b_notch, a_notch)
-                    else:
-                        filtered_values = raw_values.copy()
+                    filtered_values = apply_filter(raw_values, b_band, a_band)
+                    filtered_values = apply_filter(filtered_values, b_notch, a_notch)
 
                     data_packet = {
                         "time": timestamp,
-                        "values": filtered_values.tolist(),
-                        "deviceData": self.latest_device_data,
-                        "qualityData": self.latest_quality_data,
-                        "channelNames": channel_names
+                        "values": filtered_values.tolist()
                     }
                     
                     # print(f"[DEBUG] Sending filtered data: time={timestamp}, channels={len(filtered_values)}")
@@ -248,38 +162,6 @@ class EmotivEEGClient:
             print(f"[ERROR] EEG data handling failed: {e}")
             import traceback
             traceback.print_exc()
-
-    def handle_device_data(self, data):
-        """Handle device information data"""
-        try:
-            dev_data = data.get('dev', None)
-            timestamp = data.get('time', None)
-            
-            if dev_data and timestamp:
-                self.latest_device_data = {
-                    "timestamp": timestamp,
-                    "data": dev_data
-                }
-                # print(f"[DEVICE] Time: {timestamp}, Device data: {dev_data}")
-                
-        except Exception as e:
-            print(f"[ERROR] Device data handling failed: {e}")
-
-    def handle_quality_data(self, data):
-        """Handle EEG quality data"""
-        try:
-            eq_data = data.get('eq', None)
-            timestamp = data.get('time', None)
-            
-            if eq_data and timestamp:
-                self.latest_quality_data = {
-                    "timestamp": timestamp,
-                    "data": eq_data
-                }
-                # print(f"[QUALITY] Time: {timestamp}, EEG Quality: {eq_data}")
-                
-        except Exception as e:
-            print(f"[ERROR] Quality data handling failed: {e}")
 
     def run_sequence(self):
         # Step 1: Request Access

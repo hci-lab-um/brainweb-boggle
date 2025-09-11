@@ -258,6 +258,132 @@
         "frequencies": [14.5],
         "phases": [0.5]
     },
+    "scenario_50": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - One option, send and cancel buttons",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn"],
+        "frequencies": [6, 10.5, 8],
+        "phases": [1, 1.5, 1.5]
+    },
+    "scenario_51": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Two options, send and cancel buttons",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn"],
+        "frequencies": [6, 10.5, 8, 12.5],
+        "phases": [1, 1.5, 1.5, 0]
+    },
+    "scenario_52": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Three options, send and cancel buttons",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn"],
+        "frequencies": [6, 10.5, 8, 12.5, 9],
+        "phases": [1, 1.5, 1.5, 0, 0.5]
+    },
+    "scenario_53": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Four options, send and cancel buttons",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn"],
+        "frequencies": [6, 10.5, 8, 12.5, 9, 7.5],
+        "phases": [1, 1.5, 1.5, 0, 0.5, 1.5]
+    },
+    "scenario_54": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - One option, send and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 10.5, 8, 12.5],
+        "phases": [1, 1.5, 1.5, 0]
+    },
+    "scenario_55": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Two options, send and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 10.5, 8, 12.5, 9],
+        "phases": [1, 1.5, 1.5, 0, 0.5]
+    },
+    "scenario_56": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Three options, send and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 10.5, 8, 12.5, 9, 7.5],
+        "phases": [1, 1.5, 1.5, 0, 0.5, 1.5]
+    },
+    "scenario_57": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Four options, send and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 10.5, 8, 12.5, 9, 7.5, 11],
+        "phases": [1, 1.5, 1.5, 0, 0.5, 1.5, 0]
+    },
+    "scenario_58": {
+        "name": "DROPDOWN",
+        "description": "MULTIPLE SELECTION DROPDOWN - Four options, send and cancel buttons + two active arrows",
+        "buttonIds": ["cancelBtn", "sendBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn", "firstArrowKeyBtn", "secondArrowKeyBtn"],
+        "frequencies": [6, 10.5, 8, 12.5, 9, 7.5, 11, 9.5],
+        "phases": [1, 1.5, 1.5, 0, 0.5, 1.5, 0, 0]
+    },
+    "scenario_59": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - One option and cancel button",
+        "buttonIds": ["cancelBtn", "firstItemBtn"],
+        "frequencies": [6, 8],
+        "phases": [1, 1.5]
+    },
+    "scenario_60": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Two options and cancel button",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn"],
+        "frequencies": [6, 8, 12.5],
+        "phases": [1, 1.5, 0]
+    },
+    "scenario_61": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Three options and cancel button",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn"],
+        "frequencies": [6, 8, 12.5, 9],
+        "phases": [1, 1.5, 0, 0.5]
+    },
+    "scenario_62": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Four options and cancel button",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn"],
+        "frequencies": [6, 8, 12.5, 9, 7.5],
+        "phases": [1, 1.5, 0, 0.5, 1.5]
+    },
+    "scenario_63": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - One option and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 8, 12.5],
+        "phases": [1, 1.5, 0]
+    },
+    "scenario_64": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Two options and cancel button + one active arrow",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 8, 12.5, 9],
+        "phases": [1, 1.5, 0, 0.5]
+    },
+    "scenario_65": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Three options and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 8, 12.5, 9, 7.5],
+        "phases": [1, 1.5, 0, 0.5, 1.5]
+    },
+    "scenario_66": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Four options and cancel buttons + one active arrow",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn", "firstArrowKeyBtn"],
+        "frequencies": [6, 8, 12.5, 9, 7.5, 11],
+        "phases": [1, 1.5, 0, 0.5, 1.5, 0]
+    },
+    "scenario_67": {
+        "name": "DROPDOWN",
+        "description": "SINGLE SELECTION DROPDOWN - Four options and cancel buttons + two active arrows",
+        "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn", "firstArrowKeyBtn", "secondArrowKeyBtn"],
+        "frequencies": [6, 8, 12.5, 9, 7.5, 11, 9.5],
+        "phases": [1, 1.5, 0, 0.5, 1.5, 0, 0]
+    },
     "scenario_80": {
         "name": "KEYBOARD",
         "description": "No text in search field",

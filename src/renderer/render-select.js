@@ -453,7 +453,6 @@ function attachEventListeners() {
                             case 'month':
                             case 'week':
                             case 'range':
-                            case 'combobox':
                                 loadKeyboard = true;
                                 break;
                         }
@@ -463,8 +462,16 @@ function attachEventListeners() {
                         selectedSpecialElementBoggleId = elementToClick.boggleId;
                         initSpecialInteractiveElements(elementTagName);
                         break;
+                    
+                    // DROPDOWNS & COMBOBOXES
                     case 'select':
                         loadDropdownOverlay = true;
+                        break;
+                    case 'div':
+                    case 'span':
+                        if (elementTypeAttribute === 'combobox') {
+                            loadDropdownOverlay = true;
+                        }
                         break;
                 }
 

@@ -2,7 +2,7 @@ const { ipcRenderer } = require('electron');
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
-const { createMaterialIcon } = require('../utils/utilityFunctions');
+const { createMaterialIcon, getCenterCoordinates } = require('../utils/utilityFunctions');
 const logger = require('../main/modules/logger');
 
 // Prefix used for generating button IDs
@@ -15,11 +15,12 @@ let zoomFactor;
 let sidebar;
 let navbar;
 let webpage;
-let elementsInTabView = [];         // These are all the interactive elements visible in the current tab
-let currentElements = [];           // These are a subset of the interactive elements. They pertain to the selected region/group
-let previousElementsStack = [];     // This contains a history of current elements. It is used when pressing the BACK button
-let startIndex;                     // This is used when clicking the 'Toggle Numbers Visibility' button. It is updated in the renderNumericalButtonsInSidebar function
-let isRegionSplitView = false;      // This is used to determine if the current view is split into regions or not
+let elementsInTabView = [];                 // These are all the interactive elements visible in the current tab
+let currentElements = [];                   // These are a subset of the interactive elements. They pertain to the selected region/group
+let previousElementsStack = [];             // This contains a history of current elements. It is used when pressing the BACK button
+let startIndex;                             // This is used when clicking the 'Toggle Numbers Visibility' button. It is updated in the renderNumericalButtonsInSidebar function
+let isRegionSplitView = false;              // This is used to determine if the current view is split into regions or not
+let selectedSpecialElementBoggleId = null;  // This is used to store the boggleId of the video/audio element that is currently selected
 
 ipcRenderer.on('select-loaded', async (event, overlayData) => {
     try {
@@ -32,6 +33,14 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
         await initSelectOverlay(); // Begin initialisation
     } catch (error) {
         logger.error('Error in select-loaded handler:', error);
+    }
+});
+
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
     }
 });
 
@@ -304,6 +313,43 @@ async function reInitialiseSelectOverlay() {
     }
 }
 
+async function initSpecialInteractiveElements(elementType) {
+    try {
+        sidebar.innerHTML = '';
+        navbar.innerHTML = '';
+
+        const navbarTitle = document.createElement('div');
+        navbarTitle.classList.add('navbar-title');
+        navbar.appendChild(navbarTitle);
+        navbar.classList.add('navbar--opaque');
+
+        previousElementsStack.length = 0;
+        const closeSelectBtnIcon = document.getElementById('closeSelectBtn').querySelector('i');
+        closeSelectBtnIcon.innerText = previousElementsStack.length > 1 ? 'arrow_back' : 'close';
+
+        if (elementType === 'video' || elementType === 'audio') {
+            if (elementType === 'video') navbarTitle.innerHTML = `Video`;
+            else navbarTitle.innerHTML = `Audio`;
+
+            const buttonLabels = ['Pause/Play', 'Mute/Unmute', '10 secs', '10 secs'];
+            const buttonIcons = ['play_pause', 'no_sound', 'fast_forward', 'fast_rewind'];
+
+            for (let idx = 0; idx < 4; idx++) {
+                const button = document.createElement('button');
+                button.setAttribute('id', `${idPrefix[idx]}Btn`);
+                button.classList.add('button');
+                button.classList.add('isVideoAudioButton');
+                button.innerHTML = `${buttonLabels[idx]} ${createMaterialIcon('sm', buttonIcons[idx])}`;
+                sidebar.appendChild(button);
+            }
+
+            await updateScenarioId(43, buttons, ViewNames.SELECT);
+        }
+    } catch (error) {
+        logger.error('Error in initSpecialInteractiveElements:', error);
+    }
+}
+
 function attachEventListeners() {
     const overlay = document.getElementById('selectOverlay')
     if (!overlay) return;
@@ -315,6 +361,10 @@ function attachEventListeners() {
     overlay.addEventListener('click', async (event) => {
         const button = event.target.closest('button');
         if (!button) return;
+
+        // Disable the button immediately to prevent multiple clicks
+        button.disabled = true;
+        setTimeout(() => { button.disabled = false; }, 1500);
 
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
@@ -334,10 +384,10 @@ function attachEventListeners() {
                 return;
             }
 
-            await stopManager();
-
             // Handle region button click (A, B, C...)
             if (button.classList.contains('isRegionButton')) {
+                await stopManager();
+
                 const gridContainer = document.getElementById('webpage');
                 if (gridContainer) gridContainer.innerHTML = '';
 
@@ -354,6 +404,8 @@ function attachEventListeners() {
             }
             // Handle grouped element buttons (1–6, 7–12, etc.)
             else if (button.classList.contains('isGroupButton')) {
+                await stopManager();
+
                 const groupIdx = idPrefix.findIndex(prefix => buttonId.startsWith(prefix));
                 if (groupIdx !== -1) {
                     const startIdx = groupIdx * 6;
@@ -367,13 +419,20 @@ function attachEventListeners() {
             // Handle clicking of element
             else if (button.classList.contains('isElementButton')) {
                 removeLabelsAndHighlightFromElements(currentElements);
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
 
                 const elementToClick = currentElements.find(element => element.labelNumber === Number(button.innerHTML));
                 const elementTagName = elementToClick.tagName ? elementToClick.tagName.toLowerCase() : null;
-                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : null;
+                const elementTypeAttribute = elementToClick.type ? elementToClick.type.toLowerCase() : elementToClick.role ? elementToClick.role.toLowerCase() : null;
+
+                console.log(`Element to click: ${elementToClick.boggleId}, Tag: ${elementTagName}, Type: ${elementTypeAttribute}`);
+
+                if (elementTagName !== 'video' && elementTagName !== 'audio') {
+                    await stopManager();
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                }
 
                 let loadKeyboard = false;
+                let loadDropdownOverlay = false;
 
                 switch (elementTagName) {
                     case 'textarea':
@@ -393,8 +452,25 @@ function attachEventListeners() {
                             case 'time':
                             case 'month':
                             case 'week':
+                            case 'range':
                                 loadKeyboard = true;
                                 break;
+                        }
+                        break;
+                    case 'audio':
+                    case 'video':
+                        selectedSpecialElementBoggleId = elementToClick.boggleId;
+                        initSpecialInteractiveElements(elementTagName);
+                        break;
+                    
+                    // DROPDOWNS & COMBOBOXES
+                    case 'select':
+                        loadDropdownOverlay = true;
+                        break;
+                    case 'div':
+                    case 'span':
+                        if (elementTypeAttribute === 'combobox') {
+                            loadDropdownOverlay = true;
                         }
                         break;
                 }
@@ -406,45 +482,51 @@ function attachEventListeners() {
                     } catch (error) {
                         logger.error('Error creating keyboard overlay:', error);
                     }
+                } else if (loadDropdownOverlay) {
+                    try {
+                        ipcRenderer.send('overlay-create', ViewNames.DROPDOWN, -1, null, null, elementToClick);
+                    } catch (error) {
+                        logger.error('Error creating dropdown overlay:', error);
+                    }
                 } else {
                     try {
                         // Calculate intersection of element and visible bounds
                         webpageBounds = await webpage.getBoundingClientRect();
-                        const elemLeft = elementToClick.x;
-                        const elemTop = elementToClick.y;
-                        const elemRight = elemLeft + elementToClick.width;
-                        const elemBottom = elemTop + elementToClick.height;
+                        const coordinates = getCenterCoordinates(elementToClick, webpageBounds)
 
-                        const visibleLeft = Math.max(elemLeft, 0);
-                        const visibleTop = Math.max(elemTop, 0);
-                        const visibleRight = Math.min(elemRight, webpageBounds.width);
-                        const visibleBottom = Math.min(elemBottom, webpageBounds.height);
-
-                        // If element is not visible at all, fallback to clicking on the centre of the element
-                        let clickX, clickY;
-                        if (visibleLeft < visibleRight && visibleTop < visibleBottom) {
-                            clickX = (visibleLeft + visibleRight) / 2;
-                            clickY = (visibleTop + visibleBottom) / 2;
-                        } else {
-                            clickX = Math.max(0, Math.min(elemLeft + elementToClick.width / 2, webpageBounds.width));
-                            clickY = Math.max(0, Math.min(elemTop + elementToClick.height / 2, webpageBounds.height));
+                        if (elementTagName !== 'video' && elementTagName !== 'audio') {
+                            ipcRenderer.send('mouse-click-nutjs', coordinates);
+                            ipcRenderer.send('elementsInDom-removeBoggleId');
                         }
-
-                        const coordinates = {
-                            x: clickX,
-                            y: clickY
-                        }
-
-                        ipcRenderer.send('mouse-click-nutjs', coordinates);
-                        ipcRenderer.send('elementsInDom-removeBoggleId');
                     } catch (error) {
                         logger.error('Error calculating the coordinates of the element', error);
                     }
                 }
                 return;
             }
+            // Handle special buttons for video/audio elements
+            else if (button.classList.contains('isVideoAudioButton')) {
+                const buttonId = button.getAttribute('id');
+
+                switch (buttonId) {
+                    case "firstBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'play-pause', selectedSpecialElementBoggleId);
+                        break;
+                    case "secondBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'mute-unmute', selectedSpecialElementBoggleId);
+                        break;
+                    case "thirdBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'seek-forward', selectedSpecialElementBoggleId);
+                        break;
+                    case "fourthBtn":
+                        ipcRenderer.send('videoAudioElement-handle', 'seek-backward', selectedSpecialElementBoggleId);
+                        break;
+                }
+            }
             // Handle the CLOSE/BACK button
             else if (buttonId === 'closeSelectBtn') {
+                await stopManager();
+
                 removeLabelsAndHighlightFromElements(currentElements);
                 if (previousElementsStack.length > 1) {
                     previousElementsStack.pop();
@@ -459,7 +541,7 @@ function attachEventListeners() {
                 } else {
                     // No previous state, exit overlay
                     ipcRenderer.send('elementsInDom-removeBoggleId');
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SELECT);
                 }
                 return;
             }

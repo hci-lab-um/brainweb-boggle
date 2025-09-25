@@ -62,6 +62,11 @@
     justify-content: center;
 }
 
+.navbar--opaque {
+    background-color: colors.$bg-dark;
+    gap: 2%;
+}
+
 #webpage {
     flex: 88%;
     width: 100%;
@@ -74,6 +79,7 @@
 
 .button {
     color: colors.$white;
+    text-shadow: 3px 2px 3px black;
     background-color: colors.$primary-muted;
     border-radius: 6px;
     border: none;

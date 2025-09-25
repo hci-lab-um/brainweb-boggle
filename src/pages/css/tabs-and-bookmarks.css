@@ -166,6 +166,11 @@
   justify-content: center;
 }
 
+.navbar--opaque {
+  background-color: #1f1f1f;
+  gap: 2%;
+}
+
 #webpage {
   flex: 88%;
   width: 100%;
@@ -187,6 +192,7 @@
 
 .button {
   color: #ffffff;
+  text-shadow: 3px 2px 3px black;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;
@@ -398,6 +404,7 @@ body {
   background-color: rgba(183, 255, 0, 0.702);
   width: min-content;
   border-radius: 0 0 6px;
+  text-shadow: none;
 }
 
 .noItemsMessage {

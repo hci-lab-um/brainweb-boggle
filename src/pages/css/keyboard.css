@@ -166,6 +166,11 @@
   justify-content: center;
 }
 
+.navbar--opaque {
+  background-color: #1f1f1f;
+  gap: 2%;
+}
+
 #webpage {
   flex: 88%;
   width: 100%;
@@ -187,6 +192,7 @@
 
 .button {
   color: #ffffff;
+  text-shadow: 3px 2px 3px black;
   background-color: rgba(41, 56, 142, 0.5019607843);
   border-radius: 6px;
   border: none;
@@ -321,6 +327,28 @@ body {
   box-sizing: border-box;
   justify-content: space-between;
 }
+.keyboard__columnContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 4vw;
+}
+.keyboard__column {
+  display: flex;
+  flex-direction: column;
+  gap: 4vh;
+  width: 100%;
+}
+.keyboard__column--left {
+  flex: 1;
+  justify-content: center;
+  padding: 0;
+}
+.keyboard__column--middle {
+  flex: 3;
+}
+.keyboard__column--right {
+  flex: 1;
+}
 .keyboard__row {
   display: flex;
   width: 100%;
@@ -329,12 +357,16 @@ body {
 .keyboard__row--first {
   flex: 0.5;
 }
+.keyboard__row--largeGap {
+  gap: 4vh;
+}
 .keyboard__textarea {
   position: relative;
   flex: 4 1 0%;
 }
 .keyboard__key {
   color: #ffffff;
+  text-shadow: 3px 2px 3px black;
   height: 9.5vh;
   flex-grow: 1;
   border-radius: 4px;
@@ -359,6 +391,9 @@ body {
 .keyboard__key--wide {
   flex: 2;
 }
+.keyboard__key--center {
+  height: 100%;
+}
 .keyboard__key--activatable::after {
   content: "";
   position: absolute;
@@ -373,43 +408,35 @@ body {
   background: #08FF00;
 }
 
-.textarea__input {
-  position: relative;
-  height: 100%;
+.textarea {
+  flex: 4 1 0%;
   border-radius: 6px;
   background: #f8f9fa;
-  width: 100%;
+  width: 669px;
   resize: none;
   font-size: 40px;
-  font-family: monospace;
-  z-index: 1;
+}
+.textarea--numeric {
+  padding: 0 60px;
   border: none;
-  padding: 2px;
-  line-height: 1.2;
-  overflow-y: scroll;
-  color: transparent;
-  caret-color: #000000;
 }
-.textarea__autocomplete {
+.textarea--numeric[type=date]::-webkit-calendar-picker-indicator, .textarea--numeric[type=datetime-local]::-webkit-calendar-picker-indicator, .textarea--numeric[type=month]::-webkit-calendar-picker-indicator, .textarea--numeric[type=week]::-webkit-calendar-picker-indicator, .textarea--numeric[type=number]::-webkit-inner-spin-button, .textarea--numeric[type=number]::-webkit-outer-spin-button, .textarea--numeric[type=time]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.maskOverlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  color: #000000;
-  font-size: 40px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  word-break: break-word;
-  padding: 2px;
-  max-height: 100%;
-  width: 100%;
-  line-height: 1.2;
   pointer-events: none;
-  z-index: 2;
-  background: transparent;
-  overflow-y: hidden;
-}
-.textarea__autocomplete span {
-  color: #aaa;
+  color: rgba(0, 0, 0, 0.7);
+  opacity: 0.5;
+  white-space: pre;
+  z-index: 10;
+  text-align: start;
+  align-content: center;
+  font-family: arial;
+  padding: 0 60px;
 }
 
 .keyboard__keysContainer {
@@ -516,6 +543,9 @@ button {
 }
 .button--four-keys {
   flex-grow: 2;
+}
+.button--numeric {
+  padding: 10px;
 }
 
 /*# sourceMappingURL=keyboard.css.map */

@@ -27,6 +27,7 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
         ({ webpageBounds, zoomFactor } = overlayData);
         sidebar = document.getElementById('sidebar-buttons');
         navbar = document.getElementById('navbar');
+        navbar.classList.add('navbar--opaque');
         webpage = document.getElementById('webpage');
 
         webpageBounds = webpage.getBoundingClientRect();
@@ -36,9 +37,18 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.SEEK);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }
@@ -396,6 +406,10 @@ function attachEventListeners() {
         const button = event.target.closest('button');
         if (!button) return;
 
+        // Disable the button immediately to prevent multiple clicks
+        button.disabled = true;
+        setTimeout(() => { button.disabled = false; }, 1500);
+
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
 
@@ -511,7 +525,7 @@ function attachEventListeners() {
                         initSeekOverlay(`Element ${currentScrollableElement.labelNumber}`, currentScrollableElement);
                     } else {
                         ipcRenderer.send('elementsInDom-removeBoggleId', ViewNames.SEEK);
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SEEK);
                     }
                     break;
                 case "readBtn":

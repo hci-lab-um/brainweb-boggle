@@ -56,14 +56,19 @@ body {
     border: none;
     width: 100%;
     color: colors.$white;
+    text-shadow: 3px 2px 3px black;
 }
 
 .button {
     font-size: 25px;
 }
 
-#favicon {
+.favicon {
     color: colors.$bright-green;
+
+    &--error {
+        color: colors.$secondary-muted;
+    }
 }
 
 #brainLoader {

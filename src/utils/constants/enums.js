@@ -7,6 +7,7 @@ const ViewNames = Object.freeze({
     BOOKMARKS: "bookmarks",
     TABS: "tabs",
     SEEK: "seek",
+    DROPDOWN: "dropdown",
 });
 
 const CssConstants = Object.freeze({

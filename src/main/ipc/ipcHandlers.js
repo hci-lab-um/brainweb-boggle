@@ -4,8 +4,14 @@ const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
+const { processDataWithFbcca } = require('../modules/eeg-pipeline');
+const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 
 const defaultUrl = 'https://www.google.com';
+let bciIntervalId = null;           // This will hold the ID of the BCI interval
+let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
+mouse.config.autoDelayMs = 0;       // Disables auto delay for faster clicking
+keyboard.config.autoDelayMs = 50;   // Disables auto delay for faster typing
 
 function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////
@@ -31,7 +37,10 @@ function registerIpcHandlers(context) {
             // Tabs that were saved in the database but not yet loaded will have webContentsView set to null.
             // and therefore, won't update the snapshot, title, and URL to the latest values - because there is no latest value.
             if (tab.webContentsView) {
-                tab.webContentsView.setBounds(webpageBounds);
+                updateWebpageBounds(mainWindowContent.webContents).then(webpageBounds => {
+                    webpageBounds = webpageBounds;
+                    tab.webContentsView.setBounds(webpageBounds);
+                });
                 tab.title = (await tab.webContentsView.webContents.getTitle()) || tab.title;
                 tab.url = (await tab.webContentsView.webContents.getURL()) || tab.url;
                 tab.snapshot = await captureSnapshot(tab) || tab.snapshot; // Mutates the snapshot in tabsList
@@ -43,9 +52,25 @@ function registerIpcHandlers(context) {
                 snapshot: tab.snapshot,
                 title: tab.title,
                 url: tab.url,
+                isErrorPage: tab.isErrorPage,
+                originalURL: tab.originalURL
             };
         }));
     }
+
+    ipcMain.on('bciInterval-restart', (event, scenarioId) => {
+        // Clear the previous interval if it exists
+        if (bciIntervalId) {
+            clearInterval(bciIntervalId);
+        }
+
+        // Set new interval to process data every 4 seconds
+        bciIntervalId = setInterval(() => {
+            // Process the latest data with the fbcca algorithm. 
+            // viewsList will be used to determine which view to process the data for
+            processDataWithFbcca(scenarioId, viewsList);
+        }, fbccaConfiguration.gazeLengthInSecs * 1000);
+    });
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
         let mainWindowContentBounds = mainWindow.getContentBounds();
@@ -74,7 +99,11 @@ function registerIpcHandlers(context) {
         const activeTab = tabsList.find(tab => tab.isActive);
 
         if (elementProperties && elementProperties.id === 'omnibox') {
-            elementProperties.value = await activeTab.webContentsView.webContents.getURL();
+            if (activeTab.isErrorPage) {
+                elementProperties.value = activeTab.originalURL; // If the tab is an error page, we use the original URL
+            } else {
+                elementProperties.value = await activeTab.webContentsView.webContents.getURL();
+            }
         }
 
         let overlayData = {
@@ -87,6 +116,7 @@ function registerIpcHandlers(context) {
             zoomFactor: await activeTab.webContentsView.webContents.getZoomFactor(),
             bookmarksList: bookmarksList,
             tabsList: serialisableTabsList,
+            optionsList: elementProperties ? elementProperties.options : null,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -108,22 +138,51 @@ function registerIpcHandlers(context) {
      * keybord overlay (i.e. 83) and send it to the keyboard so that the same buttons that were flickering before the arrow
      * keys overlay was opened, start flickering again.
      */
-    ipcMain.on('overlay-closeAndGetPreviousScenario', (event, overlayName) => {
+    ipcMain.handle('overlay-closeAndGetPreviousScenario', async (event, overlayName) => {
         // topMostView may also be the mainWindow hence why it is called VIEW not OVERLAY  
         try {
-            mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
+            let poppedView = viewsList[viewsList.length - 1]; // Gets the last view in the list
+            console.log('viewsList:', viewsList);
+            if (poppedView?.name !== ViewNames.MAIN_WINDOW) {
+                poppedView = viewsList.pop();
+                mainWindow.contentView.removeChildView(poppedView.webContentsView);
 
-            // Deleting the dictionary entry for the closed overlay
-            delete scenarioIdDict[overlayName];
+                // Deleting the dictionary entry for the closed overlay
+                delete scenarioIdDict[overlayName];
 
-            // This was done because the contentView does not have a function that returns the top most child view.
-            // Hence we are using our viewsList.
-            let topMostView = viewsList[viewsList.length - 1];
-            let lastScenarioId = scenarioIdDict[topMostView.name].pop();
-            topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
-            topMostView.webContentsView.webContents.focus();
+                // This was done because the contentView does not have a function that returns the top most child view.
+                // Hence we are using our viewsList.
+                let topMostView = viewsList[viewsList.length - 1];
+                let lastScenarioId = scenarioIdDict[topMostView.name].pop();
+
+                if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
+                    shouldCreateTabView = false; // Resetting the flag after creating the tab view
+                    let activeTab = tabsList.find(tab => tab.isActive);
+                    await createTabView(activeTab.url, false, activeTab);
+                } else {
+                    // Send scenarioId-update and wait for renderer acknowledgment before returning true
+                    await new Promise((resolve, reject) => {
+                        const ackChannel = 'scenarioId-update-complete';
+                        const ackHandler = (event, ackScenarioId) => {
+                            if (ackScenarioId === lastScenarioId) {
+                                ipcMain.removeListener(ackChannel, ackHandler);
+                                resolve();
+                            }
+                        };
+                        ipcMain.on(ackChannel, ackHandler);
+                        topMostView.webContentsView.webContents.send('scenarioId-update', lastScenarioId);
+                    });
+                }
+
+                topMostView.webContentsView.webContents.focus();
+                return true; // Indicate completion
+            } else {
+                logger.error('No view to pop or the popped view is the main window.');
+                return false; // Indicate failure
+            }
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
+            throw err;
         }
     });
 
@@ -136,15 +195,28 @@ function registerIpcHandlers(context) {
      * of the time). Therefore, the exact scenario that is needed is calculated through a function 'getScenarioNumber()' that
      * is found in the render-keybaord.js file.
      */
-    ipcMain.on('overlay-close', (event, overlayName) => {
+    ipcMain.on('overlay-close', async (event, overlayName) => {
         try {
-            mainWindow.contentView.removeChildView(viewsList.pop().webContentsView);
+            let poppedView = viewsList[viewsList.length - 1]; // Gets the last view in the list
+            if (poppedView?.name !== ViewNames.MAIN_WINDOW) {
+                poppedView = viewsList.pop();
+                mainWindow.contentView.removeChildView(poppedView.webContentsView);
 
-            // Deleting the dictionary entry for the closed overlay
-            delete scenarioIdDict[overlayName];
+                // Deleting the dictionary entry for the closed overlay
+                delete scenarioIdDict[overlayName];
 
-            let topMostView = viewsList[viewsList.length - 1];
-            topMostView.webContentsView.webContents.focus();
+                let topMostView = viewsList[viewsList.length - 1];
+                topMostView.webContentsView.webContents.focus();
+
+                if (shouldCreateTabView && topMostView.name === ViewNames.MAIN_WINDOW) {
+                    shouldCreateTabView = false; // Resetting the flag after creating the tab view
+                    let activeTab = tabsList.find(tab => tab.isActive);
+                    await createTabView(activeTab.url, false, activeTab);
+                }
+            } else {
+                logger.error('No view to pop or the popped view is the main window.');
+                return false; // Indicate failure
+            }
         } catch (err) {
             logger.error('Error closing overlay:', err.message);
         }
@@ -383,6 +455,33 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('videoAudioElement-handle', (event, action, elementBoggleId) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('videoAudioElement-handle', action, elementBoggleId);
+        } catch (err) {
+            logger.error('Error handling video audio action:', err.message);
+        }
+    });
+
+    ipcMain.on('rangeElement-setValue', (event, value, elementBoggleId) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('rangeElement-setValue', value, elementBoggleId);
+        } catch (err) {
+            logger.error('Error handling range element action:', err.message);
+        }
+    });
+
+    ipcMain.on('selectElement-setValue', (event, value, parentElementBoggleId) => {
+        try {
+            let activeTab = tabsList.find(tab => tab.isActive);
+            activeTab.webContentsView.webContents.send('selectElement-setValue', value, parentElementBoggleId);
+        } catch (err) {
+            logger.error('Error handling select element action:', err.message);
+        }
+    });
+
     ipcMain.on('elementsInDom-removeBoggleId', (event, elements) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
@@ -484,7 +583,7 @@ function registerIpcHandlers(context) {
             let tabToVisit = tabsList.find(tab => tab.tabId === tabId);
             if (tabToVisit) {
 
-                // If the selected tab was not yet created (because it was the last active tab), we create it.
+                // If the selected tab was not yet created (because it was not the last active tab before closing), we create it.
                 let createNewTab = !tabToVisit.webContentsView;
                 if (createNewTab) {
                     await createTabView(tabToVisit.url, false, tabToVisit);
@@ -495,6 +594,10 @@ function registerIpcHandlers(context) {
                     if (tabToVisit.isErrorPage) {
                         // Reloading the URL of the tab to refresh the content and update the omnibox at the same time
                         tabToVisit.webContentsView.webContents.loadURL(tabToVisit.originalURL);
+
+                        // Updating the omnibox with the original URL of the tab - this does not clash with the updating of the URL found
+                        // in the did-stop-loading event of the webContentsView because we are reloading and hence the URL will be the same.
+                        mainWindowContent.webContents.send('omniboxText-update', tabToVisit.originalURL, true);
                     } else {
                         let title = tabToVisit.webContentsView.webContents.getTitle();
                         if (!title) title = tabToVisit.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
@@ -552,11 +655,15 @@ function registerIpcHandlers(context) {
                     newActiveTab = tabsList[tabsList.length - 1];
                     newActiveTab.isActive = true;
 
-                    // Updating the omnibox with the URL of the previous tab
-                    let title = newActiveTab.webContentsView.webContents.getTitle();
-                    if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
-                    mainWindowContent.webContents.send('omniboxText-update', title);
-                    updateNavigationButtons(newActiveTab.webContentsView);
+                    // Updating the omnibox with the URL of the previous tab if it has been created
+                    if (newActiveTab.webContentsView) {
+                        let title = newActiveTab.webContentsView.webContents.getTitle();
+                        if (!title) title = newActiveTab.webContentsView.webContents.getURL(); // Fallback to original URL if title is not available
+                        mainWindowContent.webContents.send('omniboxText-update', title, newActiveTab.isErrorPage);
+                        updateNavigationButtons(newActiveTab.webContentsView);
+                    } else {
+                        shouldCreateTabView = true; // If the new active tab was not yet created, we will create it upon closing the MORE overlays
+                    }
                 }
 
                 const topMostView = viewsList[viewsList.length - 1];
@@ -570,68 +677,131 @@ function registerIpcHandlers(context) {
     });
 
     ipcMain.on('mouse-click-nutjs', async (event, coordinates) => {
-        // Always update webpageBounds before clicking
-        webpageBounds = await updateWebpageBounds(mainWindowContent.webContents);
+        try {
+            // Always update webpageBounds before clicking
+            webpageBounds = await updateWebpageBounds(mainWindowContent.webContents);
 
-        const win = BaseWindow.getFocusedWindow();
-        const bounds = win.getBounds();
-        const contentBounds = win.getContentBounds();
-        const display = screen.getDisplayMatching(bounds);
-        const scaleFactor = display.scaleFactor;
+            const win = BaseWindow.getFocusedWindow();
+            const bounds = win.getBounds();
+            const contentBounds = win.getContentBounds();
+            const display = screen.getDisplayMatching(bounds);
+            const scaleFactor = display.scaleFactor;
 
-        // Correct for frame offset
-        const frameOffsetX = contentBounds.x - bounds.x;
-        const frameOffsetY = contentBounds.y - bounds.y;
+            // Correct for frame offset
+            const frameOffsetX = contentBounds.x - bounds.x;
+            const frameOffsetY = contentBounds.y - bounds.y;
 
-        // Get global screen coordinates of window
-        const windowScreenX = bounds.x + frameOffsetX;
-        const windowScreenY = bounds.y + frameOffsetY;
+            // Get global screen coordinates of window
+            const windowScreenX = bounds.x + frameOffsetX;
+            const windowScreenY = bounds.y + frameOffsetY;
 
-        const webpageX = windowScreenX + webpageBounds.x;
-        const webpageY = windowScreenY + webpageBounds.y;
+            const webpageX = windowScreenX + webpageBounds.x;
+            const webpageY = windowScreenY + webpageBounds.y;
 
-        let activeTab = tabsList.find(tab => tab.isActive);
-        const zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
+            let activeTab = tabsList.find(tab => tab.isActive);
+            const zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
 
-        // Get the element's position within the tab (taking the zoom level into consideration)
-        const elementX = webpageX + (coordinates.x * zoomFactor);
-        const elementY = webpageY + (coordinates.y * zoomFactor);
+            // Get the element's position within the tab (taking the zoom level into consideration)
+            const elementX = webpageX + (coordinates.x * zoomFactor);
+            const elementY = webpageY + (coordinates.y * zoomFactor);
 
-        // Convert to physical pixels if needed
-        const finalX = elementX * scaleFactor;
-        const finalY = elementY * scaleFactor;
+            // Convert to physical pixels if needed
+            const finalX = elementX * scaleFactor;
+            const finalY = elementY * scaleFactor;
 
-        const targetPoint = new Point(finalX, finalY)
-        mouse.move(targetPoint).then(() => mouse.leftClick());
-    });
-
-    ipcMain.handle('keyboard-arrow-nutjs', async (event, direction) => {
-        const keyMap = {
-            up: Key.Up,
-            down: Key.Down,
-            left: Key.Left,
-            right: Key.Right,
-            home: Key.Home,
-            end: Key.End,
-        };
-        const key = keyMap[direction];
-        if (key) {
-            await keyboard.pressKey(key);
-            await keyboard.releaseKey(key);
-            return true; // Indicate success
+            const targetPoint = new Point(finalX, finalY)
+            mouse.move(targetPoint).then(() => mouse.leftClick());
+        } catch (err) {
+            logger.error('Error clicking mouse with Nut.js:', err.message);
         }
     });
 
-    ipcMain.on('keyboard-type-nutjs', async (event, value) => {
-        // Erases everything: Ctrl+A then Backspace
-        await keyboard.pressKey(Key.LeftControl, Key.A);
-        await keyboard.releaseKey(Key.A, Key.LeftControl);
-        await keyboard.pressKey(Key.Backspace);
-        await keyboard.releaseKey(Key.Backspace);
+    ipcMain.handle('keyboard-arrow-nutjs', async (event, direction) => {
+        try {
+            const keyMap = {
+                up: Key.Up,
+                down: Key.Down,
+                left: Key.Left,
+                right: Key.Right,
+                home: Key.Home,
+                end: Key.End,
+            };
+            const key = keyMap[direction];
+            if (key) {
+                await keyboard.pressKey(key);
+                await keyboard.releaseKey(key);
+                return true; // Indicate success
+            }
+        } catch (err) {
+            logger.error('Error handling keyboard arrow with Nut.js:', err.message);
+            return false; // Indicate failure
+        }
+    });
 
-        // Types the new value
-        if (value) {
-            await keyboard.type(value);
+    ipcMain.on('keyboard-type-nutjs', async (event, value, isDate, elementTypeAttribute) => {
+        try {
+            if (isDate) {
+                // Calculate the amount of left arrow presses needed to move the cursor to the start of the date input
+                let numOfLeftArrows;
+                if (elementTypeAttribute === 'month' || elementTypeAttribute === 'week' || elementTypeAttribute === 'time') {
+                    numOfLeftArrows = 2;
+                } else if (elementTypeAttribute === 'datetime-local') {
+                    numOfLeftArrows = 5;
+                } else if (elementTypeAttribute === 'date') {
+                    numOfLeftArrows = 3;
+                }
+
+                for (let i = 1; i <= numOfLeftArrows; i++) {
+                    await keyboard.pressKey(Key.Delete);
+                    await keyboard.releaseKey(Key.Delete);
+                    await keyboard.pressKey(Key.Left);
+                    await keyboard.releaseKey(Key.Left);
+                }
+            }
+            else {
+                // Erases everything: Ctrl+A then Backspace
+                await keyboard.pressKey(Key.LeftControl, Key.A);
+                await keyboard.releaseKey(Key.A, Key.LeftControl);
+                await keyboard.pressKey(Key.Backspace);
+                await keyboard.releaseKey(Key.Backspace);
+            }
+
+            // Types the new value, handling right arrow (→) as Key.Right
+            if (value && isDate) {
+                for (let char of value) {
+                    if (char === '→') {
+                        await keyboard.pressKey(Key.Right);
+                        await keyboard.releaseKey(Key.Right);
+                    } else {
+                        await keyboard.type(char);
+                    }
+                }
+            } else if (value) {
+                await keyboard.type(value);
+            }
+        } catch (err) {
+            logger.error('Error typing with Nut.js:', err.message);
+        }
+    });
+
+    ipcMain.handle('keyboardOverlay-type-nutjs', async (event, value) => {
+        try {
+            if (value === 'backspace') {
+                // Presses backspace
+                await keyboard.pressKey(Key.Backspace);
+                await keyboard.releaseKey(Key.Backspace);
+            } else if (value === 'space') {
+                // Presses space
+                await keyboard.pressKey(Key.Space);
+                await keyboard.releaseKey(Key.Space);
+            } else {
+                await keyboard.type(value);
+            }
+
+            return true; // Indicating success
+        } catch (err) {
+            logger.error('Error typing numeric keyboard with Nut.js:', err.message);
+            return false; // Indicating failure
         }
     });
 

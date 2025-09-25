@@ -8,10 +8,7 @@
 <body>
   <div id="keyboard" class="keyboard">
     <div class="keyboard__row keyboard__row--first">
-      <div id="textarea-wrapper" class="keyboard__textarea">
-        <div id="textarea-autocomplete" class="textarea__autocomplete"></div>
-        <textarea id="textarea" class="textarea__input" autofocus placeholder="Type here..."></textarea>
-      </div>
+      <textarea id="textarea" class="textarea" autofocus placeholder="Type here..."></textarea>
       <button id="arrowKeysBtn" class="button__arrow-keys expandable-group">
         <div class="arrow-keys__row">
           <span class="keyboard__key">
@@ -37,13 +34,21 @@
         </div>
       </button>
       <button id="closeKeyboardBtn" class="button__close accent">
-        <span class="keyboard__key--vertical">
+        <span class="keyboard__key keyboard__key--vertical">
           <i class="material-icons">close</i>
         </span>
       </button>
     </div>
 
     <div class="keyboard__row keyboard__row--second">
+      <button id="autoCompleteBtn">
+        <span class="keyboard__key">AUTO</span>
+      </button>
+      <button id="showHidePasswordBtn">
+        <span class="keyboard__key">
+          <i class="material-icons">visibility</i>
+        </span>
+      </button>
       <button id="numbersBtn" class="button__numbers expandable-group">
         <span class="keyboard__key">1</span>
         <span class="keyboard__key">2</span>
@@ -63,9 +68,6 @@
       </button>
       <button id="clearAllBtn">
         <span class="keyboard__key">AC</span>
-      </button>
-      <button id="autoCompleteBtn">
-        <span class="keyboard__key">AUTO</span>
       </button>
     </div>
 
@@ -139,6 +141,116 @@
       </button>
 
       <button id="keyboardSendBtn" class="button__keyboardSend accent">
+        <span class="keyboard__key"><i class="material-icons">send</i></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="keyboard" class="keyboard keyboard--numeric">
+    <div class="keyboard__row keyboard__row--first keyboard__row--largeGap">
+      <input type="number" id="numericTextarea" class="textarea textarea--numeric" autofocus="">
+      <button id="numericArrowKeysBtn" class="button__arrow-keys expandable-group">
+        <div class="arrow-keys__row">
+          <span class="keyboard__key">
+            <i class="material-icons">first_page</i>
+          </span>
+          <span class="keyboard__key">
+            <i class="material-icons">keyboard_arrow_up</i>
+          </span>
+          <span class="keyboard__key">
+            <i class="material-icons">last_page</i>
+          </span>
+        </div>
+        <div class="arrow-keys__row">
+          <span class="keyboard__key">
+            <i class="material-icons">keyboard_arrow_left</i>
+          </span>
+          <span class="keyboard__key">
+            <i class="material-icons">keyboard_arrow_down</i>
+          </span>
+          <span class="keyboard__key">
+            <i class="material-icons">keyboard_arrow_right</i>
+          </span>
+        </div>
+      </button>
+      <button id="numericCloseKeyboardBtn" class="button__close accent">
+        <span class="keyboard__key keyboard__key--vertical">
+          <i class="material-icons">close</i>
+        </span>
+      </button>
+    </div>
+  
+    <div class="keyboard__columnContainer">
+      <button id="numericSymbolsBtn" class="keyboard__column keyboard__column--left">
+        <div>
+          <span id="numericSymbolPlus" class="keyboard__key keyboard__key--large">+</span>
+        </div>
+        <div>
+          <span id="numericSymbolMinus" class="keyboard__key keyboard__key--large">-</span>
+        </div>
+        <div>
+          <span id="numericSymbolDot" class="keyboard__key keyboard__key--large">.</span>
+        </div>
+      </button>
+  
+      <div class="keyboard__column keyboard__column--middle">
+        <div class="keyboard__row keyboard__row--largeGap">
+          <button id="sevenBtn" class="button--numeric">
+            <span class="keyboard__key numKey">7</span>
+          </button>
+          <button id="eightBtn" class="button--numeric">
+            <span class="keyboard__key numKey">8</span>
+          </button>
+          <button id="nineBtn" class="button--numeric">
+            <span class="keyboard__key numKey">9</span>
+          </button>
+        </div>
+        <div class="keyboard__row keyboard__row--largeGap">
+          <button id="fourBtn" class="button--numeric">
+            <span class="keyboard__key numKey">4</span>
+          </button>
+          <button id="fiveBtn" class="button--numeric">
+            <span class="keyboard__key numKey">5</span>
+          </button>
+          <button id="sixBtn" class="button--numeric">
+            <span class="keyboard__key numKey">6</span>
+          </button>
+        </div>
+        <div class="keyboard__row keyboard__row--largeGap">
+          <button id="oneBtn" class="button--numeric">
+            <span class="keyboard__key numKey">1</span>
+          </button>
+          <button id="twoBtn" class="button--numeric">
+            <span class="keyboard__key numKey">2</span>
+          </button>
+          <button id="threeBtn" class="button--numeric">
+            <span class="keyboard__key numKey">3</span>
+          </button>
+        </div>
+      </div>
+  
+      <div class="keyboard__column keyboard__column--right">
+        <button id="numericBackspaceBtn" class="button--numeric">
+          <span class="keyboard__key keyboard__key--center">
+            <i class="material-icons">backspace</i>
+          </span>
+        </button>
+        <button id="numericClearAllBtn" class="button--numeric">
+          <span class="keyboard__key keyboard__key--center">AC</span>
+        </button>
+      </div>
+    </div>
+  
+    <div class="keyboard__row keyboard__row--largeGap">
+      <button id="numericSpaceBtn" class="button--numeric button__space">
+        <span class="keyboard__key">
+          <i class="material-icons">space_bar</i>
+        </span>
+      </button>
+      <button id="zeroBtn" class="button--numeric button__space">
+        <span class="keyboard__key">0</span>
+      </button>
+      <button id="numericKeyboardSendBtn" class="button--numeric button__keyboardSend accent button__space">
         <span class="keyboard__key"><i class="material-icons">send</i></span>
       </button>
     </div>

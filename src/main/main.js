@@ -1,10 +1,12 @@
 const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
 const { ViewNames } = require('../utils/constants/enums')
 const path = require('path')
+const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
 const logger = require('./modules/logger');
+const { startEegWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
@@ -20,6 +22,13 @@ let tabsFromDatabase = [];      // This will hold the tabs fetched from the data
 let isMainWindowLoaded = false; // This is a flag to track if main window is fully loaded
 
 app.whenReady().then(async () => {
+    try {
+        await startEegWebSocket();
+        connectWebSocket();
+    } catch (err) {
+        logger.error('Error starting LSL WebSocket:', err.message);
+    }
+
     try {
         await db.connect();
         await db.createTables();
@@ -44,6 +53,9 @@ app.on('window-all-closed', async () => {
             // Prevent deleting and inserting tabs if the main window is not loaded 
             await deleteAndInsertAllTabs();
         }
+
+        // Disconnect the LSL WebSocket
+        disconnectWebSocket();
 
         // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
         if (process.platform !== 'darwin') {
@@ -161,6 +173,14 @@ function createMainWindow() {
             }
         });
 
+        mainWindow.on('moved', () => {
+            try {
+                resizeMainWindow();
+            } catch (err) {
+                logger.error('Error moving main window:', err.message);
+            }
+        });
+
         mainWindow.on('maximize', () => {
             try {
                 resizeMainWindow();
@@ -175,7 +195,7 @@ function createMainWindow() {
                 if (splashWindow) {
                     splashWindow.close();
                 }
-                // mainWindowContent.webContents.openDevTools();
+                mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
                 logger.error('Error showing main window:', err.message);
@@ -297,7 +317,12 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
 
             // Getting the maximum tabId from the tabsList and incrementing it by 1 to assign a new tabId
             const maxTabId = tabsList.reduce((maxId, tab) => Math.max(maxId, tab.tabId), 0);
-            tabsList.push({ tabId: maxTabId + 1, webContentsView: thisTabView, isActive: true });
+            tabsList.push({
+                tabId: maxTabId + 1,
+                webContentsView: thisTabView,
+                isActive: true,
+                isErrorPage: false,
+            });
         }
 
         // ------------------------------------------
@@ -311,6 +336,10 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 // but the first tab might not be the active one, and so there might not be an 
                 // activeTab. We check for its presence and update the omnibox text only if it exists.
                 if (activeTab && thisTabView === activeTab.webContentsView) {
+                    // Resetting the navigationEventHandled flag since this event is triggered after navigation events.
+                    // This is important to ensure that the navigation buttons are updated correctly.
+                    navigationEventHandled = false;
+
                     // Active tab was chosen because when any tab is created, it is set as active.
                     // The tabs loaded from the database will already have a snapshot.
                     // If we navigate to somewhere new, this tab will be active and therefore have a snapshot.
@@ -326,16 +355,36 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                     // Only run if the title has changed since last time
                     if (activeTab.lastNavigationTitle !== title) {
                         activeTab.lastNavigationTitle = title; // Update with last loaded title
-                        mainWindowContent.webContents.send('omniboxText-update', title);
-
-                        // This is the handler for when the tab finishes loading. We update the scenario for the main window according to tab navigation history.
-                        let stopManager = true; // This is a flag to stop the scenario manager when the tab finishes loading before starting a new manager.
-                        updateNavigationButtons(thisTabView, stopManager);
+                        mainWindowContent.webContents.send('omniboxText-update', title, activeTab.isErrorPage);
                     }
                 }
             } catch (err) {
                 logger.error('Error during tabview stop loading:', err.message);
             }
+        });
+
+        // Debounce logic to ensure only one navigation event handler runs
+        let navigationEventHandled = false;
+        function handleNavigationEvent() {
+            if (navigationEventHandled) return;
+            navigationEventHandled = true;
+            try {
+                let activeTab = tabsList.find(tab => tab.isActive === true);
+                if (activeTab && thisTabView === activeTab.webContentsView) {
+                    let stopManager = true;
+                    updateNavigationButtons(thisTabView, stopManager);
+                }
+            } catch (err) {
+                logger.error('Error during tabview navigation event:', err.message);
+            }
+        }
+
+        thisTabView.webContents.on('did-navigate-in-page', () => {
+            handleNavigationEvent()
+        });
+
+        thisTabView.webContents.on('did-navigate', () => {
+            handleNavigationEvent()
         });
 
         // This is the handler for when a new tab is opened from the tabview such as when the user 
@@ -366,15 +415,97 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             }
         });
 
+        thisTabView.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+            try {
+                if (isMainFrame) {
+                    handleLoadError(errorCode, validatedURL);
+                }
+            } catch (err) {
+                logger.error('Error during tabview fail load:', err.message);
+            }
+        });
+
+        thisTabView.webContents.on('did-fail-provisional-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+            try {
+                if (isMainFrame) {
+                    handleLoadError(errorCode, validatedURL);
+                }
+            } catch (err) {
+                logger.error('Error during tabview fail provisional load:', err.message);
+            }
+        });
+
+        thisTabView.webContents.session.webRequest.onResponseStarted(async (details) => {
+            try {
+                const activeTab = tabsList.find(tab => tab.isActive === true);
+                const responseWebContentsId = details.webContentsId;
+                const activeTabWebContentsId = activeTab.webContentsView.webContents.id;
+
+                let goingToLoadErrorPage = details.url.endsWith('error.html')
+
+                // The following if statement filters out the devtools URLs
+                if (details.resourceType === 'mainFrame' && !details.url.startsWith('devtools:')) {
+
+                    // If the response is for the active tab
+                    if (responseWebContentsId === activeTabWebContentsId) {
+                        if (details.statusCode < 400 && !goingToLoadErrorPage) {
+                            // Successful page load
+                            successfulLoad = true;
+                            activeTab.isErrorPage = false;
+                            activeTab.originalURL = details.url; // Update the original URL
+                            goingToLoadErrorPage = false;
+                        } else {
+                            // Error detected
+                            successfulLoad = false;
+
+                            // When an error occurs, the next page to be loaded is the error page itself which results in a false positive
+                            // To prevent this, we set a flag to indicate that the next page to be loaded is an error page
+                            if (details.statusCode < 400) {
+                                goingToLoadErrorPage = false;
+                            } else {
+                                // Check if the response body contains a custom error page
+                                await thisTabView.webContents.executeJavaScript(`document.documentElement.innerHTML.trim()`)
+                                    .then(responseBody => {
+                                        try {
+                                            // Check if the response body contains meaningful content
+                                            const isEmptyBody = responseBody === "<head></head><body></body>" || !responseBody.trim();
+
+                                            if (!isEmptyBody) {
+                                                console.log("Server's custom error page detected");
+                                                handleLoadError(details.statusCode, details.url, responseBody);
+                                            } else {
+                                                console.log("Browser's default error page detected");
+                                                handleLoadError(details.statusCode, details.url);
+                                            }
+                                        } catch (err) {
+                                            logger.error('Error processing response body:', err.message);
+                                        }
+                                    }).catch(error => {
+                                        logger.error("Error reading response body:", error);
+                                        handleLoadError(details.statusCode, details.url);
+                                    });
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                logger.error('Error during response started:', err.message);
+            }
+        });
+
         // ---------------
         // Loading the URL
         // ---------------
-        if (!tabDataFromDB) {
-            await thisTabView.webContents.loadURL(url);
-        } else if (tabDataFromDB.isErrorPage) {
-            await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
-        } else {
-            await thisTabView.webContents.loadURL(tabDataFromDB.url);
+        try {
+            if (!tabDataFromDB) {
+                await thisTabView.webContents.loadURL(url);
+            } else if (tabDataFromDB.isErrorPage) {
+                await thisTabView.webContents.loadURL(tabDataFromDB.originalURL);
+            } else {
+                await thisTabView.webContents.loadURL(tabDataFromDB.url);
+            }
+        } catch (err) {
+            logger.error('Error loading URL:', err.message);
         }
 
         thisTabView.webContents.openDevTools();
@@ -383,7 +514,131 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
     }
 }
 
-function updateNavigationButtons(thisTabView, stopManager) {
+function handleLoadError(errorCode, attemptedURL, responseBody = null) {
+    try {
+        let activeTab = tabsList.find(tab => tab.isActive === true);
+        activeTab.originalURL = attemptedURL;
+        activeTab.isErrorPage = true;
+
+        if (!responseBody) {
+            const errorHtmlPath = path.join(__dirname, '../pages/html/error.html');
+            const errorCssPath = path.join(__dirname, '../pages/css/error.css');
+            const logoPath = path.join(__dirname, '../../resources/boggle_logo.png');
+
+            let errorHtml = '';
+            let errorCss = '';
+            let logoDataUrl = '';
+
+            try {
+                errorHtml = fs.readFileSync(errorHtmlPath, 'utf8');
+            } catch (readErr) {
+                logger.error('Failed to read error.html:', readErr.message);
+                errorHtml = '<h1 id="error-title">Error</h1><p id="error-message">An unexpected error occurred.</p>';
+            }
+
+            try {
+                errorCss = fs.readFileSync(errorCssPath, 'utf8');
+            } catch (cssErr) {
+                logger.error('Failed to read error.css:', cssErr.message);
+                errorCss = '';
+            }
+
+            try {
+                const logoBase64 = fs.readFileSync(logoPath, 'base64');
+                logoDataUrl = `data:image/png;base64,${logoBase64}`;
+            } catch (logoErr) {
+                logger.error('Failed to read boggle_logo.png:', logoErr.message);
+                logoDataUrl = '';
+            }
+
+            const safeHtml = errorHtml.replace(/`/g, '\\`');
+            const safeCss = errorCss.replace(/`/g, '\\`');
+
+            activeTab.webContentsView.webContents.executeJavaScript(`
+                document.documentElement.innerHTML = '<style>' + ${JSON.stringify(safeCss)} + '</style>' + ${JSON.stringify(safeHtml)};
+
+                var errorTitle = document.getElementById('error-title');
+                var errorMessage = document.getElementById('error-message');
+                var logoImage = document.querySelector('.error-box_logo');
+                if (logoImage) {
+                    logoImage.src = '${logoDataUrl}';
+                }
+
+                switch (${errorCode}) {
+                    case 402:
+                        errorTitle.textContent = '402 Payment Required';
+                        errorMessage.textContent = 'Payment is required to access this resource.';
+                        break;
+                    case 403:
+                        errorTitle.textContent = '403 Forbidden';
+                        errorMessage.textContent = 'You do not have permission to access this resource.';
+                        break;
+                    case 404:
+                        errorTitle.textContent = '404 Not Found';
+                        errorMessage.textContent = 'The requested resource could not be found.';
+                        break;
+                    case 408:
+                        errorTitle.textContent = '408 Request Timeout';
+                        errorMessage.textContent = 'The server timed out waiting for the request.';
+                        break;
+                    case 425:
+                        errorTitle.textContent = '425 Page Not Working';
+                        errorMessage.textContent = 'If the problem continues, contact the site owner.';
+                        break;
+                    case 500:
+                        errorTitle.textContent = '500 Internal Server Error';
+                        errorMessage.textContent = 'The server encountered an internal error.';
+                        break;
+                    case 501:
+                        errorTitle.textContent = '501 Not Implemented';
+                        errorMessage.textContent = 'The server does not support the functionality required to fulfill the request.';
+                        break;
+                    case 502:
+                        errorTitle.textContent = '502 Bad Gateway';
+                        errorMessage.textContent = 'The server received an invalid response from the upstream server.';
+                        break;
+                    case 503:
+                        errorTitle.textContent = '503 Service Unavailable';
+                        errorMessage.textContent = 'The server is currently unable to handle the request due to temporary overloading or maintenance.';
+                        break;
+                    case 504:
+                        errorTitle.textContent = '504 Gateway Timeout';
+                        errorMessage.textContent = 'The server did not receive a timely response from the upstream server.';
+                        break;
+                    case -6:
+                        errorTitle.textContent = 'File Not Found';
+                        errorMessage.textContent = 'It may have been moved, edited or deleted.';
+                        break;
+                    case -105:
+                        errorTitle.textContent = 'Address Not Found';
+                        errorMessage.textContent = 'DNS Error. The website address could not be found.';
+                        break;
+                    case -106:
+                        errorTitle.textContent = 'Network Error';
+                        errorMessage.textContent = 'There was a problem connecting to the network.';
+                        break;
+                    default:
+                        errorTitle.textContent = 'Error';
+                        errorMessage.textContent = 'An unexpected error occurred.';
+                        break;
+                }
+
+                var reloadButton = document.querySelector('button[aria-label="Reload the page"]');
+                if (reloadButton) {
+                    reloadButton.addEventListener('click', () => {
+                        window.location.href = '${attemptedURL}';
+                    });
+                }
+            `);
+
+            updateNavigationButtons(activeTab.webContentsView, false);
+        }
+    } catch (err) {
+        logger.error('Error handling load error:', err.message);
+    }
+}
+
+function updateNavigationButtons(thisTabView, stopManager = false) {
     let activeTab = tabsList.find(tab => tab.isActive === true);
 
     if (activeTab && thisTabView === activeTab.webContentsView) {

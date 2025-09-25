@@ -10,6 +10,7 @@ let itemsList = [];     // This will hold the list of items loaded from the main
 const pageSize = 4;     // This is the maximum number of items that can be displayed at once in a page
 let currentPage = 0;    // Current page index
 let overlayName;
+let isMultipleSelect;
 
 async function initialise(overlayData, isReload = false, name) {
     try {
@@ -18,14 +19,20 @@ async function initialise(overlayData, isReload = false, name) {
 
         if (overlayName === ViewNames.BOOKMARKS) {
             let { bookmarksList } = overlayData;
-            itemsList = bookmarksList;
-        }
-        else if (overlayName === ViewNames.TABS) {
+            itemsList = bookmarksList ? bookmarksList : [];
+        } else if (overlayName === ViewNames.TABS) {
             let { tabsList } = overlayData;
-            itemsList = tabsList;
+            itemsList = tabsList ? tabsList : [];
+        } else if (overlayName === ViewNames.DROPDOWN) {
+            let { optionsList, elementProperties } = overlayData;
+            itemsList = optionsList ? optionsList : [];
+            isMultipleSelect = elementProperties.multiple; // Checks if the dropdown is a multiple select
+            console.log('Initialised dropdown with options:', itemsList, 'isMultipleSelect:', isMultipleSelect);
         }
 
-        const activeIndex = itemsList.findIndex(tab => tab.isActive);
+        const activeIndex = calculateActiveIndex();
+
+        // This is to set the current page based on the active index
         if (activeIndex !== -1) {
             currentPage = Math.floor(activeIndex / pageSize);
         } else {
@@ -67,10 +74,24 @@ async function initialise(overlayData, isReload = false, name) {
     }
 }
 
-function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
-    // If there are no items, return the scenario ID for the empty state
-    if (itemsCount === 0) return 21;
+/**
+ * Calculates the index of the active item in the itemsList array.
+ * If the overlay is a dropdown, it finds the index of the selected option.
+ * Otherwise, it finds the index of the active tab.
+ */
+function calculateActiveIndex() {
+    let activeIndex = -1;
 
+    if (overlayName === ViewNames.DROPDOWN) {
+        activeIndex = itemsList.findIndex(option => option.selected);
+    } else {
+        activeIndex = itemsList.findIndex(tab => tab.isActive);
+    }
+
+    return activeIndex;
+}
+
+function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
     const totalPages = Math.ceil(itemsCount / pageSize);
     const isFirstPage = currentPage === 0;
     const isLastPage = currentPage === totalPages - 1;
@@ -78,30 +99,58 @@ function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
     const end = Math.min(start + pageSize, itemsCount);
     const itemsOnPage = end - start;
 
-    const getScenarioId = (itemsOnPage, left, right) => {
-        // Determine the scenario ID based on the number of items and arrow visibility
+    // Helper function to calculate scenario ID based on items and arrow configuration
+    const calculateScenarioId = (baseId, itemsOnPage, left, right, bothArrowsId, oneArrowId, noArrowMaxId) => {
         if (itemsOnPage >= 1 && itemsOnPage <= 3) {
-            // 21–24 (no arrow), 25–28 (left arrow), 29–30 (right arrow)
-            return 21 + itemsOnPage + ((left || right) ? 4 : 0);
+            return baseId + itemsOnPage - 1 + ((left || right) ? 4 : 0);
         }
         if (itemsOnPage === 4) {
-            if (left && right) return 30;
-            if (left || right) return 29;
-            return 25;
+            if (left && right) return bothArrowsId;
+            if (left || right) return oneArrowId;
+            return noArrowMaxId;
         }
-        return 21;
+        return baseId;
     };
 
-    if (itemsCount <= pageSize || isLastPage) {
-        return getScenarioId(itemsOnPage, hasLeftArrow, hasRightArrow);
+    // Helper function to handle pagination scenarios
+    const handlePaginationScenarios = (bothArrowsId, oneArrowId, noArrowMaxId) => {
+        if (!isFirstPage && !isLastPage) return bothArrowsId; // both arrows
+        if (isFirstPage && hasRightArrow) return oneArrowId;
+        if (isLastPage && hasLeftArrow) return oneArrowId;
+        return noArrowMaxId;
+    };
+
+    if (overlayName === ViewNames.DROPDOWN) {
+        if (isMultipleSelect) {
+            // Multiple select dropdown: scenarios 50-58
+            if (itemsCount <= pageSize || isLastPage) {
+                return calculateScenarioId(50, itemsOnPage, hasLeftArrow, hasRightArrow, 58, 57, 53);
+            }
+            return handlePaginationScenarios(58, 57, 53);
+        } else {
+            // Single select dropdown: scenarios 59-67
+            if (itemsCount <= pageSize || isLastPage) {
+                return calculateScenarioId(59, itemsOnPage, hasLeftArrow, hasRightArrow, 67, 66, 62);
+            }
+            return handlePaginationScenarios(67, 66, 62);
+        }
+    } else {
+        // If there are no items, return the scenario ID for the empty state
+        if (itemsCount === 0) return 21;
+
+        const totalPages = Math.ceil(itemsCount / pageSize);
+        const isFirstPage = currentPage === 0;
+        const isLastPage = currentPage === totalPages - 1;
+        const start = currentPage * pageSize;
+        const end = Math.min(start + pageSize, itemsCount);
+        const itemsOnPage = end - start;
+
+        // Other overlays (tabs/bookmarks): scenarios 21-30
+        if (itemsCount <= pageSize || isLastPage) {
+            return calculateScenarioId(21, itemsOnPage, hasLeftArrow, hasRightArrow, 30, 29, 25);
+        }
+        return handlePaginationScenarios(30, 29, 25);
     }
-
-    // If there are more than 4 items, we need to consider pagination
-    if (!isFirstPage && !isLastPage) return 30; // both arrows
-    if (isFirstPage && hasRightArrow) return 29;
-    if (isLastPage && hasLeftArrow) return 29;
-
-    return 25;
 }
 
 function initialiseItemsOverlay() {
@@ -120,6 +169,8 @@ function initialiseItemsOverlay() {
                     noItemsMessage.innerHTML = 'No bookmarks found :(';
                 } else if (overlayName === ViewNames.TABS) {
                     noItemsMessage.innerHTML = 'No tabs found :(';
+                } else if (overlayName === ViewNames.DROPDOWN) {
+                    noItemsMessage.innerHTML = 'No options found :(';
                 }
 
                 itemsAndArrowsContainer.appendChild(noItemsMessage);
@@ -133,13 +184,9 @@ function initialiseItemsOverlay() {
                     itemButton.setAttribute('id', `${idSuffix}ItemBtn`);
                     itemButton.classList.add('button');
 
-                    if (overlayName === ViewNames.TABS && item.isActive) {
-                        itemButton.classList.add('accent');
-
-                        const labelDiv = document.createElement('div');
-                        labelDiv.classList.add('button__label');
-                        labelDiv.textContent = 'ACTIVE';
-                        itemButton.appendChild(labelDiv);
+                    if ((overlayName === ViewNames.TABS && item.isActive) || (overlayName === ViewNames.DROPDOWN && item.selected)) {
+                        let textContent = overlayName === ViewNames.DROPDOWN ? 'SELECTED' : 'ACTIVE';
+                        addSelectedStyling(itemButton, textContent);
                     }
 
                     const buttonTitle = document.createElement('span');
@@ -147,10 +194,13 @@ function initialiseItemsOverlay() {
                     buttonTitle.textContent = item.title;
                     itemButton.appendChild(buttonTitle);
 
-                    const buttonUrl = document.createElement('span');
-                    buttonUrl.classList.add('button__url');
-                    buttonUrl.textContent = item.url;
-                    itemButton.appendChild(buttonUrl);
+                    // Only add URL if it's not a dropdown option
+                    if (overlayName !== ViewNames.DROPDOWN) {
+                        const buttonUrl = document.createElement('span');
+                        buttonUrl.classList.add('button__url');
+                        buttonUrl.textContent = item.isErrorPage ? item.originalURL : item.url;
+                        itemButton.appendChild(buttonUrl);
+                    }
 
                     return itemButton;
                 } catch (error) {
@@ -203,6 +253,16 @@ function initialiseItemsOverlay() {
                 displayNoItemsMessage();
             } else {
                 renderPage();
+
+                //  Adds a send button next to the close button if it is a multiple select
+                if (overlayName === ViewNames.DROPDOWN && isMultipleSelect) {
+                    const footer = document.getElementById('footer');
+                    const sendButton = document.createElement('button');
+                    sendButton.id = 'sendBtn';
+                    sendButton.classList.add('button', 'button__close--flex2', 'accent');
+                    sendButton.innerHTML = createMaterialIcon('l', 'send');
+                    footer.appendChild(sendButton);
+                }
             }
 
             buttons = document.querySelectorAll('button');
@@ -210,6 +270,24 @@ function initialiseItemsOverlay() {
         }
     } catch (error) {
         logger.error('Error initialising items overlay:', error);
+    }
+}
+
+function addSelectedStyling(button, textContent) {
+    button.classList.add('accent');
+
+    const labelDiv = document.createElement('div');
+    labelDiv.classList.add('button__label');
+    labelDiv.textContent = textContent;
+    button.appendChild(labelDiv);
+}
+
+function removeSelectedStyling(button) {
+    button.classList.remove('accent');
+
+    const labelDiv = button.querySelector('.button__label');
+    if (labelDiv) {
+        labelDiv.remove();
     }
 }
 
@@ -239,9 +317,9 @@ function showItemAddedPopup() {
             message: overlayName === ViewNames.BOOKMARKS ? 'Bookmark added successfully' : 'Tab added successfully',
             icon: overlayName === ViewNames.BOOKMARKS ? createMaterialIcon('m', 'bookmark_added') : createMaterialIcon('m', 'check'),
             timeout: 1750,
-            onClose: () => {
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+            onClose: async () => {
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
             }
         });
     } catch (error) {
@@ -263,7 +341,7 @@ function showItemDeletedPopup(url, tabId) {
 
                     // If there are no tabs left, a new tab is created with the default URL
                     if (itemsList.length - 1 === 0) {
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                         ipcRenderer.send('overlay-close', ViewNames.MORE);
                         await ipcRenderer.invoke('tab-add');
                     }
@@ -282,10 +360,10 @@ function showDeleteAllSuccessPopup() {
             icon: createMaterialIcon('m', 'delete_forever'),
             timeout: 1750,
             onClose: async () => {
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
 
                 if (overlayName === ViewNames.BOOKMARKS) {
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                 }
 
                 if (overlayName === ViewNames.TABS) {
@@ -366,7 +444,7 @@ async function showItemActionPopup(item) {
 
         const urlSpan = document.createElement('span');
         urlSpan.classList.add('popup__url', 'popup__url--itemAction');
-        urlSpan.textContent = item.url;
+        urlSpan.textContent = item.isErrorPage ? item.originalURL : item.url;
         snapshotContainer.appendChild(urlSpan);
 
         if (item.snapshot) {
@@ -384,15 +462,16 @@ async function showItemActionPopup(item) {
         visitBtn.textContent = 'Visit';
         visitBtn.onclick = () => {
             addButtonSelectionAnimation(visitBtn);
-            setTimeout(() => {
+            setTimeout(async () => {
                 popupElements.close();
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                ipcRenderer.send('overlay-close', ViewNames.MORE);
+
                 if (overlayName === ViewNames.BOOKMARKS) {
                     ipcRenderer.send('url-load', item.url);
                 } else {
                     ipcRenderer.send('tab-visit', item.tabId);
                 }
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
-                ipcRenderer.send('overlay-close', ViewNames.MORE);
             }, CssConstants.SELECTION_ANIMATION_DURATION);
         };
 
@@ -454,6 +533,10 @@ function attachEventListeners() {
             const button = event.target.closest('button');
             if (!button) return;
 
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
             const buttonId = button.id;
             addButtonSelectionAnimation(button);
 
@@ -465,7 +548,8 @@ function attachEventListeners() {
             }
 
             setTimeout(async () => {
-                await stopManager();
+                // When multiple items can be selected, we don't stop the manager
+                if (!isMultipleSelect) await stopManager();
 
                 if (buttonId.includes('ItemBtn')) {
                     const idMap = {
@@ -479,12 +563,42 @@ function attachEventListeners() {
                         const itemIndex = currentPage * pageSize + pageIndex;
                         const item = itemsList[itemIndex];
                         if (item) {
-                            showItemActionPopup(item);
+                            if (overlayName === ViewNames.DROPDOWN) {
+                                if (!isMultipleSelect) {
+                                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                                    ipcRenderer.send('selectElement-setValue', item.value, item.parentElementId);
+                                } else {
+                                    if (item.selected) {
+                                        removeSelectedStyling(button);
+                                        item.selected = false;
+                                    } else {
+                                        addSelectedStyling(button, 'SELECTED');
+                                        item.selected = true;
+                                    }
+                                }
+                            } else {
+                                showItemActionPopup(item);
+                            }
                         }
                     }
                 }
                 if (buttonId === 'cancelBtn') {
-                    ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+                }
+                else if (buttonId === 'sendBtn') {
+                    await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
+
+                    // Collects all selected item values for multiple select
+                    const selectedValues = itemsList
+                        .filter(item => item.selected)
+                        .map(item => item.value);
+
+                    // Gets the parent element ID from any item (they should all have the same one)
+                    const parentElementId = itemsList.length > 0 ? itemsList[0].parentElementId : null;
+
+                    if (parentElementId) {
+                        ipcRenderer.send('selectElement-setValue', selectedValues, parentElementId);
+                    }
                 }
                 else if (buttonId === 'addBtn') {
                     if (overlayName === ViewNames.BOOKMARKS) {
@@ -499,7 +613,7 @@ function attachEventListeners() {
                         // Creates a short pop-up message to indicate that the item has been added then closes the overlay
                         showItemAddedPopup();
                     } else if (overlayName === ViewNames.TABS) {
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', overlayName);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', overlayName);
                         ipcRenderer.send('overlay-close', ViewNames.MORE);
                         await ipcRenderer.invoke('tab-add');
                     }

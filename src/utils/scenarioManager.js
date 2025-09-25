@@ -1,5 +1,5 @@
 const stimuli = require("ssvep-stimuli");
-const { scenarioConfig } = require('../../configs/scenarioConfig');
+const scenarioConfig = require('../../configs/scenarioConfig.json');
 const { browserConfig } = require('../../configs/browserConfig');
 const { ipcRenderer } = require("electron");
 const logger = require('../main/modules/logger');
@@ -26,9 +26,11 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
 
         buttons.forEach((button) => {
             const currentBtnId = button.getAttribute('id');
-            if (buttonIds.includes(currentBtnId)) {
-                button.setAttribute('data-phase-shift', phases[index]);
-                button.setAttribute('data-frequency', frequencies[index]);
+            const buttonIdIndex = buttonIds.indexOf(currentBtnId);
+            
+            if (buttonIdIndex !== -1) {
+                button.setAttribute('data-phase-shift', phases[buttonIdIndex]);
+                button.setAttribute('data-frequency', frequencies[buttonIdIndex]);
                 button.setAttribute('data-pattern', browserConfig.stimuli.customSetup.patterns.line);
                 button.setAttribute('data-light-color', browserConfig.stimuli.customSetup.colors.lightColor);
                 button.setAttribute('data-dark-color', browserConfig.stimuli.customSetup.colors.darkColor);
@@ -39,6 +41,9 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         });
 
         await manager.start();
+
+        // Restart the BCI interval with the new scenario ID to be able to process the data according to the new scenario
+        ipcRenderer.send('bciInterval-restart', scenarioId);
     } catch (error) {
         logger.error('Error in updateScenarioId:', error);
     }

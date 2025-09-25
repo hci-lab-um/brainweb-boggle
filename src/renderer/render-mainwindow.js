@@ -18,18 +18,27 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }
 });
 
-ipcRenderer.on('omniboxText-update', (event, title) => {
+ipcRenderer.on('omniboxText-update', (event, title, isErrorPage = false) => {
     try {
         console.log('title in omniboxText-update', title)
-        updateOmniboxText(title);
+        updateOmniboxText(title, isErrorPage);
     } catch (error) {
         logger.error('Error in omniboxText-update handler:', error);
     }
@@ -50,14 +59,29 @@ ipcRenderer.on('webpageBounds-get', () => {
     }
 });
 
-function updateOmniboxText(title) {
+function updateOmniboxText(title, isErrorPage = false) {
     const omniboxText = document.getElementById('omnibox');
     omniboxText.value = title;
+
+    const omniboxFav = document.querySelector('#favicon');
+    const omniboxIcon = omniboxFav.querySelector('i');
+
+    if (isErrorPage) {
+        omniboxIcon.innerText = 'close';
+        omniboxFav.classList.add('favicon--error');
+    } else {
+        omniboxIcon.innerText = 'check';
+        omniboxFav.classList.remove('favicon--error');
+    }
 }
 
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
             addButtonSelectionAnimation(button);
             const buttonId = button.getAttribute('id');
 
@@ -107,7 +131,7 @@ function attachEventListeners() {
                         }
                         break;
                     case "backBtn":
-                        ipcRenderer.send('webpage-goBack');                        
+                        ipcRenderer.send('webpage-goBack');
                         break;
                     case "forwardBtn":
                         ipcRenderer.send('webpage-goForward');

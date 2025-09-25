@@ -178,6 +178,38 @@ function slideInView(view, webpageBounds, duration = 300) {
     }
 }
 
+function getCenterCoordinates(elementToClick, webpageBounds) {
+    try {
+        // Calculate intersection of element and visible bounds
+        const elemLeft = elementToClick.x;
+        const elemTop = elementToClick.y;
+        const elemRight = elemLeft + elementToClick.width;
+        const elemBottom = elemTop + elementToClick.height;
+
+        const visibleLeft = Math.max(elemLeft, 0);
+        const visibleTop = Math.max(elemTop, 0);
+        const visibleRight = Math.min(elemRight, webpageBounds.width);
+        const visibleBottom = Math.min(elemBottom, webpageBounds.height);
+
+        // If element is not visible at all, fallback to clicking on the centre of the element
+        let clickX, clickY;
+        if (visibleLeft < visibleRight && visibleTop < visibleBottom) {
+            clickX = (visibleLeft + visibleRight) / 2;
+            clickY = (visibleTop + visibleBottom) / 2;
+        } else {
+            clickX = Math.max(0, Math.min(elemLeft + elementToClick.width / 2, webpageBounds.width));
+            clickY = Math.max(0, Math.min(elemTop + elementToClick.height / 2, webpageBounds.height));
+        }
+
+        return {
+            x: clickX,
+            y: clickY
+        }
+    } catch (error) {
+        logger.error('Error calculating the coordinates of the element', error);
+    }
+}
+
 module.exports = {
     createMaterialIcon,
     captureSnapshot,
@@ -185,5 +217,6 @@ module.exports = {
     createNavigationButton,
     updatePaginationIndicators,
     paginate,
-    slideInView
+    slideInView,
+    getCenterCoordinates
 };

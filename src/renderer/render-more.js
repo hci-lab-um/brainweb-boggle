@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants  } = require('../utils/constants/enums');
+const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
@@ -18,9 +18,18 @@ ipcRenderer.on('more-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
     try {
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
         logger.error('Error in scenarioId-update handler:', error);
     }
@@ -29,6 +38,10 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
             addButtonSelectionAnimation(button)
             const buttonId = button.getAttribute('id');
 
@@ -45,19 +58,19 @@ function attachEventListeners() {
                         ipcRenderer.send('overlay-create', ViewNames.BOOKMARKS, -1);
                         break;
                     case "refreshBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-refresh');
                         break;
                     case "zoomInBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-zoomIn');
                         break;
                     case "zoomOutBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-zoomOut');
                         break;
                     case "zoomResetBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         ipcRenderer.send('webpage-zoomReset');
                         break;
                     case "settingsBtn":
@@ -70,7 +83,7 @@ function attachEventListeners() {
                         ipcRenderer.send('app-exit');
                         break;
                     case "closeMoreBtn":
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.MORE);
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);

@@ -1,0 +1,90 @@
+@use "colors";
+
+body {
+    font-family: "Roboto", sans-serif;
+    overflow: hidden;
+    margin: 0;
+    background: colors.$black;
+}
+
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+
+    .error-border {
+        display: flex;
+        flex-direction: column;
+        padding: 2.5px;
+        border-radius: 10px;
+        min-width: 700px;
+        width: 45vw;
+        gap: 25px;
+        align-items: center;
+        justify-content: center;
+        background-image: linear-gradient(colors.$purple, colors.$denim-blue);
+    }
+
+    .error-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        background: black;
+        border-radius: 9px;
+        border: 2px;
+        padding: 40px 70px 60px 70px;
+        box-sizing: border-box;
+
+        &_contents {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+            padding-bottom: 20px;
+        }
+
+        &_logo {
+            width: auto;
+            height: 160px;
+            font-weight: normal;
+        }
+
+        &_text {
+            justify-items: flex-start;
+
+            h1 {
+                color: colors.$white;
+                font-weight: normal;
+                margin-bottom: 20px;
+                text-align: left;
+                font-size: clamp(2rem, 5vw, 3rem);
+                line-height: 1.1;
+                max-width: 100%;
+            }
+
+            p {
+                font-size: 1.5rem;
+                margin-top: 0;
+                color: colors.$white;
+                text-align: left;
+                width: 90%;
+            }
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            padding: 20px 20px;
+            font-size: 1.75rem;
+            border-radius: 9px;
+            transition: background-color 0.3s;
+            background: colors.$steel-blue;
+        }
+    }
+}

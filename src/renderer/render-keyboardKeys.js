@@ -19,6 +19,14 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     }
 });
 
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error);
+    }
+});
+
 // // ONLY NEEDED IF THERE WILL BE A SCREEN WITH SCROLL BUTTONS - SYMBOLS
 // // The logic might need updating!!
 // ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
@@ -53,7 +61,11 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     keysAndArrowsContainer.classList.add('keyboard__keysAndArrowsContainer');
                     break;
                 case 'arrowKeysBtn':
+                case 'numericArrowKeysBtn':
                     keys = ['first_page', 'keyboard_arrow_up', 'last_page', 'keyboard_arrow_left', 'keyboard_arrow_down', 'keyboard_arrow_right'];
+                    break;
+                case 'numericSymbolsBtn':
+                    keys = `+-.`.split('');
                     break;
                 default:
                     keys = buttonId.replace('Btn', '').split('');
@@ -67,7 +79,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     key.classList.add('button', 'keyboard__key', 'keyboard__key--large');
                     key.setAttribute('id', `${idSuffix}KeyBtn`);
 
-                    if (buttonId === 'arrowKeysBtn') {
+                    if (buttonId === 'arrowKeysBtn' || buttonId === 'numericArrowKeysBtn') {
                         keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
                         key.innerHTML = createMaterialIcon('l', keyValue);
                         key.classList.add('arrowKeyBtn');
@@ -155,6 +167,10 @@ function attachEventListeners() {
         const button = event.target.closest('button');
         if (!button) return;
 
+        // Disable the button immediately to prevent multiple clicks
+        button.disabled = true;
+        setTimeout(() => { button.disabled = false; }, 1500);
+
         addButtonSelectionAnimation(button);
         const buttonId = button.getAttribute('id');
         const buttonText = button.textContent.trim();
@@ -174,7 +190,7 @@ function attachEventListeners() {
                 ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-moveCursor', buttonText);
             } else if (buttonId === 'cancelBtn') {
-                ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
+                await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
             } else if (!['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
                 ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-populate', buttonText);

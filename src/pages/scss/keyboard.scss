@@ -16,6 +16,31 @@ body {
     box-sizing: border-box;
     justify-content: space-between;
 
+    &__columnContainer {
+        display: flex;
+        flex-direction: row;
+        gap: 4vw;
+    }
+
+    &__column {
+        display: flex;
+        flex-direction: column;
+        gap: 4vh;
+        width: 100%;
+
+        &--left {
+            flex: 1;
+            justify-content: center;
+            padding: 0;
+        }
+        &--middle {
+            flex: 3;
+        }
+        &--right {
+            flex: 1;
+        }
+    }
+
     &__row {
         display: flex;
         width: 100%;
@@ -23,6 +48,10 @@ body {
 
         &--first {
             flex: 0.5;
+        }
+
+        &--largeGap {
+            gap: 4vh;
         }
     }
 
@@ -33,6 +62,7 @@ body {
 
     &__key {
         color: colors.$white;
+        text-shadow: 3px 2px 3px black;
         height: 9.5vh;
         flex-grow: 1;
         border-radius: 4px;
@@ -44,7 +74,7 @@ body {
         vertical-align: top;
         padding: 0;
         position: relative;
-        -webkit-tap-highlight-color: transparent;
+        -webkit-tap-highlight-color: transparent;        
 
         &--vertical {
             height: min-content;
@@ -58,6 +88,10 @@ body {
 
         &--wide {
             flex: 2;
+        }
+
+        &--center {
+            height: 100%;
         }
 
         &--activatable::after {
@@ -78,46 +112,42 @@ body {
 }
 
 .textarea {
-    &__input {
-        position: relative;
-        height: 100%;
-        border-radius: 6px;
-        background: #f8f9fa;
-        width: 100%;
-        resize: none;
-        font-size: 40px;
-        font-family: monospace;
-        z-index: 1;
+    flex: 4 1 0%;
+    border-radius: 6px;
+    background: colors.$bg-light;
+    width: 669px;
+    resize: none;
+    font-size: 40px;
+
+    &--numeric {
+        padding: 0 60px;
         border: none;
-        padding: 2px; // crucial to match with autocomplete
-        line-height: 1.2; // make sure this matches in both
-        overflow-y: scroll;
-        color: transparent;
-        caret-color: colors.$black; // makes the caret visible
-    }
 
-    &__autocomplete {
-        position: absolute;
-        top: 0;
-        left: 0;
-        color: colors.$black;
-        font-size: 40px;
-        font-family: monospace;
-        white-space: pre-wrap;
-        word-break: break-word;
-        padding: 2px;
-        max-height: 100%;
-        width: 100%;
-        line-height: 1.2;
-        pointer-events: none;
-        z-index: 2;
-        background: transparent;
-        overflow-y: hidden;
+        &[type="date"]::-webkit-calendar-picker-indicator,
+        &[type="datetime-local"]::-webkit-calendar-picker-indicator,
+        &[type="month"]::-webkit-calendar-picker-indicator,
+        &[type="week"]::-webkit-calendar-picker-indicator,
+        &[type="number"]::-webkit-inner-spin-button,
+        &[type="number"]::-webkit-outer-spin-button,
+        &[type="time"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+            margin: 0;
+        }
     }
+}
 
-    &__autocomplete span {
-        color: #aaa;
-    }
+.maskOverlay {
+    position: absolute;
+    pointer-events: none;
+    color: colors.$bg-black-transparent-70;
+    opacity: 0.5;
+    white-space: pre;
+    z-index: 10;
+    text-align: start;
+    align-content: center;
+    font-family: arial;
+    padding: 0 60px;
 }
 
 .keyboard__keysContainer {
@@ -190,5 +220,9 @@ button {
 
     &--four-keys {
         flex-grow: 2;
+    }
+
+    &--numeric {
+        padding: 10px;
     }
 }

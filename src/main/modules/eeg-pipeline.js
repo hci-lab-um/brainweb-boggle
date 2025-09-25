@@ -2,7 +2,7 @@ const path = require('path');
 const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
-const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
+// const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 const { browserConfig } = require('../../../configs/browserConfig');
 

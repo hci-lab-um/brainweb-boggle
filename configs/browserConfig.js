@@ -1,6 +1,5 @@
 const browserConfig = {
-    // fbccaLanguage: 'python', // 'javascript' or 'python'
-    fbccaLanguage: 'javascript',
+    fbccaLanguage: 'python', // 'javascript' or 'python'
     eegDataSource: 'lsl', // 'lsl' or 'emotiv' 
     // eegDataSource: 'emotiv',
     stimuli: {

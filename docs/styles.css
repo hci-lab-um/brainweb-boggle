@@ -191,8 +191,8 @@ h6 {
   background-size: cover;
 }
 
-.about .card{
-border: 1px solid #ffffff7d;
+.about .card {
+  border: 1px solid #ffffff7d;
 }
 
 /* ----------------- */
@@ -554,7 +554,8 @@ border: 1px solid #ffffff7d;
   transform: scale(1.1);
 }
 
-.paper h1, .paper h2 {
+.paper h1,
+.paper h2 {
   font-family: 'Inter', sans-serif;
 }
 
@@ -577,16 +578,6 @@ border: 1px solid #ffffff7d;
 .article {
   height: 20em;
   overflow: visible;
-
-  box-shadow:
-    0 0 2px 0 #f4f4f6 inset,
-    0em 100px 500px -5px rgba(255, 255, 255, .5),
-    -1em 1em 3em 1em rgba(255, 255, 255, .2),
-    -5em 1em 30em 1em rgba(255, 255, 255, .2),
-    0em 10px 50px -10px rgba(255, 255, 255, 1),
-    1.2em 0em 3em 0em #044134c2,
-    2.5em -1em 17em 3em #04413412,
-    0px -5px 25px 0px #808f8c;
 
   -webkit-transition: all .5s ease;
   -moz-transition: all .5s ease;
@@ -708,8 +699,14 @@ border: 1px solid #ffffff7d;
 }
 
 /* --------------- */
-/*  Profile Cards  */
+/*  People Section */
 /* --------------- */
+
+.people {
+  background: #101010;
+}
+
+/* Profile Cards */
 .profile-card-3 {
   position: relative;
   float: left;
@@ -831,31 +828,31 @@ border: 1px solid #ffffff7d;
 /*  Contact Us Section  */
 /* -------------------- */
 
-.contact-section {
-  background: #f8f9fa;
+.contact {
+  background: #101010;
   overflow: visible;
   position: relative;
 }
 
 /* Add this new pseudo-element for background image only */
-.contact-section::before {
+.contact::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('./assets/cacti-cropped.png');
+  background: url('./assets/brain_signals.png') repeat-x;
   background-size: contain;
   background-position: bottom;
-  opacity: 0.175;
+  opacity: 0.3;
   /* Only the background image will have this opacity */
   pointer-events: none;
   z-index: 0;
 }
 
 @media (max-width: 991.98px) {
-  .contact-section::before {
+  .contact::before {
     background-repeat: no-repeat;
     background-position: center bottom;
   }

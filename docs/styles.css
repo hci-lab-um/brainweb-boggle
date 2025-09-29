@@ -728,7 +728,6 @@ h6 {
   width: 100%;
   vertical-align: top;
   opacity: 0.7;
-  filter: blur(1.5px);
 }
 
 .profile-card-3 .card-content {
@@ -736,7 +735,7 @@ h6 {
   padding: 15px 25px;
   color: #232323;
   float: left;
-  background: #efefef;
+  background: #d3eeff;
   height: 50%;
   border-radius: 0 0 5px 5px;
   position: relative;
@@ -745,7 +744,7 @@ h6 {
 
 .profile-card-3 .card-content::before {
   content: "";
-  background: #efefef;
+  background: #d3eeff;
   width: 120%;
   height: 100%;
   left: 11px;

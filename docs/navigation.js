@@ -77,13 +77,13 @@ function initNavigation() {
 
 // add function to copy citation text to clipboard
 function copyCitation() {
-    const citationText = `D. Vella and C. Porter, "Remapping the Document Object Model using Geometric and Hierarchical Data Structures for Efficient Eye Control," Acm Pacmhci, vol. 8, (ETRA), pp. 1–16, 2024. Available: https://dl.acm.org/doi/10.1145/3655608. DOI: 10.1145/3655608.`;
+  const citationText = `D. Vella and C. Porter, "Remapping the Document Object Model using Geometric and Hierarchical Data Structures for Efficient Eye Control," Acm Pacmhci, vol. 8, (ETRA), pp. 1–16, 2024. Available: https://dl.acm.org/doi/10.1145/3655608. DOI: 10.1145/3655608.`;
 
-    navigator.clipboard.writeText(citationText).then(() => {
-        alert("Citation copied!");
-    }).catch(err => {
-        console.error("Error copying citation: ", err);
-    });
+  navigator.clipboard.writeText(citationText).then(() => {
+    alert("Citation copied!");
+  }).catch(err => {
+    console.error("Error copying citation: ", err);
+  });
 }
 
 // Feature Modal logic
@@ -92,6 +92,7 @@ function setupFeatureModal() {
   const modalTitle = document.getElementById('featureModalLabel');
   const modalDescription = document.getElementById('featureModalDescription');
   const modalVideo = document.getElementById('featureModalVideo');
+  const exploreBtn = document.getElementById('featureModalExploreBtn');
   const featureButtons = document.querySelectorAll('.feature-modal-trigger');
 
   featureButtons.forEach(btn => {
@@ -103,7 +104,6 @@ function setupFeatureModal() {
       if (modalTitle) modalTitle.textContent = title;
       if (modalDescription) modalDescription.textContent = description;
       if (modalVideo) {
-        // Remove old sources
         while (modalVideo.firstChild) modalVideo.removeChild(modalVideo.firstChild);
         if (video) {
           const source = document.createElement('source');
@@ -113,9 +113,18 @@ function setupFeatureModal() {
           modalVideo.load();
         }
       }
+
+      // Showing the Explore the Library button only for the SSVEP Generator feature
+      if (title.toLowerCase() === "makes use of ssvep-stimuli generator library") {
+        exploreBtn.style.display = 'inline-block';
+        exploreBtn.href = "https://www.npmjs.com/package/ssvep-stimuli";
+      } else {
+        exploreBtn.style.display = 'none';
+      }
     });
   });
 }
+
 
 // Bootstrap tooltip for copy citation button
 document.addEventListener('DOMContentLoaded', function () {

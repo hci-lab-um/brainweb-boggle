@@ -7,6 +7,9 @@
   /* --bs-body-bg: #e0e0db; */
 
   --arrow-size: 30px;
+  --light-blue: #5fc6ee;
+  --shadow-purple: #7267b133;
+
   /* default size */
   --arrow-border: calc(var(--arrow-size) / 3);
 }
@@ -91,7 +94,7 @@ h6 {
 }
 
 .hero-button-primary {
-  background-color: #5fc6ee;
+  background-color: var(--light-blue);
   color: black
 }
 
@@ -102,12 +105,12 @@ h6 {
 
 .hero-button-secondary {
   background-color: transparent;
-  border: 2px solid #5fc6ee;
+  border: 2px solid var(--light-blue);
   color: white;
 }
 
 .hero-button-secondary:hover {
-  background-color: #5fc6ee;
+  background-color: var(--light-blue);
   color: black;
 }
 
@@ -281,7 +284,7 @@ h6 {
 }
 
 .feature-card:hover {
-  border: 2px solid #0a2f38;
+  border: 2px solid var(--light-blue);
   -webkit-transform: scale(1.05);
   -moz-transform: scale(1.05);
   -ms-transform: scale(1.05);
@@ -314,14 +317,15 @@ h6 {
 /* Feature Modal Content Styles */
 .feature-modal-custom .modal-content {
   border-radius: 2.5rem;
-  background: #f8f9fa;
+  background-image: url('./assets/hero-background.png');
   box-shadow: 0 8px 48px 0 rgba(10, 47, 56, 0.18), 0 2px 16px 0 rgba(10, 47, 56, 0.10);
   overflow: hidden;
   margin: 0 auto;
   width: auto;
-  border-top: 6px solid #0a2f38;
-  border-left: 6px solid #b2dfdb;
-  border-right: 6px solid #b2dfdb;
+  border-top: 3px solid #0a2f38;
+  border-bottom: 3px solid #0a2f38;
+  border-left: 6px solid var(--light-blue);
+  border-right: 6px solid var(--light-blue);
 }
 
 .feature-modal-custom .modal-dialog {
@@ -346,7 +350,6 @@ h6 {
   font-weight: 800;
   width: 100%;
   text-align: center;
-  color: #0a2f38;
   letter-spacing: 0.5px;
   background-clip: text;
 }
@@ -373,9 +376,9 @@ h6 {
   max-width: 1300px !important;
   max-height: 85vh !important;
   border-radius: 1.5rem;
-  box-shadow: 0 4px 20px 10px rgba(26, 188, 156, 0.10);
+  box-shadow: 0px 0px 20px 20px var(--shadow-purple);
   background: #000;
-  border: 3px solid #0a2f38;
+  border: 2px solid #ffffff;
 }
 
 #featureModalDescription {
@@ -384,7 +387,7 @@ h6 {
   text-align: justify;
   margin: 0 auto;
   color: #0a2f38;
-  background: #d5e5df;
+  background: #0000002a;
   border-radius: 1rem;
   padding: 1.2rem 1.5rem;
   box-shadow: 0 2px 12px 0 rgba(10, 47, 56, 0.04);
@@ -394,14 +397,13 @@ h6 {
   filter: none;
   background-color: #e0e7fa;
   border-radius: 50%;
-  transition: box-shadow 0.2s, background 0.2s;
+  transition: box-shadow 0.2s, background-color 0.2s;
   box-shadow: 0 2px 8px 0 rgba(10, 47, 56, 0.08);
 }
 
 .feature-modal-custom .btn-close:hover {
-  background-color: rgba(26, 188, 156, 0.35);
+  background-color: var(--light-blue);
   box-shadow: 0 4px 16px 0 rgba(26, 188, 156, 0.18);
-  opacity: 1;
 }
 
 @media (max-width: 991.98px) {
@@ -869,7 +871,7 @@ h6 {
 
 .stat-label {
   font-weight: 500;
-  color: #5fc6ee;
+  color: var(--light-blue);
   max-width: 150px;
 }
 

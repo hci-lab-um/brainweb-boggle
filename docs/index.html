@@ -123,7 +123,8 @@
             <div class="text-center mb-5">
                 <h2>Breaking Barriers with Brain Technology</h2>
                 <p class="text-muted fs-5">
-                    Boggle is developed as part of the BrainWeb project, and it contributes to ongoing research as well as practice in the field of assistive technology.
+                    Boggle is developed as part of the BrainWeb project, and it contributes to ongoing research as well
+                    as practice in the field of assistive technology.
                 </p>
                 <div class="d-flex justify-content-center my-5 gap-5 align-items-start">
                     <div class="stat d-flex flex-column justify-content-center align-items-center gap-2">
@@ -188,9 +189,11 @@
                     <div class="card-body">
                         <h3 class="card-title pb-2">Inclusive by Design</h3>
                         <p class="card-text fs-5">
-                            Boggle is designed for individuals with severe motor impairments, such as ALS or spinal injuries.
+                            Boggle is designed for individuals with severe motor impairments, such as ALS or spinal
+                            injuries.
                             Using Steady State Visually Evoked Potentials (SSVEPs) and accessible EEG hardware, it
-                            brings reliable, low-cost brain-computer interaction to the web, enabling access to the internet 
+                            brings reliable, low-cost brain-computer interaction to the web, enabling access to the
+                            internet
                             for all, without limitations.
                         </p>
                     </div>
@@ -246,167 +249,89 @@
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 pb-5 justify-content-center">
                 <div class="col">
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/quadtree.png" class="card-img-top"
-                            alt="Image Showing Quadtree on University of Malta Website">
+                        <img src="./assets/features/quadtree.png" class="card-img-top" alt="SSVEP Stimuli Generator">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Quadtree Algorithm</h5>
-                            <p class="text-muted card-text">A Quadtree data structure that organises interactive page
-                                elements by
-                                location
-                                for efficient searching and processing.</p>
+                            <h5 class="card-title">Makes use of ssvep-stimuli-generator library</h5>
+                            <p class="text-muted card-text">Generates SSVEP stimuli for Boggle using a library developed
+                                for SSVEP brain-computer interfaces
+                            </p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="A Quadtree is a hierarchical, spatial data structure that recursively subdivides a two-dimensional space into four quadrants or regions. In CACTUS, it is used to efficiently index and retrieve DOM elements based on their screen coordinates, enabling gaze-based selection even on complex web pages."
-                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Quadtree Algorithm"
-                            data-description="A Quadtree data structure that organises interactive page elements by location for efficient searching and processing."
-                            data-video="./assets/features/quadtree.mp4"
-                            aria-label="View more about Quadtree Algorithm"></button>
+                            data-longDescription="Boggle leverages the ssvep-stimuli library to create precise visual stimuli patterns for SSVEP-based brain–computer interaction (BCI), enabling customisable and reliable browser control. Key features include: flexible frequency support with a wide range of SSVEP stimuli frequencies; adaptive rendering that synchronises with monitor refresh rates; customisable appearance through CSS or WebGL; user-defined colours for stimuli; and multiple pattern types, including dot, solid, chequered, and line. The library was originally developed as part of the BrainWeb project and now can be used to support other BCI research and applications. ADD NPM LINK"
+                            data-bs-toggle="modal" data-bs-target="#featureModal"
+                            data-title="Makes use of ssvep-stimuli-generator library" data-description="Generates SSVEP stimuli for Boggle using a library developed
+                                for SSVEP brain-computer interfaces" data-video="./assets/features/quadtree.mp4"
+                            aria-label="View more about SSVEP Stimuli Generator"></button>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
                         <img src="./assets/features/menu_rendering.png" class="card-img-top"
-                            alt="Image Showing Menu Rendering on University of Malta Website">
+                            alt="Select Screen Algorithm">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Menu Rendering</h5>
-                            <p class="text-muted card-text">In case of navigation menus, the entire landmark region’s
-                                contents are
-                                re-rendered hierarchically in the side panel.</p>
+                            <h5 class="card-title">Efficient Interactive Element Selection</h5>
+                            <p class="text-muted card-text">
+                                The algorithm efficiently segments the screen into regions, automatically detects
+                                interactive elements, and highlights them for easy selection by the user.
+                            </p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="In CACTUS, the Menu Rendering Engine works alongside the sidebar to transform complex website navigation into structured, accessible menus. It automatically detects menubars, flyouts, and megamenus from the page’s DOM, reconstructing them into hierarchical data that preserves labels, links, and spatial relationships. This ensures that even hidden or dynamically generated navigation elements are captured and made usable. By outputting a consistent, JSON-based menu structure enriched with accessibility metadata, CACTUS can re-render these menus inside the sidebar in real time. As users move their gaze or switch focus, the sidebar presents these structured menus in a clear, context-sensitive layout, enabling efficient and precise navigation without requiring fine pointer control."
-                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Menu Rendering"
-                            data-description="In case of navigation menus, the entire landmark region’s contents are re-rendered hierarchically in the side panel."
+                            data-longDescription="The Efficient Interactive Element Selection algorithm in Boggle identifies and highlights interactive areas on the screen. If there are more than 36 elements, the screen is split into 4 regions. If any region still contains more than 36 elements, that region is split into 6 regions instead of 4. Then the user can proceed to select a region and then the element they want to interact with. This process helps users efficiently navigate and interact with web content, reducing unwanted clicks and improving accessibility."
+                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Efficient Interactive Element Selection"
+                            data-description="Efficiently selects and highlights interactive regions on the screen for gaze-based navigation and control."
                             data-video="./assets/features/menu_rendering.mp4"
-                            aria-label="View more about Menu Rendering"></button>
+                            aria-label="View more about Efficient Interactive Element Selection"></button>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/virtual_eye_cursor.png" class="card-img-top"
-                            alt="Image Showing Virtual Eye Cursor on University of Malta Website">
+                        <img src="./assets/features/input_types.png" class="card-img-top" alt="Input Types">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Virtual Eye Cursor</h5>
-                            <p class="text-muted card-text">A virtual cursor that represents a smoothened version of the
-                                gaze path
-                                taken by
-                                the user.</p>
+                            <h5 class="card-title">Can interact with different input types</h5>
+                            <p class="text-muted card-text">Supports interaction with buttons, links, checkboxes, radio
+                                buttons, text fields, numbers, dates, comboboxes, videos, audio, and more.</p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="The Virtual Eye Cursor is a software abstraction that maps real-time gaze coordinates to a persistent on-screen cursor. It decouples raw eye-tracking data from DOM interaction, applying smoothing, dwell-time logic, and adaptive filtering to reduce jitter and false activations. The cursor is rendered using a high-contrast, customisable SVG overlay, ensuring precise and accessible gaze-based selection across all web content."
-                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Virtual Eye Cursor"
-                            data-description="A virtual cursor that represents a smoothened version of the gaze path taken by the user."
-                            data-video="./assets/features/virtual_eye_cursor.mp4"
-                            aria-label="View more about Virtual Eye Cursor"></button>
+                            data-longDescription="CACTUS is engineered to interact with a wide range of HTML input types, including buttons, links, checkboxes, radio buttons, text fields, numbers, dates, comboboxes, videos, audio, and more, ensuring comprehensive accessibility."
+                            data-bs-toggle="modal" data-bs-target="#featureModal"
+                            data-title="Can interact with different input types"
+                            data-description="Supports interaction with buttons, links, checkboxes, radio buttons, text fields, numbers, dates, comboboxes, videos, audio, and more."
+                            data-video="./assets/features/input_types.mp4"
+                            aria-label="View more about Input Types"></button>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
                         <img src="./assets/features/second_input_modalities.png" class="card-img-top"
-                            alt="Image showing a user using adaptive switches to interact with the browser">
+                            alt="EEG Headsets">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Integration with Adaptive Switches</h5>
-                            <p class="text-muted card-text">Seamless integration with adaptive switches, allowing users
-                                to map multiple
-                                switches to different browser functionalities.</p>
+                            <h5 class="card-title">Works with multiple EEG headsets</h5>
+                            <p class="text-muted card-text">Compatible with multiple EEG headsets so that users can utilise any headset they prefer.</p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="CACTUS provides a plug-and-play approach for integrating second input modalities, known as adaptive switches (e.g., the Vibe-Lite Switch, foot switches, or sip-and-puff devices). These modalities are connected through a switch interface (e.g., Hitch 2.0), which typically supports one or more switches. Each switch can be mapped to specific actions depending on the setup, allowing users to trigger pre-programmed functions like clicking or scrolling, or to activate browser-specific commands by assigning the corresponding hotkeys. Examples include opening bookmarks, zooming in, or navigating forwards and backwards, all in conjunction with gaze. This setup gives users, particularly those with complex motor profiles, the ability to speed up and enhance their interaction with the browser."
+                            data-longDescription="CACTUS integrates with various EEG headsets, allowing users to choose their preferred hardware for brain-computer interaction and browser control."
                             data-bs-toggle="modal" data-bs-target="#featureModal"
-                            data-title="Integration with Adaptive Switches"
-                            data-description="Seamless integration with adaptive switches, allowing users to map multiple switches to different browser functionalities."
+                            data-title="Works with multiple EEG headsets"
+                            data-description="Compatible with multiple EEG headsets so that users can utilise any headset they prefer."
                             data-video="./assets/features/second_input_modalities.mp4"
-                            aria-label="View more about Integration with Adaptive Switches"></button>
+                            aria-label="View more about Multiple EEG Headset Integration"></button>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/keyboard.png" class="card-img-top"
-                            alt="Multilingual & Numeric Keyboard">
+                        <img src="./assets/features/keyboard.png" class="card-img-top" alt="BCI Keyboard">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Multilingual & Numeric Keyboard</h5>
-                            <p class="text-muted card-text">A multilingual and numeric on-screen keyboard with text
-                                autocomplete which
-                                formats directly within the browser interface.</p>
+                            <h5 class="card-title">BCI keyboard with autocomplete & numeric keyboards</h5>
+                            <p class="text-muted card-text">Features an 18 stimuli keyboard with autocomplete and a
+                                numeric keyboard for efficient text and numeric entry.</p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="The CACTUS on-screen keyboard is a fully gaze-accessible, multilingual, and numeric input system designed for users with limited motor control. It features dynamic key layouts for multiple languages, a dedicated numeric keypad, and advanced autocomplete functionality that predicts and suggests words in real time as the user types. Text entry is performed using dwell-based selection, and the keyboard enlarges the nearby keys to facilitate selection."
+                            data-longDescription="Boggle features an 18-stimuli flickering BCI keyboard, where letters are grouped to reduce the number of flickering elements visible at once. It includes an autocomplete button that predicts the next word for the user. For numeric entry, a dedicated keyboard with only numbers is displayed, without any letters."
                             data-bs-toggle="modal" data-bs-target="#featureModal"
-                            data-title="Multilingual & Numeric Keyboard"
-                            data-description="A multilingual and numeric on-screen keyboard with text autocomplete which formats directly within the browser interface."
+                            data-title="BCI keyboard with autocomplete & numeric keyboards"
+                            data-description="Features an 18 stimuli keyboard with autocomplete and a numeric keyboard for efficient text and numeric entry."
                             data-video="./assets/features/keyboard.mp4"
-                            aria-label="View more about Multilingual & Numeric Keyboard"></button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/sidepanel.png" class="card-img-top" alt="Dynamic Side Panel">
-                        <div class="card-body py-4">
-                            <h5 class="card-title">Dynamic Side Panel</h5>
-                            <p class="text-muted card-text">A side panel that encompasses a variety of contexts,
-                                including drop-downs,
-                                video components, and hierarchical menus.</p>
-                        </div>
-                        <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="The sidebar in CACTUS is a dynamic, context-aware navigation panel that serves as the primary interface for interacting with web page elements through gaze-based control. Located on the left side of the browser interface, it continuously updates in real-time to display interactive elements detected near the user's Virtual Eye Cursor. The sidebar operates through two main modes: hierarchical menu rendering and individual element listing. When displaying individual elements, it shows interactive components like buttons, links, form inputs, and multimedia controls as vertically stacked items with descriptive icons and labels, each with visual animations for feedback. Users navigate through the sidebar using dwell-based selection, scroll controls, and level-up navigation for hierarchical structures."
-                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Dynamic Side Panel"
-                            data-description="A side panel that encompasses a variety of contexts, including drop-downs, video components, and hierarchical menus."
-                            data-video="./assets/features/sidepanel.mp4"
-                            aria-label="View more about Dynamic Side Panel"></button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/quick_click.png" class="card-img-top" alt="Quick Click">
-                        <div class="card-body py-4">
-                            <h5 class="card-title">Quick Click</h5>
-                            <p class="text-muted card-text">A function that allows the user to dwell on a specific
-                                on-page item,
-                                directly resulting in an emulated click. </p>
-                        </div>
-                        <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="Quick Click enables users to immediately click or activate the interactive element they are looking at, simply by dwelling on it with their gaze. Unlike the side panel, which lists nearby elements for selection, Quick Click allows direct interaction with any on-page item under the Virtual Eye Cursor, without the need for it to be listed first. This provides a fast, intuitive way to perform actions with minimal effort."
-                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Quick Click"
-                            data-description="A function that allows the user to dwell on a specific on-page item, directly resulting in an emulated click."
-                            data-video="./assets/features/quick_click.mp4"
-                            aria-label="View more about Quick Click"></button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/input_types.png" class="card-img-top"
-                            alt="Integration with Different Input Types">
-                        <div class="card-body py-4">
-                            <h5 class="card-title">Integration with Different HTML Input Types</h5>
-                            <p class="text-muted card-text">Supports various input types, including buttons, links,
-                                radio buttons,
-                                checkboxes, dates, comboboxes, videos, audio, text, textareas, numbers and so on.</p>
-                        </div>
-                        <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="CACTUS is engineered to interact with a comprehensive set of HTML input types, including <button>, <a>, <input type='text'>, <input type='number'>, <input type='date'>, <input type='radio'>, <input type='checkbox'>, <input type='range'>, <input type='file'>, <select>, <option>, <textarea>, <datalist>, <output>, and <progress>. The system also supports multimedia elements such as <video> and <audio>, providing sidebar controls for play/pause, mute/unmute, volume, and seek (with range-based precision), hierarchical navigation, and visual feedback via icons."
-                            data-bs-toggle="modal" data-bs-target="#featureModal"
-                            data-title="Integration with Different HTML Input Types" data-description="Supports various HTML input types, including
-                            buttons, links, radio buttons,
-                            checkboxes, dates, comboboxes, videos, audio, text, textareas, numbers and so on."
-                            data-video="./assets/features/input_types.mp4"
-                            aria-label="View more about Integration with Different HTML Input Types"></button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/settings.png" class="card-img-top" alt="Highly Customisable">
-                        <div class="card-body py-4">
-                            <h5 class="card-title">Highly Customisable</h5>
-                            <p class="text-muted card-text">A settings page that offers extensive customisation options
-                                to tailor the user
-                                experience according to individual preferences.</p>
-                        </div>
-                        <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="CACTUS offers highly customisable settings, including Manual Link Interaction, which defines how links are activated (direct navigation vs. simulated clicking), and Menu Navigation, which controls whether the sidebar presents hierarchical menus or flat lists. Users can also tailor dwell times, language preferences, and scroll settings, while adaptive switch shortcuts are displayed for reference. The settings engine persists preferences in a database, ensuring they are retained for future sessions, with all changes applied in real time."
-                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Highly Customisable"
-                            data-description="A settings page that offers extensive customisation options to tailor the user experience according to individual preferences."
-                            data-video="./assets/features/settings.mp4"
-                            aria-label="View more about Highly Customisable"></button>
+                            aria-label="View more about BCI Keyboard"></button>
                     </div>
                 </div>
             </div>

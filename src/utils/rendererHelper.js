@@ -67,6 +67,7 @@ async function initialise(overlayData, isReload = false, name) {
             false,
             itemsList.length > pageSize
         );
+        console.log('Determined scenarioId:', scenarioId);
         // Updating the scenarioId for the overlay
         await updateScenarioId(scenarioId, buttons, overlayName);
     } catch (error) {
@@ -91,16 +92,80 @@ function calculateActiveIndex() {
     return activeIndex;
 }
 
+// function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
+//     const totalPages = Math.ceil(itemsCount / pageSize);
+//     const isFirstPage = currentPage === 0;
+//     const isLastPage = currentPage === totalPages - 1;
+//     const start = currentPage * pageSize;
+//     const end = Math.min(start + pageSize, itemsCount);
+//     const itemsOnPage = end - start;
+
+//     // Helper function to calculate scenario ID based on items and arrow configuration
+//     const calculateScenarioId = (baseId, itemsOnPage, left, right, bothArrowsId, oneArrowId, noArrowMaxId) => {
+//         if (itemsOnPage >= 1 && itemsOnPage <= 3) {
+//             return baseId + itemsOnPage - 1 + ((left || right) ? 4 : 0);
+//         }
+//         if (itemsOnPage === 4) {
+//             if (left && right) return bothArrowsId;
+//             if (left || right) return oneArrowId;
+//             return noArrowMaxId;
+//         }
+//         return baseId;
+//     };
+
+//     // Helper function to handle pagination scenarios
+//     const handlePaginationScenarios = (bothArrowsId, oneArrowId, noArrowMaxId) => {
+//         if (!isFirstPage && !isLastPage) return bothArrowsId; // both arrows
+//         if (isFirstPage && hasRightArrow) return oneArrowId;
+//         if (isLastPage && hasLeftArrow) return oneArrowId;
+//         return noArrowMaxId;
+//     };
+
+//     if (overlayName === ViewNames.DROPDOWN) {
+//         if (isMultipleSelect) {
+//             // Multiple select dropdown: scenarios 50-58
+//             if (itemsCount <= pageSize || isLastPage) {
+//                 return calculateScenarioId(50, itemsOnPage, hasLeftArrow, hasRightArrow, 58, 57, 53);
+//             }
+//             return handlePaginationScenarios(58, 57, 53);
+//         } else {
+//             // Single select dropdown: scenarios 59-67
+//             if (itemsCount <= pageSize || isLastPage) {
+//                 return calculateScenarioId(59, itemsOnPage, hasLeftArrow, hasRightArrow, 67, 66, 62);
+//             }
+//             return handlePaginationScenarios(67, 66, 62);
+//         }
+//     } else {
+//         // If there are no items, return the scenario ID for the empty state
+//         if (itemsCount === 0) return 21;
+
+//         const totalPages = Math.ceil(itemsCount / pageSize);
+//         const isFirstPage = currentPage === 0;
+//         const isLastPage = currentPage === totalPages - 1;
+//         const start = currentPage * pageSize;
+//         const end = Math.min(start + pageSize, itemsCount);
+//         const itemsOnPage = end - start;
+
+//         // Other overlays (tabs/bookmarks): scenarios 21-30
+//         if (itemsCount <= pageSize || isLastPage) {
+//             return calculateScenarioId(21, itemsOnPage, hasLeftArrow, hasRightArrow, 30, 29, 25);
+//         }
+//         return handlePaginationScenarios(30, 29, 25);
+//     }
+// }
+
 function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
-    const totalPages = Math.ceil(itemsCount / pageSize);
+    // Normalize page math once
+    const totalPages = Math.max(1, Math.ceil(itemsCount / pageSize));
     const isFirstPage = currentPage === 0;
     const isLastPage = currentPage === totalPages - 1;
     const start = currentPage * pageSize;
     const end = Math.min(start + pageSize, itemsCount);
-    const itemsOnPage = end - start;
+    const itemsOnPage = Math.max(0, end - start);
 
-    // Helper function to calculate scenario ID based on items and arrow configuration
-    const calculateScenarioId = (baseId, itemsOnPage, left, right, bothArrowsId, oneArrowId, noArrowMaxId) => {
+    // DROPDOWN handling (multiple vs single)
+    const calculateDropdownId = (baseId, itemsOnPage, left, right, bothArrowsId, oneArrowId, noArrowMaxId) => {
+        // 1..3 map with offset; 4 handled specially
         if (itemsOnPage >= 1 && itemsOnPage <= 3) {
             return baseId + itemsOnPage - 1 + ((left || right) ? 4 : 0);
         }
@@ -109,12 +174,12 @@ function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
             if (left || right) return oneArrowId;
             return noArrowMaxId;
         }
+        // fallback if something unexpected (e.g. >4 items on a dropdown page)
         return baseId;
     };
 
-    // Helper function to handle pagination scenarios
     const handlePaginationScenarios = (bothArrowsId, oneArrowId, noArrowMaxId) => {
-        if (!isFirstPage && !isLastPage) return bothArrowsId; // both arrows
+        if (!isFirstPage && !isLastPage) return bothArrowsId; // both arrows visible
         if (isFirstPage && hasRightArrow) return oneArrowId;
         if (isLastPage && hasLeftArrow) return oneArrowId;
         return noArrowMaxId;
@@ -122,34 +187,48 @@ function getItemsScenarioId(itemsCount, hasLeftArrow, hasRightArrow) {
 
     if (overlayName === ViewNames.DROPDOWN) {
         if (isMultipleSelect) {
-            // Multiple select dropdown: scenarios 50-58
+            // MULTIPLE SELECTION DROPDOWN: scenarios 50-58
             if (itemsCount <= pageSize || isLastPage) {
-                return calculateScenarioId(50, itemsOnPage, hasLeftArrow, hasRightArrow, 58, 57, 53);
+                return calculateDropdownId(50, itemsOnPage, hasLeftArrow, hasRightArrow, 58, 57, 53);
             }
             return handlePaginationScenarios(58, 57, 53);
         } else {
-            // Single select dropdown: scenarios 59-67
+            // SINGLE SELECTION DROPDOWN: scenarios 59-67
             if (itemsCount <= pageSize || isLastPage) {
-                return calculateScenarioId(59, itemsOnPage, hasLeftArrow, hasRightArrow, 67, 66, 62);
+                return calculateDropdownId(59, itemsOnPage, hasLeftArrow, hasRightArrow, 67, 66, 62);
             }
             return handlePaginationScenarios(67, 66, 62);
         }
     } else {
+        // Non-dropdown overlays (BOOKMARKS / TABS): use your previous working logic
         // If there are no items, return the scenario ID for the empty state
         if (itemsCount === 0) return 21;
 
-        const totalPages = Math.ceil(itemsCount / pageSize);
-        const isFirstPage = currentPage === 0;
-        const isLastPage = currentPage === totalPages - 1;
-        const start = currentPage * pageSize;
-        const end = Math.min(start + pageSize, itemsCount);
-        const itemsOnPage = end - start;
+        const getScenarioId = (itemsOnPage, left, right) => {
+            // 1–3 items => 22–24 (no arrow) or 26–28 (arrow)
+            if (itemsOnPage >= 1 && itemsOnPage <= 3) {
+                return 21 + itemsOnPage + ((left || right) ? 4 : 0);
+            }
+            // 4 items => 25 (no arrows), 29 (one arrow), 30 (both arrows)
+            if (itemsOnPage === 4) {
+                if (left && right) return 30;
+                if (left || right) return 29;
+                return 25;
+            }
+            // fallback to base
+            return 21;
+        };
 
-        // Other overlays (tabs/bookmarks): scenarios 21-30
         if (itemsCount <= pageSize || isLastPage) {
-            return calculateScenarioId(21, itemsOnPage, hasLeftArrow, hasRightArrow, 30, 29, 25);
+            return getScenarioId(itemsOnPage, hasLeftArrow, hasRightArrow);
         }
-        return handlePaginationScenarios(30, 29, 25);
+
+        // If there are more than one page, handle pagination scenarios
+        if (!isFirstPage && !isLastPage) return 30; // both arrows
+        if (isFirstPage && hasRightArrow) return 29;
+        if (isLastPage && hasLeftArrow) return 29;
+
+        return 25;
     }
 }
 

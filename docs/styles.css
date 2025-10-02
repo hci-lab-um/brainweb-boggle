@@ -393,6 +393,11 @@ h6 {
   box-shadow: 0 2px 12px 0 rgba(10, 47, 56, 0.04);
 }
 
+#featureModalExploreBtn {
+  background: var(--light-blue);
+  color: black;
+}
+
 .feature-modal-custom .btn-close {
   filter: none;
   background-color: #e0e7fa;
@@ -430,6 +435,11 @@ h6 {
 
   #featureModalDescription {
     font-size: 1rem !important;
+    padding: 1.2rem 0;
+  }
+
+  #featureModalExploreBtn {
+    width: 100%;
   }
 }
 
@@ -640,7 +650,7 @@ h6 {
 
 .publication-title {
   font-weight: normal;
-  color: darkblue;
+  color: var(--light-blue);
   display: none;
   font-size: 1.4rem;
   text-decoration: none;
@@ -659,14 +669,14 @@ h6 {
     background-color: transparent;
     height: 40px;
     width: 40px;
-    color: #0a3039;
+    color: white;
     font-size: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
     text-indent: 0;
-    opacity: 1;
-    border: 1.5px solid #0a3039;
+    opacity: 0.5;
+    border: 1.5px solid #cef6ff;
   }
 
   .carousel-indicators [data-bs-target] span {
@@ -674,8 +684,9 @@ h6 {
   }
 
   .carousel-indicators .active {
-    background-color: #0a3039;
-    color: white;
+    background-color: var(--light-blue);
+    color: black;
+    opacity: 1;
   }
 
   .carousel-control-prev,

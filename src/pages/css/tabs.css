@@ -341,7 +341,6 @@ body {
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 3vw;
   width: 100%;
   height: 100%;
   justify-content: space-around;

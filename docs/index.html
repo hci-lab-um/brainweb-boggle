@@ -69,11 +69,12 @@
                                 class="hero-title-main mx-auto d-block d-md-inline mx-md-0">
                         </picture>
                         <p class="lead text-md-start hero-description">
-                            Boggle is a <strong>brain-native web browser</strong>, reimagining internet access for
-                            people
-                            with severe motor impairments. Built using Steady State Visually Evoked Potentials (SSVEPs)
-                            and low-cost EEG headsets, it transforms the web into a space that can be browsed and
-                            controlled directly with brain signals.
+                            Boggle is a <strong>brain-controlled web browser</strong> that redefines internet access for people with
+                            severe motor impairments.
+                            Powered by neural responses to visual stimulation (Steady-State Visually Evoked Potentials),
+                            it enables users who cannot
+                            rely on traditional assistive technologies, such as eye trackers and switch control, to
+                            navigate the web freely.
                         </p>
                         <div class="d-flex gap-3 mt-3 flex-column flex-md-row">
                             <a href="https://github.com/hci-lab-um/boggle/releases"
@@ -158,7 +159,7 @@
                                 </g>
                             </svg>
                         </div>
-                        <div class="stat-label">Works with Multiple EEG Headsets</div>
+                        <div class="stat-label">Utilises low-cost EEG Headsets</div>
                     </div>
                     <div class="stat d-flex flex-column justify-content-center align-items-center gap-2">
                         <div class="stat-value">
@@ -189,8 +190,7 @@
                     <div class="card-body">
                         <h3 class="card-title pb-2">Inclusive by Design</h3>
                         <p class="card-text fs-5">
-                            Boggle is designed for individuals with severe motor impairments, such as ALS or spinal
-                            injuries.
+                            Boggle is designed to work outside the lab and developed for people who cannot use traditional assistive technology.
                             Using Steady State Visually Evoked Potentials (SSVEPs) and accessible EEG hardware, it
                             brings reliable, low-cost brain-computer interaction to the web, enabling access to the
                             internet
@@ -258,16 +258,13 @@
                         <img src="./assets/features/ssvep-stimuli_library.png" class="card-img-top"
                             alt="SSVEP Stimuli Generator">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Makes use of ssvep-stimuli Generator Library</h5>
-                            <p class="text-muted card-text">Generates SSVEP stimuli for Boggle using an in-house library
-                                developed
-                                for SSVEP brain-computer interfaces.
-                            </p>
+                            <h5 class="card-title">Integrates with the ssvep-stimuli Generator Library</h5>
+                            <p class="text-muted card-text">Generates SSVEP stimuli for Boggle using an in-house library developed for SSVEP brain-computer interfaces.</p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
                             data-longDescription="Boggle leverages the ssvep-stimuli library to create precise visual stimuli patterns for SSVEP-based brain–computer interaction (BCI), enabling customisable and reliable browser control. Key features include: flexible frequency support with a wide range of SSVEP stimuli frequencies; adaptive rendering that synchronises with monitor refresh rates; customisable appearance through CSS or WebGL; user-defined colours for stimuli; and multiple pattern types, including dot, solid, chequered, and line. The library was originally developed as part of the BrainWeb project and now can be used to support other BCI research and applications."
                             data-bs-toggle="modal" data-bs-target="#featureModal"
-                            data-title="Makes use of ssvep-stimuli Generator Library"
+                            data-title="Integrates with the ssvep-stimuli Generator Library"
                             data-description="Generates SSVEP stimuli for Boggle using an in-house library developed for SSVEP brain-computer interfaces."
                             data-video="./assets/features/ssvep-stimuli_library.mp4"
                             aria-label="View more about SSVEP Stimuli Generator"></button>
@@ -284,7 +281,7 @@
                             </p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="The Efficient Interactive Element Selection algorithm in Boggle identifies and highlights interactive areas on the screen. If there are more than 36 elements, the screen is split into 4 regions. If any region still contains more than 36 elements, that region is split into 6 regions instead of 4. Then the user can proceed to select a region and then the element they want to interact with. This process helps users efficiently navigate and interact with busy web pages, reducing unwanted clicks and improving accessibility."
+                            data-longDescription="The Efficient Interactive Element Selection algorithm in Boggle identifies and highlights interactive areas on the screen. If there are more than 36 elements, the screen is split into 4 regions. If any region still contains more than 36 elements, the screen is split into 6 regions instead of 4. Then the user can proceed to select a region and then the element they want to interact with. This algorithm ensures that only a limited number of stimuli are presented at one go, to improve classification efficiency, reducing errors while at the same time balancing the need for unnecessary selections."
                             data-bs-toggle="modal" data-bs-target="#featureModal"
                             data-title="Efficient Interactive Element Selection"
                             data-description="Efficiently selects and highlights interactive regions on the screen for gaze-based navigation and control."
@@ -348,7 +345,7 @@
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
                         <img src="./assets/features/tabs_and_bookmarks.png" class="card-img-top" alt="BCI Keyboard">
                         <div class="card-body py-4">
-                            <h5 class="card-title">Effective Bookmark & Tab Management</h5>
+                            <h5 class="card-title">Bookmark & Tab Management</h5>
                             <p class="text-muted card-text">Manage bookmarks and tabs efficiently with intuitive
                                 controls for saving, opening, closing, and switching between web pages.
                             </p>

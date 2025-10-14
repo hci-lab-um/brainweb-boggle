@@ -505,6 +505,7 @@ h6 {
   .citation p {
     margin: 0;
     text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .citation a {
@@ -799,6 +800,7 @@ h6 {
   margin-top: 10px;
   font-weight: 100;
   letter-spacing: normal;
+  padding: 0 0.75rem;
 }
 
 .profile-card-3 i {

@@ -5,7 +5,7 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon } = require('../utils/utilityFunctions');
 const logger = require('../main/modules/logger');
 
-const scrollDistance = 400; // Distance to scroll in pixels
+const SCROLL_DISTANCE = 400; // Distance to scroll in pixels
 
 // Prefix used for generating button IDs
 const idPrefix = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
@@ -456,7 +456,7 @@ function attachEventListeners() {
                     } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
                             scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
-                            top: -scrollDistance,
+                            top: -SCROLL_DISTANCE,
                             behavior: 'smooth'
                         });
                     }
@@ -498,7 +498,7 @@ function attachEventListeners() {
                     } else if (currentScrollableElement) {
                         ipcRenderer.send('scrollableElement-scroll', {
                             scrollableBoggleId: currentScrollableElement.scrollableBoggleId,
-                            top: scrollDistance,
+                            top: SCROLL_DISTANCE,
                             behavior: 'smooth'
                         });
                     }

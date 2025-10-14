@@ -7,6 +7,7 @@ const logger = require('../main/modules/logger');
 let buttons = [];
 let browsingContainer = null;
 const SCROLL_DISTANCE = 400; // Pixels scrolled per button press
+let versionElement = null;
 
 ipcRenderer.on('about-loaded', async (event, overlayData) => {
     try {
@@ -14,6 +15,8 @@ ipcRenderer.on('about-loaded', async (event, overlayData) => {
 
         buttons = document.querySelectorAll('button');
         browsingContainer = document.getElementById('browsing-container');
+        versionElement = document.getElementById('appVersion');
+        await setAppVersion();
         await updateScenarioId(scenarioId, buttons, ViewNames.ABOUT);
         attachEventListeners();
     } catch (error) {
@@ -28,6 +31,16 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
         logger.error('Error in selectedButton-click handler:', error);
     }
 });
+
+async function setAppVersion() {
+    try {
+        if (!versionElement) return;
+        const version = await ipcRenderer.invoke('app-getVersion');
+        versionElement.textContent = version || 'Unknown';
+    } catch (error) {
+        logger.error('Error setting app version:', error);
+    }
+}
 
 function attachEventListeners() {
     buttons.forEach((button, index) => {

@@ -186,6 +186,15 @@ function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.handle('app-getVersion', async () => {
+        try {
+            return app.getVersion();
+        } catch (err) {
+            logger.error('Error retrieving app version:', err.message);
+            throw err;
+        }
+    });
+
     /**
      * This IPC event is used when an overlay is closed but we DO NOT need to get the scenario of the view that was behind it.
      * For example, when I open the keyboard with an empty text area, I am initially on scenario 80. If I press the space

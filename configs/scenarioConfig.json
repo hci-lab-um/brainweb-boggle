@@ -195,6 +195,13 @@
         "frequencies": [6, 14.5, 10.5],
         "phases": [1, 0.5, 1.5]
     },
+    "scenario_33": {
+        "name": "ABOUT",
+        "description": "About overlay with 2 scrolling buttons and a close button",
+        "buttonIds": ["scrollUpBtn", "scrollDownBtn", "closeAboutBtn"],
+        "frequencies": [6, 7.5, 8],
+        "phases": [1, 1.5, 1.5]
+    },
     "scenario_40": {
         "name": "SELECT",
         "description": "1 button in sidebar, with CLOSE/BACK button & toggle",
@@ -383,6 +390,9 @@
         "buttonIds": ["cancelBtn", "firstItemBtn", "secondItemBtn", "thirdItemBtn", "fourthItemBtn", "firstArrowKeyBtn", "secondArrowKeyBtn"],
         "frequencies": [6, 8, 12.5, 9, 7.5, 11, 9.5],
         "phases": [1, 1.5, 0, 0.5, 1.5, 0, 0]
+    },
+    "scenario_70": {
+        "name": "SETTINGS"
     },
     "scenario_80": {
         "name": "KEYBOARD",

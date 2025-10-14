@@ -236,6 +236,16 @@
   z-index: 999;
 }
 
+#aboutOverlay,
+#selectOverlay,
+#seekOverlay {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
 .popup {
   display: flex;
   position: fixed;
@@ -318,16 +328,6 @@ body {
   margin: 0;
   background-color: transparent;
   overflow: hidden;
-}
-
-#selectOverlay,
-#seekOverlay {
-  display: block;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
 }
 
 #webpage {

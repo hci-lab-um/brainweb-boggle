@@ -74,10 +74,10 @@ function attachEventListeners() {
                         ipcRenderer.send('webpage-zoomReset');
                         break;
                     case "settingsBtn":
-                        // tbi
+                        //tbi
                         break;
                     case "aboutBtn":
-                        // tbi
+                        ipcRenderer.send('overlay-create', ViewNames.ABOUT, 33);
                         break;
                     case "exitBtn":
                         ipcRenderer.send('app-exit');

@@ -11,16 +11,6 @@ body {
     overflow: hidden;
 }
 
-#selectOverlay,
-#seekOverlay {
-    display: block;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-}
-
 #webpage {
     background-color: transparent !important;
 }

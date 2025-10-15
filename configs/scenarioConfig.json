@@ -197,10 +197,10 @@
     },
     "scenario_33": {
         "name": "ABOUT",
-        "description": "About overlay with 2 scrolling buttons and a close button",
-        "buttonIds": ["scrollUpBtn", "scrollDownBtn", "closeAboutBtn"],
-        "frequencies": [6, 7.5, 8],
-        "phases": [1, 1.5, 1.5]
+        "description": "About overlay with 2 scrolling buttons, a close button, NPM button and license button",
+        "buttonIds": ["scrollUpBtn", "scrollDownBtn", "closeAboutBtn", "npmBtn", "licenseBtn"],
+        "frequencies": [6, 7.5, 8, 9, 8.5],
+        "phases": [1, 1.5, 1.5, 0.5, 1]
     },
     "scenario_40": {
         "name": "SELECT",

@@ -54,6 +54,10 @@ function attachEventListeners() {
 
             setTimeout(async () => {
                 switch (buttonId) {
+                    case "licenseBtn":
+                        break;
+                    case "npmBtn":
+                        break;
                     case "scrollUpBtn":
                         if (!browsingContainer) {
                             logger.warn('scrollUpBtn clicked but browsing container was not found.');

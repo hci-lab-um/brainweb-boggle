@@ -576,9 +576,11 @@ function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.handle('tab-add', async () => {
+    ipcMain.handle('tab-add', async (event, url) => {
+        const targetUrl = url || defaultUrl;
         try {
-            createTabView(defaultUrl, true);
+            console.log('Creating tab with URL:', targetUrl);
+            await createTabView(targetUrl, true);
             return true;
         } catch (err) {
             logger.error('Error adding tab:', err.message);

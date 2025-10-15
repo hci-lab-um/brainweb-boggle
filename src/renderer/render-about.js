@@ -55,8 +55,10 @@ function attachEventListeners() {
             setTimeout(async () => {
                 switch (buttonId) {
                     case "licenseBtn":
+                        handleExternalLink(button);
                         break;
                     case "npmBtn":
+                        handleExternalLink(button);
                         break;
                     case "scrollUpBtn":
                         if (!browsingContainer) {
@@ -83,4 +85,26 @@ function attachEventListeners() {
             }, CssConstants.SELECTION_ANIMATION_DURATION);
         });
     });
+}
+
+async function handleExternalLink(button) {
+    try {
+        const url = button?.dataset?.link;
+
+        if (!url) {
+            logger.warn('handleExternalLink called without a data-link attribute.');
+            return;
+        }
+
+        await stopManager();
+        const result = await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.ABOUT);
+        ipcRenderer.send('overlay-close', ViewNames.MORE);
+        await ipcRenderer.invoke('tab-add', url);
+
+        if (!result) {
+            logger.error(`Failed to open external link in new tab: ${url}`);
+        }
+    } catch (error) {
+        logger.error('Error handling external link:', error);
+    }
 }

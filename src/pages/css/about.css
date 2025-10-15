@@ -322,6 +322,16 @@
   height: 125px;
 }
 
+body {
+  background-color: #061524;
+  font-family: "Roboto", sans-serif;
+  color: white;
+}
+
+h3, h4 {
+  font-weight: normal;
+}
+
 #sidebar {
   background-color: #1f1f1f;
   gap: 5%;
@@ -349,6 +359,7 @@
 }
 
 #browsing-container {
+  background-color: #1f1f1f;
   align-items: normal;
   overflow-y: scroll;
   /* width */
@@ -366,6 +377,11 @@
   background: #10468b;
   border-radius: 2px;
 }
+#browsing-container h2 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
 #browsing-container .aboutCard {
   display: flex;
   flex-direction: column;
@@ -374,7 +390,7 @@
   padding: 2.25rem 2.75rem;
   margin: 1rem 0;
   border-radius: 15px;
-  background-color: #e9eaf1;
+  background-color: rgba(255, 255, 255, 0.07);
   gap: 5px;
 }
 #browsing-container .aboutCard #boggleLogo-container {
@@ -382,33 +398,46 @@
   justify-content: center;
   align-items: center;
   margin-bottom: 1rem;
-  gap: 15px;
+  gap: 2rem;
 }
 #browsing-container .aboutCard #boggleLogo-logo {
-  width: 80px;
-  height: 80px;
+  width: 7.5rem;
+  height: 7.5rem;
   border-radius: 50%;
   margin: 0;
+}
+#browsing-container .aboutCard #boggleLogo-text {
+  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+#browsing-container .aboutCard #boggleLogo-text img {
+  width: 15rem;
+}
+#browsing-container .aboutCard #boggleLogo-text h4 {
+  margin: 0;
+  font-size: 1.5rem;
 }
 #browsing-container .aboutCard h3 {
   margin: 0;
   font-size: 1.9rem;
-  color: #0e315d;
+  color: #ffffff;
 }
 #browsing-container .aboutCard h4 {
   margin-top: 8px;
   font-size: 1.3rem;
-  color: #0e315d;
+  color: #ffffff;
 }
 #browsing-container .aboutCard p {
   margin: 1rem 0;
   font-size: 1.4rem;
-  color: #0e315d;
+  color: #b5c2cd;
   line-height: 35px;
 }
 #browsing-container .linkButtonsContainer {
   justify-items: center;
   width: 100%;
+  margin-top: 1rem;
 }
 #browsing-container .linkButtonsContainer .linkButton {
   padding: 30px;
@@ -430,7 +459,7 @@
   text-align: center;
   font-size: 1.5rem;
   line-height: 35px;
-  background-color: #f9faff;
+  background-color: rgba(255, 255, 255, 0.07);
 }
 
 /*# sourceMappingURL=about.css.map */

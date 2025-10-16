@@ -1,0 +1,34 @@
+@use "colors";
+@use "components";
+
+body {
+    background-color: colors.$bg-dark-blue;
+    font-family: "Roboto", sans-serif;
+    color: white;
+}
+
+#settingsOverlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+#settingsSelection {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+#generalSettings,
+#stimuliSettings {
+    display: none;
+}
+
+.settingsContent {
+    flex: 3;
+    width: 100%;
+}

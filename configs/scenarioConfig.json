@@ -392,7 +392,11 @@
         "phases": [1, 1.5, 0, 0.5, 1.5, 0, 0]
     },
     "scenario_70": {
-        "name": "SETTINGS"
+        "name": "SETTINGS",
+        "description": "Settings menu with 6 buttons",
+        "buttonIds": ["generalSettingsBtn", "stimuliSettingsBtn", "calibrationBtn", "closeSettingsBtn"],
+        "frequencies": [6, 7.5, 8.5, 7],
+        "phases": [1, 1.5, 1, 0]  
     },
     "scenario_80": {
         "name": "KEYBOARD",

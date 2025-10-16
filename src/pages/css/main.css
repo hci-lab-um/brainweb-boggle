@@ -329,6 +329,11 @@ body {
   margin: 0;
 }
 
+body.splash-page {
+  overflow: hidden;
+  height: 100vh;
+}
+
 .image__splash {
   max-width: 100%;
   height: auto;

@@ -232,7 +232,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: #1f1f1f;
   z-index: 999;
 }
 
@@ -323,7 +323,7 @@
 }
 
 body {
-  background-color: #061524;
+  background-color: #1f1f1f;
   font-family: "Roboto", sans-serif;
   color: white;
 }

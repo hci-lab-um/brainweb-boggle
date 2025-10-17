@@ -3,11 +3,10 @@
 @use "animation";
 @use "components";
 
-body {
-    background-color: colors.$bg-dark;
-}
-
 #moreOptions {
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: colors.$bg-dark;
     display: grid;
     gap: 3vw;
     width: 100%;

@@ -6,6 +6,10 @@ const logger = require('../main/modules/logger');
 
 let buttons = [];
 let settingsSelection = null;
+let settingsContentContainer = null;
+let generalSettingsInfoContainer = null;
+let homeUrl = '';
+let headsetInUse = '';
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
@@ -13,6 +17,9 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
 
         buttons = document.querySelectorAll('button');
         settingsSelection = document.getElementById('settingsSelection');
+        settingsContentContainer = document.querySelector('.settingsContent');
+        homeUrl = overlayData.homeUrl || '';
+        headsetInUse = overlayData.headsetInUse || '';
 
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
         attachEventListeners();
@@ -42,13 +49,13 @@ function attachEventListeners() {
             setTimeout(async () => {
                 switch (buttonId) {
                     case "generalSettingsBtn":
-                        //tbi 
+                        showGeneralSettingsDetails();
                         break;
                     case "stimuliSettingsBtn":
-                        //tbi
+                        resetSettingsContent();
                         break;
                     case "calibrationBtn":
-                        // tbi
+                        resetSettingsContent();
                         break;
                     case "closeSettingsBtn":
                         await stopManager();
@@ -58,4 +65,94 @@ function attachEventListeners() {
             }, CssConstants.SELECTION_ANIMATION_DURATION);
         });
     });
+}
+
+function showGeneralSettingsDetails() {
+    hideSettingsContent();
+
+    if (!generalSettingsInfoContainer) {
+        generalSettingsInfoContainer = buildGeneralSettingsInfoContainer();
+        settingsContentContainer?.parentElement?.appendChild(generalSettingsInfoContainer);
+    }
+
+    updateGeneralSettingsInfo();
+    generalSettingsInfoContainer.style.display = 'block';
+}
+
+function resetSettingsContent() {
+    if (generalSettingsInfoContainer) {
+        generalSettingsInfoContainer.style.display = 'none';
+    }
+
+    if (settingsContentContainer) {
+        settingsContentContainer.style.display = '';
+    }
+}
+
+function hideSettingsContent() {
+    if (settingsContentContainer) {
+        settingsContentContainer.style.display = 'none';
+    }
+}
+
+function buildGeneralSettingsInfoContainer() {
+    const container = document.createElement('div');
+    container.id = 'generalSettingsDetails';
+    container.classList.add('settingsDetails');
+
+    const heading = document.createElement('h2');
+    heading.textContent = 'General Settings';
+    container.appendChild(heading);
+
+    const homeParagraph = document.createElement('p');
+    homeParagraph.textContent = 'Home URL: ';
+    const homeLink = document.createElement('a');
+    homeLink.id = 'generalSettingsHomeLink';
+    homeLink.rel = 'noreferrer noopener';
+    homeParagraph.appendChild(homeLink);
+    container.appendChild(homeParagraph);
+
+    const headsetParagraph = document.createElement('p');
+    headsetParagraph.textContent = 'Headset: ';
+    const headsetValue = document.createElement('span');
+    headsetValue.id = 'generalSettingsHeadset';
+    headsetParagraph.appendChild(headsetValue);
+    container.appendChild(headsetParagraph);
+
+    return container;
+}
+
+function updateGeneralSettingsInfo() {
+    if (!generalSettingsInfoContainer) return;
+
+    const homeLink = generalSettingsInfoContainer.querySelector('#generalSettingsHomeLink');
+    const headsetValue = generalSettingsInfoContainer.querySelector('#generalSettingsHeadset');
+
+    if (homeLink) {
+        if (homeUrl) {
+            homeLink.textContent = homeUrl;
+            homeLink.href = homeUrl;
+            homeLink.target = '_blank';
+        } else {
+            homeLink.textContent = 'Not configured';
+            homeLink.removeAttribute('href');
+            homeLink.removeAttribute('target');
+        }
+    }
+
+    if (headsetValue) {
+        headsetValue.textContent = formatHeadsetLabel(headsetInUse);
+    }
+}
+
+function formatHeadsetLabel(headset) {
+    if (!headset) {
+        return 'Unknown';
+    }
+
+    if (headset.toLowerCase() === 'lsl') {
+        return 'LSL';
+    }
+
+    return headset.charAt(0).toUpperCase() + headset.slice(1);
 }

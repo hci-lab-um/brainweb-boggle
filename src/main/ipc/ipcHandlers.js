@@ -6,6 +6,7 @@ const { captureSnapshot } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
+const { browserConfig } = require('../../../configs/browserConfig');
 
 const defaultUrl = 'https://www.google.com';
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
@@ -117,6 +118,8 @@ function registerIpcHandlers(context) {
             bookmarksList: bookmarksList,
             tabsList: serialisableTabsList,
             optionsList: elementProperties ? elementProperties.options : null,
+            homeUrl: defaultUrl,
+            headsetInUse: browserConfig.eegDataSource,
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {

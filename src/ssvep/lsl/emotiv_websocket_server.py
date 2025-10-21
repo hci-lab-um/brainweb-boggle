@@ -4,7 +4,6 @@ import websockets
 import json
 import ssl
 import threading
-import time
 import numpy as np
 from scipy.signal import butter, lfilter, iirnotch
 import websocket
@@ -352,7 +351,7 @@ connected_websockets = set()
 main_loop = None  # Store reference to main event loop
 
 # === WebSocket Server Handler (For browser clients) ===
-async def emotiv_to_websocket(websocket, path):
+async def emotiv_to_websocket(websocket):
     global emotiv_client, connected_websockets, main_loop
     
     print("[INFO] Browser WebSocket client connected")
@@ -408,11 +407,13 @@ async def send_data_to_client(websocket, data_packet):
 # === Start WebSocket Server ===
 def main():
     print("Starting Emotiv EEG WebSocket server at ws://localhost:8765")
-    start_server = websockets.serve(emotiv_to_websocket, "localhost", 8765)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    print("READY")  # Signal to Node.js that the server is ready
-    asyncio.get_event_loop().run_forever()
 
+    async def start():
+        server = await websockets.serve(emotiv_to_websocket, "localhost", 8765)
+        print("READY")
+        await server.wait_closed()
+
+    asyncio.run(start())
 
 if __name__ == "__main__":
     main()

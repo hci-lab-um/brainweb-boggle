@@ -15,10 +15,10 @@ async function captureSnapshot(activeTab) {
             activeTab.snapshot = snapshot.toDataURL();
             return activeTab.snapshot;
         } else {
-            logger.warn('Active tab or webContents not available for capture');
+            console.warn('Active tab or webContents not available for capture');
         }
     } catch (err) {
-        logger.error('Error capturing snapshot:', err.message);
+        console.error('Error capturing snapshot:', err.message);
         return null;
     }
 }
@@ -170,11 +170,11 @@ function slideInView(view, webpageBounds, duration = 300) {
                     view.setBounds(webpageBounds); // Ensure final bounds are set
                 }
             } catch (err) {
-                logger.error('Error during slide in view:', err.message);
+                console.error('Error during slide in view:', err.message);
             }
         }, interval);
     } catch (err) {
-        logger.error('Error sliding in view:', err.message);
+        console.error('Error sliding in view:', err.message);
     }
 }
 
@@ -206,7 +206,7 @@ function getCenterCoordinates(elementToClick, webpageBounds) {
             y: clickY
         }
     } catch (error) {
-        logger.error('Error calculating the coordinates of the element', error);
+        console.error('Error calculating the coordinates of the element', error);
     }
 }
 

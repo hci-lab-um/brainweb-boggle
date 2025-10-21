@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const dbPath = path.join(app.getPath('userData'), 'boggle.db');
 const logger = require('./logger');
-
+const { Headsets } = require('../../utils/constants/enums');
 let db;
 
 function connect() {
@@ -91,9 +91,74 @@ function createTabsTable() {
     });
 }
 
+function createHeadsetTable() {
+    return new Promise((resolve, reject) => {
+        const createHeadsetTable = `
+            CREATE TABLE IF NOT EXISTS headsets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                headset_name TEXT NOT NULL,
+                company_name TEXT NOT NULL,
+                connection_type TEXT NOT NULL,
+                selected BOOLEAN NOT NULL,
+                UNIQUE(headset_name, company_name, connection_type)
+            );
+        `;
+        db.run(createHeadsetTable, (err) => {
+            if (err) {
+                logger.error('Error creating headsets table:', err.message);
+                reject(err);
+            } else {
+                logger.info('Headsets table created successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function populateHeadsetTable() {
+    return new Promise((resolve, reject) => {
+        // Build one row per connection type from the Headsets enum
+        const allRows = [];
+        const values = [];
+        const DEFAULT_HEADSET = Headsets.EPOC_X.NAME;
+
+        Object.values(Headsets).forEach((headset) => {
+            const connectionTypes = Object.values(headset.CONNECTION_TYPE || {});
+            connectionTypes.forEach((connType) => {
+                allRows.push('(?, ?, ?, ?)');
+                values.push(
+                    headset.NAME,
+                    headset.COMPANY,
+                    connType,
+                    headset.NAME === DEFAULT_HEADSET ? 1 : 0
+                );
+            });
+        });
+
+        if (allRows.length === 0) {
+            resolve();
+            return;
+        }
+
+        const insertHeadsets = `INSERT OR IGNORE INTO headsets (headset_name, company_name, connection_type, selected) VALUES ${allRows.join(', ')}`;
+
+        db.run(insertHeadsets, values, (err) => {
+            if (err) {
+                logger.error('Error populating headsets table:', err.message);
+                reject(err);
+            } else {
+                logger.info('Headsets table populated successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
 async function createTables() {
     return createBookmarksTable()
         .then(createTabsTable)
+        .then(createHeadsetTable)
+        .then(populateHeadsetTable)
         .catch((err) => {
             logger.error('Error creating tables:', err.message);
             throw err;
@@ -130,7 +195,7 @@ function addBookmark({ url, title, snapshot }) {
     }
 }
 
-function addTab({url, title, isActive, snapshot, originalURL, isErrorPage}) {
+function addTab({ url, title, isActive, snapshot, originalURL, isErrorPage }) {
     try {
         // Converting base64 image to buffer
         let base64Data = snapshot.replace(/^data:image\/\w+;base64,/, "");
@@ -141,7 +206,7 @@ function addTab({url, title, isActive, snapshot, originalURL, isErrorPage}) {
                 INSERT INTO tabs (url, title, isActive, snapshot, originalURL, isErrorPage)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
-            db.run(insertTab, [url, title, isActive, binarySnapshot, originalURL, isErrorPage], function(err) {
+            db.run(insertTab, [url, title, isActive, binarySnapshot, originalURL, isErrorPage], function (err) {
                 if (err) {
                     logger.error('Error inserting tab:', err.message);
                     reject(err);
@@ -197,12 +262,42 @@ function deleteAllBookmarks() {
 function deleteAllTabs() {
     return new Promise((resolve, reject) => {
         const deleteTabs = `DELETE FROM tabs`;
-        db.run(deleteTabs, function(err) {
+        db.run(deleteTabs, function (err) {
             if (err) {
                 logger.error('Error deleting all tabs:', err.message);
                 reject(err);
             } else {
                 logger.info('All tabs have been deleted');
+                resolve();
+            }
+        });
+    });
+}
+
+function deleteHeadsetsTable() {
+    return new Promise((resolve, reject) => {
+        const deleteTable = `DROP TABLE IF EXISTS headsets`;
+        db.run(deleteTable, function (err) {
+            if (err) {
+                logger.error('Error deleting headsets table:', err.message);
+                reject(err);
+            } else {
+                logger.info('Headsets table has been deleted');
+                resolve();
+            }
+        });
+    });
+}
+
+function deleteSettingsTable() {
+    return new Promise((resolve, reject) => {
+        const deleteTable = `DROP TABLE IF EXISTS settings`;
+        db.run(deleteTable, function (err) {
+            if (err) {
+                logger.error('Error deleting settings table:', err.message);
+                reject(err);
+            } else {
+                logger.info('Settings table has been deleted');
                 resolve();
             }
         });
@@ -275,4 +370,6 @@ module.exports = {
 
     deleteAllBookmarks,
     deleteAllTabs,
+    deleteHeadsetsTable,
+    deleteSettingsTable
 };

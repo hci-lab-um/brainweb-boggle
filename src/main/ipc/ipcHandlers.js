@@ -8,13 +8,13 @@ const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 const { browserConfig } = require('../../../configs/browserConfig');
 
-const defaultUrl = 'https://www.google.com';
+let defaultUrl;
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
 mouse.config.autoDelayMs = 0;       // Disables auto delay for faster clicking
 keyboard.config.autoDelayMs = 50;   // Disables auto delay for faster typing
 
-function registerIpcHandlers(context) {
+async function registerIpcHandlers(context) {
     //////////////// THESE VARIABLES ARE BEING PASSED BY VALUE (NOT BY REFERENCE) ////////////////
     let {
         mainWindow,
@@ -30,6 +30,8 @@ function registerIpcHandlers(context) {
         deleteAndInsertAllTabs,
         updateNavigationButtons
     } = context;
+
+    defaultUrl = await db.getDefaultURL();
 
     // Helper function to serialise tabsList
     async function getSerialisableTabsList(tabsList) {
@@ -119,7 +121,8 @@ function registerIpcHandlers(context) {
             tabsList: serialisableTabsList,
             optionsList: elementProperties ? elementProperties.options : null,
             homeUrl: defaultUrl,
-            headsetInUse: browserConfig.eegDataSource,
+            headsetInUse: await db.getDefaultHeadset(),
+            connectionTypeInUse: await db.getDefaultConnectionType(),
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {

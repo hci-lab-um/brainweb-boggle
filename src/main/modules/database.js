@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const dbPath = path.join(app.getPath('userData'), 'boggle.db');
 const logger = require('./logger');
-const { Headsets } = require('../../utils/constants/enums');
+const { Headsets, Settings } = require('../../utils/constants/enums');
 let db;
 
 function connect() {
@@ -95,11 +95,9 @@ function createHeadsetTable() {
     return new Promise((resolve, reject) => {
         const createHeadsetTable = `
             CREATE TABLE IF NOT EXISTS headsets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 headset_name TEXT NOT NULL,
                 company_name TEXT NOT NULL,
                 connection_type TEXT NOT NULL,
-                selected BOOLEAN NOT NULL,
                 UNIQUE(headset_name, company_name, connection_type)
             );
         `;
@@ -120,17 +118,15 @@ function populateHeadsetTable() {
         // Build one row per connection type from the Headsets enum
         const allRows = [];
         const values = [];
-        const DEFAULT_HEADSET = Headsets.EPOC_X.NAME;
 
         Object.values(Headsets).forEach((headset) => {
             const connectionTypes = Object.values(headset.CONNECTION_TYPE || {});
             connectionTypes.forEach((connType) => {
-                allRows.push('(?, ?, ?, ?)');
+                allRows.push('(?, ?, ?)');
                 values.push(
                     headset.NAME,
                     headset.COMPANY,
-                    connType,
-                    headset.NAME === DEFAULT_HEADSET ? 1 : 0
+                    connType
                 );
             });
         });
@@ -140,7 +136,7 @@ function populateHeadsetTable() {
             return;
         }
 
-        const insertHeadsets = `INSERT OR IGNORE INTO headsets (headset_name, company_name, connection_type, selected) VALUES ${allRows.join(', ')}`;
+        const insertHeadsets = `INSERT OR IGNORE INTO headsets (headset_name, company_name, connection_type) VALUES ${allRows.join(', ')}`;
 
         db.run(insertHeadsets, values, (err) => {
             if (err) {
@@ -154,11 +150,59 @@ function populateHeadsetTable() {
     });
 }
 
+function createSettingsTable() {
+    return new Promise((resolve, reject) => {
+        const createSettingsTable = `
+            CREATE TABLE IF NOT EXISTS settings (
+                setting_name TEXT PRIMARY KEY,
+                setting_value TEXT NOT NULL 
+            );
+        `;
+        db.run(createSettingsTable, (err) => {
+            if (err) {
+                logger.error('Error creating settings table:', err.message);
+                reject(err);
+            }
+            else {
+                logger.info('Settings table created successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function populateSettingsTable() {
+    return new Promise((resolve, reject) => {
+        const insertSetting = `INSERT OR IGNORE INTO settings (setting_name, setting_value) VALUES (?, ?)`;
+
+        const defaultSettings = {
+            [Settings.DEFAULT_URL.NAME]: Settings.DEFAULT_URL.DEFAULT,
+            [Settings.DEFAULT_HEADSET.NAME]: Settings.DEFAULT_HEADSET.DEFAULT,
+            [Settings.DEFAULT_CONNECTION_TYPE.NAME]: Settings.DEFAULT_CONNECTION_TYPE.DEFAULT,
+        };
+
+        db.serialize(() => {
+            Object.entries(defaultSettings).forEach(([name, value]) => {
+                db.run(insertSetting, [name, value.toString()], (err) => {
+                    if (err) {
+                        logger.error('Error populating settings table:', err.message);
+                        reject(err);
+                    }
+                });
+            });
+            logger.info('Settings table populated with default values.');
+            resolve();
+        });
+    });
+}
+
 async function createTables() {
     return createBookmarksTable()
         .then(createTabsTable)
         .then(createHeadsetTable)
         .then(populateHeadsetTable)
+        .then(createSettingsTable)
+        .then(populateSettingsTable)
         .catch((err) => {
             logger.error('Error creating tables:', err.message);
             throw err;
@@ -354,6 +398,39 @@ function getTabs() {
     });
 }
 
+function getSetting(setting) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialised'));
+            return;
+        }
+
+        const query = `SELECT setting_value FROM settings WHERE setting_name = ?`;
+        db.get(query, [setting], (err, row) => {
+            if (err) {
+                logger.error(`Error retrieving ${setting}:`, err.message);
+                reject(err);
+            } else {
+                resolve(row.setting_value);
+            }
+        });
+    }).catch(err => {
+        logger.error(`Error getting ${setting}:`, err.message);
+    });
+}
+
+// These get the values in the database and not the defaults from enums.js
+function getDefaultURL() {
+    return getSetting(Settings.DEFAULT_URL.NAME);
+}
+
+function getDefaultHeadset() {
+    return getSetting(Settings.DEFAULT_HEADSET.NAME);
+}
+
+function getDefaultConnectionType() {
+    return getSetting(Settings.DEFAULT_CONNECTION_TYPE.NAME);
+}
 
 module.exports = {
     connect,
@@ -365,6 +442,9 @@ module.exports = {
 
     getBookmarks,
     getTabs,
+    getDefaultURL,
+    getDefaultHeadset,
+    getDefaultConnectionType,
 
     deleteBookmarkByUrl,
 

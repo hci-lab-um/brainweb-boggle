@@ -10,6 +10,7 @@ let settingsContentContainer = null;
 let generalSettingsInfoContainer = null;
 let homeUrl = '';
 let headsetInUse = '';
+let connectionTypeInUse = '';
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
@@ -20,6 +21,7 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         settingsContentContainer = document.querySelector('.settingsContent');
         homeUrl = overlayData.homeUrl || '';
         headsetInUse = overlayData.headsetInUse || '';
+        connectionTypeInUse = overlayData.connectionTypeInUse || '';
 
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
         attachEventListeners();
@@ -119,6 +121,13 @@ function buildGeneralSettingsInfoContainer() {
     headsetParagraph.appendChild(headsetValue);
     container.appendChild(headsetParagraph);
 
+    const connectionTypeParagraph = document.createElement('p');
+    connectionTypeParagraph.textContent = 'Connection Type: ';
+    const connectionTypeValue = document.createElement('span');
+    connectionTypeValue.id = 'generalSettingsConnectionType';
+    connectionTypeParagraph.appendChild(connectionTypeValue);
+    container.appendChild(connectionTypeParagraph);
+
     return container;
 }
 
@@ -127,6 +136,7 @@ function updateGeneralSettingsInfo() {
 
     const homeLink = generalSettingsInfoContainer.querySelector('#generalSettingsHomeLink');
     const headsetValue = generalSettingsInfoContainer.querySelector('#generalSettingsHeadset');
+    const connectionTypeValue = generalSettingsInfoContainer.querySelector('#generalSettingsConnectionType');
 
     if (homeLink) {
         if (homeUrl) {
@@ -142,6 +152,9 @@ function updateGeneralSettingsInfo() {
 
     if (headsetValue) {
         headsetValue.textContent = formatHeadsetLabel(headsetInUse);
+    }
+    if (connectionTypeValue) {
+        connectionTypeValue.textContent = connectionTypeInUse || 'Unknown';
     }
 }
 

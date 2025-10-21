@@ -5,24 +5,25 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
 
 let buttons = [];
-let settingsSelection = null;
 let settingsContentContainer = null;
 let generalSettingsInfoContainer = null;
 let homeUrl = '';
 let headsetInUse = '';
 let connectionTypeInUse = '';
+let closeSettingsButton = null;
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
         const { scenarioId } = overlayData;
 
         buttons = document.querySelectorAll('button');
-        settingsSelection = document.getElementById('settingsSelection');
         settingsContentContainer = document.querySelector('.settingsContent');
+        closeSettingsButton = document.getElementById('closeSettingsBtn');
         homeUrl = overlayData.homeUrl || '';
         headsetInUse = overlayData.headsetInUse || '';
         connectionTypeInUse = overlayData.connectionTypeInUse || '';
 
+        setCloseButtonMode('close');
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
         attachEventListeners();
     } catch (error) {
@@ -60,8 +61,12 @@ function attachEventListeners() {
                         resetSettingsContent();
                         break;
                     case "closeSettingsBtn":
-                        await stopManager();
-                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SETTINGS);
+                        if (closeSettingsButton?.dataset.mode === 'back') { // Back to main settings
+                            resetSettingsContent();
+                        } else { // Close settings overlay
+                            await stopManager();
+                            await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SETTINGS);
+                        }
                         break;
                 }
             }, CssConstants.SELECTION_ANIMATION_DURATION);
@@ -79,6 +84,7 @@ function showGeneralSettingsDetails() {
 
     updateGeneralSettingsInfo();
     generalSettingsInfoContainer.style.display = 'block';
+    setCloseButtonMode('back');
 }
 
 function resetSettingsContent() {
@@ -89,8 +95,11 @@ function resetSettingsContent() {
     if (settingsContentContainer) {
         settingsContentContainer.style.display = '';
     }
+
+    setCloseButtonMode('close');
 }
 
+// Hides the settings content container (contains the 3 buttons - generalSettingsBtn, stimuliSettingsBtn and calibrationBtn)
 function hideSettingsContent() {
     if (settingsContentContainer) {
         settingsContentContainer.style.display = 'none';
@@ -131,6 +140,32 @@ function buildGeneralSettingsInfoContainer() {
     return container;
 }
 
+function setCloseButtonMode(mode) {
+    if (!closeSettingsButton) {
+        return;
+    }
+
+    closeSettingsButton.dataset.mode = mode;
+
+    const iconElement = closeSettingsButton.querySelector('i');
+    // Update button text and aria-label based on whether to close or go back
+    if (mode === 'back') {
+        if (iconElement) {
+            iconElement.textContent = 'arrow_back';
+        } else {
+            closeSettingsButton.textContent = 'Back';
+        }
+        closeSettingsButton.setAttribute('aria-label', 'Back to Settings');
+    } else {
+        if (iconElement) {
+            iconElement.textContent = 'close';
+        } else {
+            closeSettingsButton.textContent = 'Close';
+        }
+        closeSettingsButton.setAttribute('aria-label', 'Close Settings');
+    }
+}
+
 function updateGeneralSettingsInfo() {
     if (!generalSettingsInfoContainer) return;
 
@@ -151,21 +186,9 @@ function updateGeneralSettingsInfo() {
     }
 
     if (headsetValue) {
-        headsetValue.textContent = formatHeadsetLabel(headsetInUse);
+        headsetValue.textContent = headsetInUse || 'Unknown';
     }
     if (connectionTypeValue) {
         connectionTypeValue.textContent = connectionTypeInUse || 'Unknown';
     }
-}
-
-function formatHeadsetLabel(headset) {
-    if (!headset) {
-        return 'Unknown';
-    }
-
-    if (headset.toLowerCase() === 'lsl') {
-        return 'LSL';
-    }
-
-    return headset.charAt(0).toUpperCase() + headset.slice(1);
 }

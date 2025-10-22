@@ -82,17 +82,19 @@ def test_fbcca(eeg, list_freqs):
     # Filter bank coefficients 
     fb_coefs = np.array([i for i in range(1, fbcca_config.subBands + 1)])**(-1.25) + 0.25
 
-    # Get number of samples AFTER filterbank (downsampling included)
-    testdata_example = filterbank(eeg, 1)
-    num_smpls_resampled = testdata_example.shape[1]
+    # Compute all sub-bands once per invocation to avoid redundant filtering
+    filtered_subbands = [filterbank(eeg, fb_idx + 1) for fb_idx in range(fbcca_config.subBands)]
+    if not filtered_subbands:
+        raise ValueError('No sub-bands computed; check fbcca_config.subBands.')
+
+    num_smpls_resampled = filtered_subbands[0].shape[1]
 
     # Generate reference signals to match downsampled EEG length
     y_ref = cca_reference(list_freqs, num_smpls_resampled, fs=256)  # <-- updated
 
     r = np.zeros((fbcca_config.subBands, len(list_freqs)))
 
-    for fb_i in range(fbcca_config.subBands):
-        testdata = filterbank(eeg, fb_i + 1)
+    for fb_i, testdata in enumerate(filtered_subbands):
         for class_i in range(len(list_freqs)):
             refdata = y_ref[class_i, :, :]
 

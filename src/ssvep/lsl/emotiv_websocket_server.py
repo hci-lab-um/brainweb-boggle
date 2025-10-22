@@ -21,7 +21,7 @@ FILTER_ORDER = 5
 NOTCH_Q = 30.0
 EMOTIV_CHANNEL_NAMES = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"] # Emotiv Epoc X channel names always in this order
 APPLY_FILTERING = False      # Set to True/False to enable/disable bandpass and notch filters
-SAVE_RAW_DATA = True        # Set to True/False to enable/disable saving raw data to JSON files
+SAVE_RAW_DATA = False        # Set to True/False to enable/disable saving raw data to JSON files
 
 # === ELECTRODE CONFIGURATION ===
 # Epoc X electrode layout: AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4

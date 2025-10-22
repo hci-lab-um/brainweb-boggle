@@ -8,8 +8,12 @@ const { browserConfig } = require('../../../configs/browserConfig');
 
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
 const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
+const requiredSampleCount = fbccaConfiguration.totalDataPointCount();
 let messageResult = { data: [] };
 let ws = null;
+let pythonShellInstance = null;
+let pythonShellInitPromise = null;
+let pythonRequestQueue = Promise.resolve();
 
 // Function used to run the LSL or Emotiv WebSocket Server
 async function startEegWebSocket() {
@@ -73,12 +77,14 @@ function connectWebSocket() {
                     if (jsonData.time && jsonData.values) {
                         // console.log(`[DEBUG] Adding Emotiv data: time=${jsonData.time}, channels=${jsonData.values.length}`);
                         messageResult.data.push(jsonData);
+                        trimMessageBuffer();
                     } else {
                         console.log('[DEBUG] Emotiv data missing time or values:', jsonData);
                     }
                 } else {
                     // LSL data format: {time: timestamp, values: [ch1, ch2, ...]}
                     messageResult.data.push(jsonData);
+                    trimMessageBuffer();
                 }
             } catch (error) {
                 console.error("Failed to parse JSON:", error);
@@ -104,13 +110,121 @@ function disconnectWebSocket() {
     }
 }
 
+function trimMessageBuffer() {
+    if (!Array.isArray(messageResult.data)) {
+        return;
+    }
+
+    const excess = messageResult.data.length - requiredSampleCount;
+    if (excess > 0) {
+        messageResult.data.splice(0, excess);
+    }
+}
+
+function resetPythonShell({ terminate = false } = {}) {
+    if (terminate && pythonShellInstance && typeof pythonShellInstance.terminate === 'function') {
+        try {
+            pythonShellInstance.terminate();
+        } catch (error) {
+            console.error('Failed to terminate Python shell:', error);
+        }
+    }
+
+    pythonShellInstance = null;
+    pythonShellInitPromise = null;
+}
+
+async function ensurePythonShell() {
+    if (pythonShellInstance) {
+        return pythonShellInstance;
+    }
+
+    if (!pythonShellInitPromise) {
+        pythonShellInitPromise = new Promise((resolve, reject) => {
+            try {
+                const scriptPath = path.join(__dirname, '../../ssvep/fbcca-py/run_fbcca.py');
+                const shell = new PythonShell(scriptPath, { mode: 'json' });
+
+                shell.on('stderr', (error) => {
+                    console.error('Python Error:', error.toString());
+                });
+
+                shell.on('close', (code) => {
+                    console.log('Python shell closed with code', code);
+                    resetPythonShell();
+                });
+
+                pythonShellInstance = shell;
+                resolve(shell);
+            } catch (error) {
+                resetPythonShell();
+                reject(error);
+            }
+        }).catch((error) => {
+            resetPythonShell();
+            throw error;
+        });
+    }
+
+    return pythonShellInitPromise;
+}
+
+function queuePythonTask(task) {
+    const nextTask = pythonRequestQueue.then(() => task());
+    pythonRequestQueue = nextTask.catch(() => { });
+    return nextTask;
+}
+
+function runPythonFbcca(eegData, scenarioId) {
+    return queuePythonTask(async () => {
+        const shell = await ensurePythonShell();
+
+        return new Promise((resolve, reject) => {
+            const handleMessage = (selectedButtonId) => {
+                shell.removeListener('message', handleMessage);
+                shell.removeListener('close', handleClose);
+                if (selectedButtonId && typeof selectedButtonId === 'object' && selectedButtonId.error) {
+                    reject(new Error(selectedButtonId.error));
+                    return;
+                }
+                resolve(selectedButtonId);
+            };
+
+            const handleError = (error) => {
+                shell.removeListener('message', handleMessage);
+                shell.removeListener('close', handleClose);
+                resetPythonShell({ terminate: true });
+                reject(error);
+            };
+
+            const handleClose = () => {
+                handleError(new Error('Python shell closed before responding.'));
+            };
+
+            try {
+                shell.once('message', handleMessage);
+                shell.once('close', handleClose);
+                shell.send({ eegData, scenario_id: scenarioId }, (error) => {
+                    if (error) {
+                        handleError(error);
+                    }
+                });
+            } catch (error) {
+                handleError(error);
+            }
+        });
+    });
+}
+
 // Function to handle incoming WebSocket data
 async function processDataWithFbcca(currentScenarioID, viewsList) {
-    if (messageResult.data && messageResult.data.length > 0) {
+    if (messageResult.data && messageResult.data.length >= requiredSampleCount) {
         console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${eegDataSource.toUpperCase()}`);
 
-        const dataPoints = messageResult['data'];
-        console.log("Sample data point:", dataPoints[0]);
+        const dataPoints = messageResult.data.slice(-requiredSampleCount);
+        messageResult.data = [];
+
+        console.log('Sample data point:', dataPoints[0]);
 
         // Determine the actual number of channels from the first data point
         const actualChannelCount = fbccaConfiguration.channels;
@@ -118,7 +232,7 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
 
         // Initialize an array to hold data by channel (use actual channel count)
         const eegData = Array.from({ length: actualChannelCount }, () => []);
-        
+
         // Populate the eegData array, where each row corresponds to a channel
         dataPoints.forEach((point, idx) => {
             const values = point['values'];
@@ -131,14 +245,16 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
             } else {
                 console.log(`[WARNING] Data point ${idx} missing values:`, point);
             }
-        }); console.log(`[DEBUG] Processed data - Channel 0 has ${eegData[0] ? eegData[0].length : 0} samples`);
+        });
+
+        console.log(`[DEBUG] Processed data - Channel 0 has ${eegData[0] ? eegData[0].length : 0} samples`);
 
         // !!!!!!!!!!! CHECK THIS !!!!!!!!!!! 
         // Slice the first 200 samples from each channel DUE TO VISUAL LATENCY
         // eegData = eeg.map(channel => channel.slice(200));
 
         // Now `channels` is a 2D array where each row is a channel with values over time
-        console.log("Organised data by channel:", eegData);
+        console.log(`[DEBUG] Organised data by channel count ${eegData.length}, samples per channel ${eegData[0] ? eegData[0].length : 0}`);
 
         // Run fbcca algorithm based on the selected language
         if (fbccaLanguage === 'javascript') {
@@ -157,49 +273,27 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
 
         } else {
             // Run fbcca in Python
-            return new Promise((resolve, reject) => {
-                let scriptPath = path.join(__dirname, '../../ssvep/fbcca-py/run_fbcca.py');
-                let shell = new PythonShell(scriptPath, { mode: 'json' });
+            return runPythonFbcca(eegData, currentScenarioID).then((selectedButtonId) => {
+                const parsedButtonId = parseInt(selectedButtonId, 10);
 
-                console.log('Sending Scenario ID and EEG data to Python:', currentScenarioID);
+                if (!Number.isNaN(parsedButtonId) && parsedButtonId !== -1) {
+                    console.log('PYTHON - User selected button', parsedButtonId);
 
-                // Send both eegData and scenario_id in a single JSON message
-                shell.send({ eegData: JSON.stringify(eegData), scenario_id: currentScenarioID.toString() });
+                    let topMostView = viewsList[viewsList.length - 1];
+                    topMostView.webContentsView.webContents.send('selectedButton-click', parsedButtonId);
+                } else {
+                    console.log('PYTHON - User is in Idle State!');
+                }
 
-                shell.on('message', (selectedButtonId) => {
-                    try {
-                        if (parseInt(selectedButtonId) != -1) {
-                            console.log("PYTHON - User selected button", selectedButtonId);
-
-                            // Obtaining the topmost view from the viewsList to send the button click for the button that has been classified by fbcca PYTHON
-                            let topMostView = viewsList[viewsList.length - 1];
-                            topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
-                        }
-                        else {
-                            console.log("PYTHON - User is in Idle State!");
-                        }
-
-                        resolve(shell);  // Resolve with running Python process after receiving selectedButtonId    
-                    } catch (error) {
-                        console.error("Error when executing Python:", error);
-                        reject(error);
-                    }
-                });
-
-                shell.on('stderr', (error) => {
-                    console.error('Python Error:', error.toString());
-                });
-
-                shell.on('close', () => {
-                    console.log('Python shell closed');
-                });
+                return parsedButtonId;
+            }).catch((error) => {
+                console.error('Error when executing Python:', error);
+                return -1;
             });
         }
-    } else {
-        console.log(`[DEBUG] No EEG data available for processing. messageResult.data length: ${messageResult.data ? messageResult.data.length : 'undefined'}`);
+    } else if (messageResult.data && messageResult.data.length > 0) {
+        console.log(`[DEBUG] Not enough EEG data for processing. messageResult.data length: ${messageResult.data.length}`);
     }
-
-    messageResult.data = [];
 }
 
 module.exports = {

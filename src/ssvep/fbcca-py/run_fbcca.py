@@ -75,12 +75,17 @@ if __name__ == "__main__":
             message = json.loads(line)
             
             # Check message content for required keys
-            if 'eegData' in message and 'scenario_id' in message:              
-                eegData = np.array(json.loads(message['eegData']))
+            if 'eegData' in message and 'scenario_id' in message:             
+                eeg_payload = message['eegData']
+                if isinstance(eeg_payload, str):
+                    eeg_array = np.array(json.loads(eeg_payload), dtype=np.float32)
+                else:
+                    eeg_array = np.array(eeg_payload, dtype=np.float32)
+
                 scenario_id = int(message['scenario_id'])
                                 
                 # Run the fbcca process
-                label = run_fbcca(eegData, scenario_id)
+                label = run_fbcca(eeg_array, scenario_id)
                 
                 # Output the result as a JSON string
                 print(json.dumps(label))

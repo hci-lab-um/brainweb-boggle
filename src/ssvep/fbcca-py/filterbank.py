@@ -2,6 +2,13 @@ import numpy as np
 from scipy.signal import cheb1ord, cheby1, filtfilt, resample, decimate
 from fbcca_config import fbcca_config
 
+# Cache filter coefficients per sub-band so we only design each filter once
+_FILTER_COEFF_CACHE = {}
+
+# Sub-band definitions used across calls
+_PASSBAND = [6, 14, 22, 30, 38, 46, 54, 62, 70, 78]
+_STOPBAND = [4, 10, 16, 24, 32, 40, 48, 56, 64, 72]
+
 def resample_eeg(eeg, original_fs, target_fs=256):
     num_samples = int(eeg.shape[1] * target_fs / original_fs)
     return resample(eeg, num_samples, axis=1)  # Resample along time axis
@@ -22,17 +29,15 @@ def filterbank(eeg, idx_fb=1, target_fs=256):
 
     num_chans, _ = eeg.shape
     fs_original = fbcca_config.samplingRate
-    fs = fs_original / 2  
+    fs = fs_original / 2
 
-    # For public dataset frequencies (8-15.8Hz)
-    passband = [6, 14, 22, 30, 38, 46, 54, 62, 70, 78]
-    stopband = [4, 10, 16, 24, 32, 40, 48, 56, 64, 72]
-    Wp = [passband[idx_fb - 1] / fs, 90 / fs]  # Passband frequencies
-    Ws = [stopband[idx_fb - 1] / fs, 100 / fs]  # Stopband frequencies
+    if idx_fb not in _FILTER_COEFF_CACHE:
+        Wp = [_PASSBAND[idx_fb - 1] / fs, 90 / fs]
+        Ws = [_STOPBAND[idx_fb - 1] / fs, 100 / fs]
+        N, Wn = cheb1ord(Wp, Ws, 3, 40)
+        _FILTER_COEFF_CACHE[idx_fb] = cheby1(N, 0.5, Wn, btype='band')
 
-    # Design Chebyshev Type I filter
-    N, Wn = cheb1ord(Wp, Ws, 3, 40)
-    B, A = cheby1(N, 0.5, Wn, btype='band')
+    B, A = _FILTER_COEFF_CACHE[idx_fb]
 
     # Filter the EEG data
     y = np.zeros_like(eeg)

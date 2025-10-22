@@ -6,7 +6,6 @@ const logger = require('../main/modules/logger');
 
 let buttons = [];
 let settingsContentContainer = null;
-let generalSettingsInfoContainer = null;
 let homeUrl = '';
 let headsetInUse = '';
 let connectionTypeInUse = '';
@@ -66,13 +65,29 @@ function showSettingsSelection() {
 function updateVisibility(containerIdToShow) {
     // Makes the required container visible and all other containers hidden
     const containers = settingsContentContainer.children;
+    const titleElement = document.getElementById('settingsTitle');
+
     for (const container of containers) {
         if (container.id !== containerIdToShow) {
             container.style.display = 'none';
-        } else if (container.id === 'settingsSelection') {
-            container.style.display = 'grid';
         } else {
-            container.style.display = 'block';
+            switch (container.id) {
+                case 'settingsSelection':
+                    titleElement.textContent = 'Settings';
+                    container.style.display = 'grid';
+                    break;
+                case 'generalSettings':
+                    titleElement.textContent = 'General Settings';
+                    container.style.display = 'block';
+                    break;
+                case 'stimuliSettings':
+                    titleElement.textContent = 'Stimuli Settings';
+                    container.style.display = 'block';
+                    break;
+                default:
+                    logger.warn(`Unknown containerIdToShow: ${containerIdToShow}`);
+                    return;
+            }
         }
     }
 }
@@ -81,31 +96,37 @@ function populateGeneralSettings() {
     const container = document.getElementById('generalSettings');
     container.innerHTML = ''; // Clear existing content
 
-    const heading = document.createElement('h2');
-    heading.textContent = 'General Settings';
-    container.appendChild(heading);
-
-    const homeParagraph = document.createElement('p');
-    homeParagraph.textContent = 'Home URL: ';
+    const homeUrlCard = document.createElement('div');
+    homeUrlCard.classList.add('settingCard');
+    const homeUrlH3 = document.createElement('h3');
+    homeUrlH3.textContent = 'Home URL';
+    homeUrlCard.appendChild(homeUrlH3);
     const homeUrlBtn = document.createElement('button');
     homeUrlBtn.id = 'homeUrlBtn';
+    homeUrlBtn.classList.add('button');
     homeUrlBtn.rel = 'noreferrer noopener';
-    homeParagraph.appendChild(homeUrlBtn);
-    container.appendChild(homeParagraph);
+    homeUrlCard.appendChild(homeUrlBtn);
+    container.appendChild(homeUrlCard);
 
-    const headsetParagraph = document.createElement('p');
-    headsetParagraph.textContent = 'Headset: ';
+    const headsetCard = document.createElement('div');
+    headsetCard.classList.add('settingCard');
+    const headsetCardH3 = document.createElement('h3');
+    headsetCardH3.textContent = 'Headset';
+    headsetCard.appendChild(headsetCardH3);
     const headsetValue = document.createElement('span');
     headsetValue.id = 'generalSettingsHeadset';
-    headsetParagraph.appendChild(headsetValue);
-    container.appendChild(headsetParagraph);
+    headsetCard.appendChild(headsetValue);
+    container.appendChild(headsetCard);
 
-    const connectionTypeParagraph = document.createElement('p');
-    connectionTypeParagraph.textContent = 'Connection Type: ';
+    const connectionTypeCard = document.createElement('div');
+    connectionTypeCard.classList.add('settingCard');
+    const connectionTypeCardH3 = document.createElement('h3');
+    connectionTypeCardH3.textContent = 'Connection Type';
+    connectionTypeCard.appendChild(connectionTypeCardH3);
     const connectionTypeValue = document.createElement('span');
     connectionTypeValue.id = 'generalSettingsConnectionType';
-    connectionTypeParagraph.appendChild(connectionTypeValue);
-    container.appendChild(connectionTypeParagraph);
+    connectionTypeCard.appendChild(connectionTypeValue);
+    container.appendChild(connectionTypeCard);
 
     if (homeUrlBtn) {
         homeUrlBtn.textContent = homeUrl ? homeUrl : 'Not configured';

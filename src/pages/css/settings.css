@@ -369,4 +369,33 @@ body {
   box-sizing: border-box;
 }
 
+.settingCard {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 2.25rem 2.75rem;
+  margin: 1rem 0;
+  border-radius: 15px;
+  background-color: rgba(255, 255, 255, 0.07);
+  gap: 5px;
+}
+.settingCard h3 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #ffffff;
+  flex: 1;
+}
+.settingCard h4 {
+  margin-top: 8px;
+  font-size: 1.3rem;
+  color: #ffffff;
+}
+.settingCard p {
+  margin: 1rem 0;
+  font-size: 1.4rem;
+  color: #b5c2cd;
+  line-height: 35px;
+}
+
 /*# sourceMappingURL=settings.css.map */

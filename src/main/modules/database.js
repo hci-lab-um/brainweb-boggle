@@ -432,6 +432,33 @@ function getDefaultConnectionType() {
     return getSetting(Settings.DEFAULT_CONNECTION_TYPE.NAME);
 }
 
+// =================================
+// ============ SETTERS ============
+// =================================
+
+function updateSetting(setting, value) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialised'));
+            return;
+        }
+
+        const query = `UPDATE settings SET setting_value = ? WHERE setting_name = ?`;
+        db.run(query, [value, setting], function (err) {
+            if (err) {
+                logger.error(`Error updating ${setting}:`, err.message);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+function updateDefaultURL(newUrl) {
+    return updateSetting(Settings.DEFAULT_URL.NAME, newUrl);
+}
+
 module.exports = {
     connect,
     close,
@@ -451,5 +478,7 @@ module.exports = {
     deleteAllBookmarks,
     deleteAllTabs,
     deleteHeadsetsTable,
-    deleteSettingsTable
+    deleteSettingsTable,
+
+    updateDefaultURL
 };

@@ -39,6 +39,18 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     }
 });
 
+ipcRenderer.on('homeUrl-update', (event, newUrl) => {
+    try {
+        homeUrl = newUrl;
+        const homeUrlBtn = document.getElementById('homeUrlBtn');
+        if (homeUrlBtn) {
+            homeUrlBtn.textContent = homeUrl ? homeUrl : 'Not configured';
+        }
+    } catch (error) {
+        logger.error('Error in homeUrl-update handler:', error);
+    }
+});
+
 function showGeneralSettings(containerIdToShow) {
     updateVisibility(containerIdToShow);
     populateGeneralSettings();
@@ -75,10 +87,10 @@ function populateGeneralSettings() {
 
     const homeParagraph = document.createElement('p');
     homeParagraph.textContent = 'Home URL: ';
-    const homeLink = document.createElement('button');
-    homeLink.id = 'generalSettingsHomeLink';
-    homeLink.rel = 'noreferrer noopener';
-    homeParagraph.appendChild(homeLink);
+    const homeUrlBtn = document.createElement('button');
+    homeUrlBtn.id = 'homeUrlBtn';
+    homeUrlBtn.rel = 'noreferrer noopener';
+    homeParagraph.appendChild(homeUrlBtn);
     container.appendChild(homeParagraph);
 
     const headsetParagraph = document.createElement('p');
@@ -95,8 +107,8 @@ function populateGeneralSettings() {
     connectionTypeParagraph.appendChild(connectionTypeValue);
     container.appendChild(connectionTypeParagraph);
 
-    if (homeLink) {
-        homeLink.textContent = homeUrl ? homeUrl : 'Not configured';
+    if (homeUrlBtn) {
+        homeUrlBtn.textContent = homeUrl ? homeUrl : 'Not configured';
     }
 
     if (headsetValue) {
@@ -105,6 +117,25 @@ function populateGeneralSettings() {
     if (connectionTypeValue) {
         connectionTypeValue.textContent = connectionTypeInUse || 'Unknown';
     }
+
+
+    homeUrlBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        homeUrlBtn.disabled = true;
+        setTimeout(() => { homeUrlBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(homeUrlBtn);
+
+        try {
+            const homeUrlBtn = document.getElementById('homeUrlBtn');
+            let elementProperties = {
+                id: 'homeUrl',
+                value: homeUrlBtn.textContent || ''
+            }
+            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
+        } catch (error) {
+            logger.error('Error creating keyboard overlay:', error);
+        }
+    });
 }
 
 function setCloseButtonMode(mode) {

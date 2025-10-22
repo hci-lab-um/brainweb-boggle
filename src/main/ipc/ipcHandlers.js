@@ -8,7 +8,6 @@ const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
 const { browserConfig } = require('../../../configs/browserConfig');
 
-let defaultUrl;
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
 mouse.config.autoDelayMs = 0;       // Disables auto delay for faster clicking
@@ -30,8 +29,6 @@ async function registerIpcHandlers(context) {
         deleteAndInsertAllTabs,
         updateNavigationButtons
     } = context;
-
-    defaultUrl = await db.getDefaultURL();
 
     // Helper function to serialise tabsList
     async function getSerialisableTabsList(tabsList) {
@@ -120,7 +117,7 @@ async function registerIpcHandlers(context) {
             bookmarksList: bookmarksList,
             tabsList: serialisableTabsList,
             optionsList: elementProperties ? elementProperties.options : null,
-            homeUrl: defaultUrl,
+            homeUrl: await db.getDefaultURL(),
             headsetInUse: await db.getDefaultHeadset(),
             connectionTypeInUse: await db.getDefaultConnectionType(),
         }
@@ -300,6 +297,21 @@ async function registerIpcHandlers(context) {
             }
         } catch (err) {
             logger.error('Error loading URL in activeTab:', err.message);
+        }
+    });
+
+    ipcMain.on('homeUrl-update', (event, newUrl) => {
+        try {
+            // Updates the default URL in the database
+            db.updateDefaultURL(newUrl);
+
+            // Updates the homeUrl button inner text in settings overlay if it is open
+            let settingsOverlay = viewsList.find(view => view.name === ViewNames.SETTINGS);
+            if (settingsOverlay) {
+                settingsOverlay.webContentsView.webContents.send('homeUrl-update', newUrl);
+            }
+        } catch (err) {
+            logger.error('Error updating home URL:', err.message);
         }
     });
 
@@ -583,7 +595,7 @@ async function registerIpcHandlers(context) {
     });
 
     ipcMain.handle('tab-add', async (event, url) => {
-        const targetUrl = url || defaultUrl;
+        const targetUrl = url || await db.getDefaultURL();
         try {
             console.log('Creating tab with URL:', targetUrl);
             await createTabView(targetUrl, true);

@@ -39,77 +39,35 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     }
 });
 
-function attachEventListeners() {
-    buttons.forEach((button, index) => {
-        button.addEventListener('click', async () => {
-            // Disable the button immediately to prevent multiple clicks
-            button.disabled = true;
-            setTimeout(() => { button.disabled = false; }, 1500);
-
-            addButtonSelectionAnimation(button)
-            const buttonId = button.getAttribute('id');
-
-            setTimeout(async () => {
-                switch (buttonId) {
-                    case "generalSettingsBtn":
-                        showGeneralSettingsDetails();
-                        break;
-                    case "stimuliSettingsBtn":
-                        resetSettingsContent();
-                        break;
-                    case "calibrationBtn":
-                        resetSettingsContent();
-                        break;
-                    case "closeSettingsBtn":
-                        if (closeSettingsButton?.dataset.mode === 'back') { // Back to main settings
-                            resetSettingsContent();
-                        } else { // Close settings overlay
-                            await stopManager();
-                            await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SETTINGS);
-                        }
-                        break;
-                }
-            }, CssConstants.SELECTION_ANIMATION_DURATION);
-        });
-    });
-}
-
-function showGeneralSettingsDetails() {
-    hideSettingsContent();
-
-    if (!generalSettingsInfoContainer) {
-        generalSettingsInfoContainer = buildGeneralSettingsInfoContainer();
-        settingsContentContainer?.parentElement?.appendChild(generalSettingsInfoContainer);
-    }
-
-    updateGeneralSettingsInfo();
-    generalSettingsInfoContainer.style.display = 'block';
+function showGeneralSettings(containerIdToShow) {
+    updateVisibility(containerIdToShow);
+    populateGeneralSettings();
     setCloseButtonMode('back');
 }
 
-function resetSettingsContent() {
-    if (generalSettingsInfoContainer) {
-        generalSettingsInfoContainer.style.display = 'none';
-    }
-
-    if (settingsContentContainer) {
-        settingsContentContainer.style.display = '';
-    }
-
+function showSettingsSelection() {
+    updateVisibility('settingsSelection');
     setCloseButtonMode('close');
 }
 
-// Hides the settings content container (contains the 3 buttons - generalSettingsBtn, stimuliSettingsBtn and calibrationBtn)
-function hideSettingsContent() {
-    if (settingsContentContainer) {
-        settingsContentContainer.style.display = 'none';
+
+function updateVisibility(containerIdToShow) {
+    // Makes the required container visible and all other containers hidden
+    const containers = settingsContentContainer.children;
+    for (const container of containers) {
+        if (container.id !== containerIdToShow) {
+            container.style.display = 'none';
+        } else if (container.id === 'settingsSelection') {
+            container.style.display = 'grid';
+        } else {
+            container.style.display = 'block';
+        }
     }
 }
 
-function buildGeneralSettingsInfoContainer() {
-    const container = document.createElement('div');
-    container.id = 'generalSettingsDetails';
-    container.classList.add('settingsDetails');
+function populateGeneralSettings() {
+    const container = document.getElementById('generalSettings');
+    container.innerHTML = ''; // Clear existing content
 
     const heading = document.createElement('h2');
     heading.textContent = 'General Settings';
@@ -117,7 +75,7 @@ function buildGeneralSettingsInfoContainer() {
 
     const homeParagraph = document.createElement('p');
     homeParagraph.textContent = 'Home URL: ';
-    const homeLink = document.createElement('a');
+    const homeLink = document.createElement('button');
     homeLink.id = 'generalSettingsHomeLink';
     homeLink.rel = 'noreferrer noopener';
     homeParagraph.appendChild(homeLink);
@@ -137,7 +95,16 @@ function buildGeneralSettingsInfoContainer() {
     connectionTypeParagraph.appendChild(connectionTypeValue);
     container.appendChild(connectionTypeParagraph);
 
-    return container;
+    if (homeLink) {
+        homeLink.textContent = homeUrl ? homeUrl : 'Not configured';
+    }
+
+    if (headsetValue) {
+        headsetValue.textContent = headsetInUse || 'Unknown';
+    }
+    if (connectionTypeValue) {
+        connectionTypeValue.textContent = connectionTypeInUse || 'Unknown';
+    }
 }
 
 function setCloseButtonMode(mode) {
@@ -166,29 +133,37 @@ function setCloseButtonMode(mode) {
     }
 }
 
-function updateGeneralSettingsInfo() {
-    if (!generalSettingsInfoContainer) return;
+function attachEventListeners() {
+    buttons.forEach((button, index) => {
+        button.addEventListener('click', async () => {
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
 
-    const homeLink = generalSettingsInfoContainer.querySelector('#generalSettingsHomeLink');
-    const headsetValue = generalSettingsInfoContainer.querySelector('#generalSettingsHeadset');
-    const connectionTypeValue = generalSettingsInfoContainer.querySelector('#generalSettingsConnectionType');
+            addButtonSelectionAnimation(button)
+            const buttonId = button.getAttribute('id');
 
-    if (homeLink) {
-        if (homeUrl) {
-            homeLink.textContent = homeUrl;
-            homeLink.href = homeUrl;
-            homeLink.target = '_blank';
-        } else {
-            homeLink.textContent = 'Not configured';
-            homeLink.removeAttribute('href');
-            homeLink.removeAttribute('target');
-        }
-    }
-
-    if (headsetValue) {
-        headsetValue.textContent = headsetInUse || 'Unknown';
-    }
-    if (connectionTypeValue) {
-        connectionTypeValue.textContent = connectionTypeInUse || 'Unknown';
-    }
+            setTimeout(async () => {
+                switch (buttonId) {
+                    case "generalSettingsBtn":
+                        showGeneralSettings('generalSettings');
+                        break;
+                    case "stimuliSettingsBtn":
+                        // tbi
+                        break;
+                    case "calibrationBtn":
+                        // tbi
+                        break;
+                    case "closeSettingsBtn":
+                        if (closeSettingsButton?.dataset.mode === 'back') { // Back to main settings
+                            showSettingsSelection();
+                        } else { // Close settings overlay
+                            await stopManager();
+                            await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SETTINGS);
+                        }
+                        break;
+                }
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
+        });
+    });
 }

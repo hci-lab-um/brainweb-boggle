@@ -50,13 +50,13 @@ const Settings = Object.freeze({
     },
     DEFAULT_HEADSET: {
         NAME: "defaultHeadset",
-        LABEL: "Default Headset",
+        LABEL: "Headset",
         DESCRIPTION: "The headset that will be used by default when the application starts.",
         DEFAULT: `${Headsets.EPOC_X.NAME} - ${Headsets.EPOC_X.COMPANY}`,
     },
     DEFAULT_CONNECTION_TYPE: {
         NAME: "defaultConnectionType",
-        LABEL: "Default Connection Type",
+        LABEL: "Connection Type",
         DESCRIPTION: "The connection type that will be used to obtain the data from the default headset.",
         DEFAULT: Headsets.EPOC_X.CONNECTION_TYPE.CONNECTION_TYPE_1,
     }

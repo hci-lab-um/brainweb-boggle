@@ -382,30 +382,57 @@ h4 {
   text-align: center;
   margin-bottom: 1.5rem;
 }
-#browsing-container #boggleLogo-container {
+#browsing-container .aboutCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 2.25rem 2.75rem;
+  margin: 1rem 0;
+  border-radius: 15px;
+  background-color: rgba(255, 255, 255, 0.07);
+  gap: 5px;
+}
+#browsing-container .aboutCard #boggleLogo-container {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 1rem;
   gap: 2rem;
 }
-#browsing-container #boggleLogo-logo {
+#browsing-container .aboutCard #boggleLogo-logo {
   width: 7.5rem;
   height: 7.5rem;
   border-radius: 50%;
   margin: 0;
 }
-#browsing-container #boggleLogo-text {
+#browsing-container .aboutCard #boggleLogo-text {
   gap: 0.75rem;
   display: flex;
   flex-direction: column;
 }
-#browsing-container #boggleLogo-text img {
+#browsing-container .aboutCard #boggleLogo-text img {
   width: 15rem;
 }
-#browsing-container #boggleLogo-text h4 {
+#browsing-container .aboutCard #boggleLogo-text h4 {
   margin: 0;
   font-size: 1.5rem;
+}
+#browsing-container .aboutCard h3 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #ffffff;
+}
+#browsing-container .aboutCard h4 {
+  margin-top: 8px;
+  font-size: 1.3rem;
+  color: #ffffff;
+}
+#browsing-container .aboutCard p {
+  margin: 1rem 0;
+  font-size: 1.4rem;
+  color: #b5c2cd;
+  line-height: 35px;
 }
 #browsing-container .linkButtonsContainer {
   justify-items: center;

@@ -315,6 +315,14 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.handle('multipleConnectionTypesExist-get', async (event, headsetName, companyName) => {
+        try {
+            return await db.multipleConnectionTypesExist(headsetName, companyName);
+        } catch (err) {
+            logger.error('Error checking multiple connection types existence:', err.message);
+        }
+    });
+
     function countIframeMatches(term) {
         const iframes = Array.from(document.querySelectorAll('iframe'));
         let iframeMatchCount = 0;

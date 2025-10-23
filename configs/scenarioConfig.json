@@ -34,6 +34,8 @@
         "frequencies": [14.5],
         "phases": [0.5]
     },
+
+
     "scenario_10": {
         "name": "SEEK",
         "description": "Find in Page overlay with only the close button",
@@ -202,6 +204,8 @@
         "frequencies": [6, 7.5, 8, 9, 8.5],
         "phases": [1, 1.5, 1.5, 0.5, 1]
     },
+
+
     "scenario_40": {
         "name": "SELECT",
         "description": "1 button in sidebar, with CLOSE/BACK button & toggle",
@@ -265,6 +269,8 @@
         "frequencies": [14.5],
         "phases": [0.5]
     },
+
+
     "scenario_50": {
         "name": "DROPDOWN",
         "description": "MULTIPLE SELECTION DROPDOWN - One option, send and cancel buttons",
@@ -391,13 +397,8 @@
         "frequencies": [6, 8, 12.5, 9, 7.5, 11, 9.5],
         "phases": [1, 1.5, 0, 0.5, 1.5, 0, 0]
     },
-    "scenario_70": {
-        "name": "SETTINGS",
-        "description": "Settings menu with 6 buttons",
-        "buttonIds": ["generalSettingsBtn", "stimuliSettingsBtn", "calibrationBtn", "closeSettingsBtn"],
-        "frequencies": [6, 7.5, 8.5, 7],
-        "phases": [1, 1.5, 1, 0]  
-    },
+
+
     "scenario_80": {
         "name": "KEYBOARD",
         "description": "No text in search field",
@@ -433,6 +434,8 @@
         "frequencies": [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 12.5],
         "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0]
     },
+
+
     "scenario_90": {
         "name": "KEYBOARD_KEYS",
         "description": "8 keys, 1 arrow button and cancel button",
@@ -481,5 +484,28 @@
         "buttonIds": ["firstKeyBtn", "secondKeyBtn", "thirdKeyBtn", "cancelBtn"],
         "frequencies": [7, 6.5, 8.5, 12.5],
         "phases": [0, 0.5, 1, 0]
+    },
+
+
+    "scenario_100": {
+        "name": "SETTINGS",
+        "description": "Settings menu with 4 buttons",
+        "buttonIds": ["generalSettingsBtn", "stimuliSettingsBtn", "calibrationBtn", "closeSettingsBtn"],
+        "frequencies": [6, 7.5, 8.5, 7],
+        "phases": [1, 1.5, 1, 0]  
+    },
+    "scenario_101": {
+        "name": "SETTINGS - General Settings",
+        "description": "General Settings menu with 4 buttons",
+        "buttonIds": ["homeUrlBtn", "headsetBtn", "connectionTypeBtn", "closeSettingsBtn"],
+        "frequencies": [6, 7.5, 8.5, 7],
+        "phases": [1, 1.5, 1, 0]  
+    },
+    "scenario_102": {
+        "name": "SETTINGS - General Settings",
+        "description": "General Settings menu with 3 buttons - no connection type",
+        "buttonIds": ["homeUrlBtn", "headsetBtn", "closeSettingsBtn"],
+        "frequencies": [6, 7.5, 7],
+        "phases": [1, 1.5, 0]  
     }
 }

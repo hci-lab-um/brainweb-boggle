@@ -50,15 +50,30 @@ ipcRenderer.on('homeUrl-update', (event, newUrl) => {
     }
 });
 
-function showGeneralSettings(containerIdToShow) {
+async function showGeneralSettings(containerIdToShow) {
     updateVisibility(containerIdToShow);
     populateGeneralSettings();
     setCloseButtonMode('back');
+
+    // Extracting company and headset name from headsetInUse to be used in the database query
+    const companyName = headsetInUse.split(' - ')[1] || '';
+    const headsetName = headsetInUse.split(' - ')[0] || '';
+    const multipleConnectionTypesExist = await ipcRenderer.invoke('multipleConnectionTypesExist-get', headsetName, companyName);
+
+    buttons = document.querySelectorAll('button');
+    if (multipleConnectionTypesExist) {
+        await updateScenarioId(101, buttons, ViewNames.SETTINGS);
+    } else {
+        await updateScenarioId(102, buttons, ViewNames.SETTINGS);
+    }
 }
 
-function showSettingsSelection() {
+async function showSettingsSelection() {
     updateVisibility('settingsSelection');
     setCloseButtonMode('close');
+
+    buttons = document.querySelectorAll('button');
+    await updateScenarioId(100, buttons, ViewNames.SETTINGS);
 }
 
 
@@ -255,6 +270,8 @@ function attachEventListeners() {
             const buttonId = button.getAttribute('id');
 
             setTimeout(async () => {
+                await stopManager();
+
                 switch (buttonId) {
                     case "generalSettingsBtn":
                         showGeneralSettings('generalSettings');
@@ -269,7 +286,6 @@ function attachEventListeners() {
                         if (closeSettingsButton?.dataset.mode === 'back') { // Back to main settings
                             showSettingsSelection();
                         } else { // Close settings overlay
-                            await stopManager();
                             await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SETTINGS);
                         }
                         break;

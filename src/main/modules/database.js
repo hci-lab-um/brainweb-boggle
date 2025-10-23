@@ -459,6 +459,29 @@ function updateDefaultURL(newUrl) {
     return updateSetting(Settings.DEFAULT_URL.NAME, newUrl);
 }
 
+// =================================
+// ============ QUERIES ============
+// =================================
+
+function multipleConnectionTypesExist(headsetName, companyName) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialised'));
+            return;
+        }
+
+        const query = `SELECT COUNT(DISTINCT connection_type) as count FROM headsets WHERE headset_name = ? AND company_name = ?`;
+        db.get(query, [headsetName, companyName], (err, row) => {
+            if (err) {
+                logger.error('Error checking multiple connection types:', err.message);
+                reject(err);
+            } else {
+                resolve(row.count > 1);
+            }
+        });
+    });
+}
+
 module.exports = {
     connect,
     close,
@@ -480,5 +503,7 @@ module.exports = {
     deleteHeadsetsTable,
     deleteSettingsTable,
 
-    updateDefaultURL
+    updateDefaultURL,
+
+    multipleConnectionTypesExist,
 };

@@ -1,6 +1,7 @@
 const { app } = require('electron');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 const dbPath = path.join(app.getPath('userData'), 'boggle.db');
 const logger = require('./logger');
 const { Headsets, Settings } = require('../../utils/constants/enums');
@@ -37,6 +38,31 @@ function close() {
         }
     });
 }
+
+
+// ==================================
+// ======== HELPER FUNCTIONS ========
+// ==================================
+
+// Helper to resolve headset IMAGE paths from enums to an absolute file path
+function resolveHeadsetImagePath(imagePathFromEnum) {
+    try {
+        if (!imagePathFromEnum) return null;
+
+        // Prefer the filename and look for it under the app's resources folder
+        const fileName = path.basename(imagePathFromEnum);
+        const appRoot = app.getAppPath();
+        const resourcesCandidate = path.join(appRoot, 'resources', fileName);
+        if (fs.existsSync(resourcesCandidate)) return resourcesCandidate;
+
+        logger.warn(`Headset image not found for path: ${imagePathFromEnum}`);
+        return null;
+    } catch (e) {
+        logger.warn(`Error resolving headset image path ${imagePathFromEnum}: ${e.message}`);
+        return null;
+    }
+}
+
 
 // =================================
 // ======== CREATING TABLES ========
@@ -95,10 +121,11 @@ function createHeadsetTable() {
     return new Promise((resolve, reject) => {
         const createHeadsetTable = `
             CREATE TABLE IF NOT EXISTS headsets (
-                headset_name TEXT NOT NULL,
                 company_name TEXT NOT NULL,
-                connection_type TEXT NOT NULL,
-                UNIQUE(headset_name, company_name, connection_type)
+                headset_name TEXT NOT NULL,
+                used_electrodes TEXT NOT NULL,
+                image BLOB,
+                PRIMARY KEY (company_name, headset_name)
             );
         `;
         db.run(createHeadsetTable, (err) => {
@@ -113,9 +140,126 @@ function createHeadsetTable() {
     });
 }
 
-function populateHeadsetTable() {
+function populateHeadsetsTable() {
     return new Promise((resolve, reject) => {
-        // Build one row per connection type from the Headsets enum
+        const allRows = [];
+        const values = [];
+
+        Object.values(Headsets).forEach((headset) => {
+            // Attempt to read the image as a Buffer; if missing, store NULL
+            let imageBuffer = null;
+            try {
+                const imgPath = resolveHeadsetImagePath(headset.IMAGE);
+                if (imgPath) {
+                    imageBuffer = fs.readFileSync(imgPath);
+                }
+            } catch (e) {
+                logger.warn(`Could not read headset image for ${headset.NAME}: ${e.message}`);
+            }
+
+            allRows.push('(?, ?, ?, ?)');
+            values.push(
+                headset.COMPANY,
+                headset.NAME,
+                JSON.stringify(headset.USED_ELECTRODES || []),
+                imageBuffer
+            );
+        });
+
+        if (allRows.length === 0) {
+            resolve();
+            return;
+        }
+
+        const insertSql = `INSERT OR IGNORE INTO headsets (company_name, headset_name, used_electrodes, image) VALUES ${allRows.join(', ')}`;
+
+        db.run(insertSql, values, (err) => {
+            if (err) {
+                logger.error('Error populating headsets table:', err.message);
+                reject(err);
+            } else {
+                logger.info('Headsets table populated successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function createConnectionTypesTable() {
+    return new Promise((resolve, reject) => {
+        const createTable = `
+            CREATE TABLE IF NOT EXISTS connection_types (
+                name TEXT PRIMARY KEY
+            );
+        `;
+        db.run(createTable, (err) => {
+            if (err) {
+                logger.error('Error creating connection_types table:', err.message);
+                reject(err);
+            } else {
+                logger.info('connection_types table created successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function populateConnectionTypesTable() {
+    return new Promise((resolve, reject) => {
+        const typesSet = new Set();
+        // Collect all unique connection types from headsets (by using Set)
+        Object.values(Headsets).forEach((headset) => {
+            Object.values(headset.CONNECTION_TYPE || {}).forEach((t) => typesSet.add(t));
+        });
+
+        const types = Array.from(typesSet);
+        if (types.length === 0) {
+            resolve();
+            return;
+        }
+
+        const placeholders = types.map(() => '(?)').join(', ');
+        const sql = `INSERT OR IGNORE INTO connection_types (name) VALUES ${placeholders}`;
+        db.run(sql, types, (err) => {
+            if (err) {
+                logger.error('Error populating connection_types table:', err.message);
+                reject(err);
+            } else {
+                logger.info('connection_types table populated successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function createHeadsetConnectionTypesTable() {
+    return new Promise((resolve, reject) => {
+        const createTable = `
+            CREATE TABLE IF NOT EXISTS headset_connection_types (
+                company_name TEXT NOT NULL,
+                headset_name TEXT NOT NULL,
+                connection_type TEXT NOT NULL,
+                PRIMARY KEY (company_name, headset_name, connection_type),
+                FOREIGN KEY (company_name, headset_name)
+                    REFERENCES headsets(company_name, headset_name),
+                FOREIGN KEY (connection_type)
+                    REFERENCES connection_types(name)
+            );
+        `;
+        db.run(createTable, (err) => {
+            if (err) {
+                logger.error('Error creating headset_connection_types table:', err.message);
+                reject(err);
+            } else {
+                logger.info('headset_connection_types table created successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function populateHeadsetConnectionTypesTable() {
+    return new Promise((resolve, reject) => {
         const allRows = [];
         const values = [];
 
@@ -123,11 +267,7 @@ function populateHeadsetTable() {
             const connectionTypes = Object.values(headset.CONNECTION_TYPE || {});
             connectionTypes.forEach((connType) => {
                 allRows.push('(?, ?, ?)');
-                values.push(
-                    headset.NAME,
-                    headset.COMPANY,
-                    connType
-                );
+                values.push(headset.COMPANY, headset.NAME, connType);
             });
         });
 
@@ -136,14 +276,13 @@ function populateHeadsetTable() {
             return;
         }
 
-        const insertHeadsets = `INSERT OR IGNORE INTO headsets (headset_name, company_name, connection_type) VALUES ${allRows.join(', ')}`;
-
-        db.run(insertHeadsets, values, (err) => {
+        const sql = `INSERT OR IGNORE INTO headset_connection_types (company_name, headset_name, connection_type) VALUES ${allRows.join(', ')}`;
+        db.run(sql, values, (err) => {
             if (err) {
-                logger.error('Error populating headsets table:', err.message);
+                logger.error('Error populating headset_connection_types table:', err.message);
                 reject(err);
             } else {
-                logger.info('Headsets table populated successfully.');
+                logger.info('headset_connection_types table populated successfully.');
                 resolve();
             }
         });
@@ -228,7 +367,11 @@ async function createTables() {
     return createBookmarksTable()
         .then(createTabsTable)
         .then(createHeadsetTable)
-        .then(populateHeadsetTable)
+        .then(createConnectionTypesTable)
+        .then(createHeadsetConnectionTypesTable)
+        .then(populateHeadsetsTable)
+        .then(populateConnectionTypesTable)
+        .then(populateHeadsetConnectionTypesTable)
         .then(createSettingsTable)
         .then(populateSettingsTable)
         .catch((err) => {
@@ -347,16 +490,32 @@ function deleteAllTabs() {
 }
 
 function deleteHeadsetsTable() {
+    // For convenience, drop the three related tables if they exist
     return new Promise((resolve, reject) => {
-        const deleteTable = `DROP TABLE IF EXISTS headsets`;
-        db.run(deleteTable, function (err) {
-            if (err) {
-                logger.error('Error deleting headsets table:', err.message);
-                reject(err);
-            } else {
-                logger.info('Headsets table has been deleted');
-                resolve();
-            }
+        db.serialize(() => {
+            db.run(`DROP TABLE IF EXISTS headset_connection_types`, (err) => {
+                if (err) {
+                    logger.error('Error deleting headset_connection_types table:', err.message);
+                    reject(err);
+                    return;
+                }
+                db.run(`DROP TABLE IF EXISTS connection_types`, (err2) => {
+                    if (err2) {
+                        logger.error('Error deleting connection_types table:', err2.message);
+                        reject(err2);
+                        return;
+                    }
+                    db.run(`DROP TABLE IF EXISTS headsets`, (err3) => {
+                        if (err3) {
+                            logger.error('Error deleting headsets table:', err3.message);
+                            reject(err3);
+                        } else {
+                            logger.info('ALL HEADSET related tables have been deleted');
+                            resolve();
+                        }
+                    });
+                });
+            });
         });
     });
 }
@@ -523,7 +682,11 @@ function multipleConnectionTypesExist(headsetName, companyName) {
             return;
         }
 
-        const query = `SELECT COUNT(DISTINCT connection_type) as count FROM headsets WHERE headset_name = ? AND company_name = ?`;
+        const query = `
+            SELECT COUNT(DISTINCT connection_type) as count
+            FROM headset_connection_types
+            WHERE headset_name = ? AND company_name = ?
+        `;
         db.get(query, [headsetName, companyName], (err, row) => {
             if (err) {
                 logger.error('Error checking multiple connection types:', err.message);

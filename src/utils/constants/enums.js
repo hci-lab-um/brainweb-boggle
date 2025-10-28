@@ -20,24 +20,30 @@ const Headsets = Object.freeze({
     EPOC_X: {
         NAME: "EPOC X",
         COMPANY: "Emotiv",
+        USED_ELECTRODES: ["O1", "P7", "P8", "O2"],
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: "Cortex API"
-        }
+        },
+        IMAGE: "../../resources/epocx_headset.png"
     },
     DSI_VR300: {
         NAME: "DSI-VR300",
         COMPANY: "Wearable Sensing",
+        USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: "LSL",
             CONNECTION_TYPE_2: "TCP/IP",
-        }
+        },
+        IMAGE: "../../resources/dsi_vr300_headset.png"
     },
-    G_TEC: {
+    G_USBAMP: {
         NAME: "g.USBamp",
         COMPANY: "g.tec",
+        USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: "LSL"
-        }
+        },
+        IMAGE: "../../resources/gusbamp_headset.png"
     }
 });
 

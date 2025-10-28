@@ -154,8 +154,9 @@ function createSettingsTable() {
     return new Promise((resolve, reject) => {
         const createSettingsTable = `
             CREATE TABLE IF NOT EXISTS settings (
-                setting_name TEXT PRIMARY KEY,
-                setting_value TEXT NOT NULL 
+                name TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                category TEXT NOT NULL
             );
         `;
         db.run(createSettingsTable, (err) => {
@@ -173,17 +174,44 @@ function createSettingsTable() {
 
 function populateSettingsTable() {
     return new Promise((resolve, reject) => {
-        const insertSetting = `INSERT OR IGNORE INTO settings (setting_name, setting_value) VALUES (?, ?)`;
+        const insertSetting = `INSERT OR IGNORE INTO settings (name, value, category) VALUES (?, ?, ?)`;
 
-        const defaultSettings = {
-            [Settings.DEFAULT_URL.NAME]: Settings.DEFAULT_URL.DEFAULT,
-            [Settings.DEFAULT_HEADSET.NAME]: Settings.DEFAULT_HEADSET.DEFAULT,
-            [Settings.DEFAULT_CONNECTION_TYPE.NAME]: Settings.DEFAULT_CONNECTION_TYPE.DEFAULT,
-        };
+        const defaultSettings = [
+            {
+                name: Settings.DEFAULT_URL.NAME,
+                value: Settings.DEFAULT_URL.DEFAULT,
+                category: Settings.DEFAULT_URL.CATEGORY,
+            },
+            {
+                name: Settings.DEFAULT_HEADSET.NAME,
+                value: Settings.DEFAULT_HEADSET.DEFAULT,
+                category: Settings.DEFAULT_HEADSET.CATEGORY,
+            },
+            {
+                name: Settings.DEFAULT_CONNECTION_TYPE.NAME,
+                value: Settings.DEFAULT_CONNECTION_TYPE.DEFAULT,
+                category: Settings.DEFAULT_CONNECTION_TYPE.CATEGORY,
+            },
+            {
+                name: Settings.DEFAULT_STIMULI_PATTERN.NAME,
+                value: Settings.DEFAULT_STIMULI_PATTERN.DEFAULT,
+                category: Settings.DEFAULT_STIMULI_PATTERN.CATEGORY,
+            },
+            {
+                name: Settings.DEFAULT_STIMULI_LIGHT_COLOR.NAME,
+                value: Settings.DEFAULT_STIMULI_LIGHT_COLOR.DEFAULT,
+                category: Settings.DEFAULT_STIMULI_LIGHT_COLOR.CATEGORY,
+            },
+            {
+                name: Settings.DEFAULT_STIMULI_DARK_COLOR.NAME,
+                value: Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT,
+                category: Settings.DEFAULT_STIMULI_DARK_COLOR.CATEGORY,
+            },
+        ];
 
         db.serialize(() => {
-            Object.entries(defaultSettings).forEach(([name, value]) => {
-                db.run(insertSetting, [name, value.toString()], (err) => {
+            defaultSettings.forEach(({ name, value, category }) => {
+                db.run(insertSetting, [name, value.toString(), category], (err) => {
                     if (err) {
                         logger.error('Error populating settings table:', err.message);
                         reject(err);
@@ -405,13 +433,13 @@ function getSetting(setting) {
             return;
         }
 
-        const query = `SELECT setting_value FROM settings WHERE setting_name = ?`;
+        const query = `SELECT value FROM settings WHERE name = ?`;
         db.get(query, [setting], (err, row) => {
             if (err) {
                 logger.error(`Error retrieving ${setting}:`, err.message);
                 reject(err);
             } else {
-                resolve(row.setting_value);
+                resolve(row.value);
             }
         });
     }).catch(err => {
@@ -432,6 +460,18 @@ function getDefaultConnectionType() {
     return getSetting(Settings.DEFAULT_CONNECTION_TYPE.NAME);
 }
 
+function getDefaultStimuliPattern() {
+    return getSetting(Settings.DEFAULT_STIMULI_PATTERN.NAME);
+}
+
+function getDefaultStimuliLightColor() {
+    return getSetting(Settings.DEFAULT_STIMULI_LIGHT_COLOR.NAME);
+}
+
+function getDefaultStimuliDarkColor() {
+    return getSetting(Settings.DEFAULT_STIMULI_DARK_COLOR.NAME);
+}
+
 // =================================
 // ============ SETTERS ============
 // =================================
@@ -443,7 +483,7 @@ function updateSetting(setting, value) {
             return;
         }
 
-        const query = `UPDATE settings SET setting_value = ? WHERE setting_name = ?`;
+        const query = `UPDATE settings SET value = ? WHERE name = ?`;
         db.run(query, [value, setting], function (err) {
             if (err) {
                 logger.error(`Error updating ${setting}:`, err.message);
@@ -459,6 +499,18 @@ function updateDefaultURL(newUrl) {
     return updateSetting(Settings.DEFAULT_URL.NAME, newUrl);
 }
 
+function updateDefaultStimuliPattern(newPattern) {
+    return updateSetting(Settings.DEFAULT_STIMULI_PATTERN.NAME, newPattern);
+}
+
+function updateDefaultStimuliLightColor(newColor) {
+    return updateSetting(Settings.DEFAULT_STIMULI_LIGHT_COLOR.NAME, newColor);
+}
+
+function updateDefaultStimuliDarkColor(newColor) {
+    return updateSetting(Settings.DEFAULT_STIMULI_DARK_COLOR.NAME, newColor);
+}
+
 module.exports = {
     connect,
     close,
@@ -472,6 +524,9 @@ module.exports = {
     getDefaultURL,
     getDefaultHeadset,
     getDefaultConnectionType,
+    getDefaultStimuliPattern,
+    getDefaultStimuliLightColor,
+    getDefaultStimuliDarkColor,
 
     deleteBookmarkByUrl,
 
@@ -480,5 +535,8 @@ module.exports = {
     deleteHeadsetsTable,
     deleteSettingsTable,
 
-    updateDefaultURL
+    updateDefaultURL,
+    updateDefaultStimuliPattern,
+    updateDefaultStimuliLightColor,
+    updateDefaultStimuliDarkColor
 };

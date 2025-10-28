@@ -50,9 +50,15 @@ ipcRenderer.on('homeUrl-update', (event, newUrl) => {
     }
 });
 
-function showGeneralSettings(containerIdToShow) {
-    updateVisibility(containerIdToShow);
+function showGeneralSettings() {
+    updateVisibility('generalSettings');
     populateGeneralSettings();
+    setCloseButtonMode('back');
+}
+
+function showStimuliSettings() {
+    updateVisibility('stimuliSettings');
+    populateStimuliSettings();
     setCloseButtonMode('back');
 }
 
@@ -159,6 +165,11 @@ function populateGeneralSettings() {
     });
 }
 
+function populateStimuliSettings() {
+    const container = document.getElementById('stimuliSettings');
+    container.innerHTML = ''; // Clear existing content    
+}
+
 function setCloseButtonMode(mode) {
     if (!closeSettingsButton) {
         return;
@@ -198,10 +209,10 @@ function attachEventListeners() {
             setTimeout(async () => {
                 switch (buttonId) {
                     case "generalSettingsBtn":
-                        showGeneralSettings('generalSettings');
+                        showGeneralSettings();
                         break;
                     case "stimuliSettingsBtn":
-                        // tbi
+                        showStimuliSettings();
                         break;
                     case "calibrationBtn":
                         // tbi

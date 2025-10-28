@@ -74,7 +74,7 @@ function attachEventListeners() {
                         ipcRenderer.send('webpage-zoomReset');
                         break;
                     case "settingsBtn":
-                        ipcRenderer.send('overlay-create', ViewNames.SETTINGS, 70);
+                        ipcRenderer.send('overlay-create', ViewNames.SETTINGS, 100);
                         break;
                     case "aboutBtn":
                         ipcRenderer.send('overlay-create', ViewNames.ABOUT, 33);

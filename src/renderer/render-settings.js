@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants } = require('../utils/constants/enums');
+const { ViewNames, CssConstants, Settings } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
@@ -50,10 +50,22 @@ ipcRenderer.on('homeUrl-update', (event, newUrl) => {
     }
 });
 
-function showGeneralSettings() {
+async function showGeneralSettings() {
     updateVisibility('generalSettings');
     populateGeneralSettings();
     setCloseButtonMode('back');
+
+    // Extracting company and headset name from headsetInUse to be used in the database query
+    const companyName = headsetInUse.split(' - ')[1] || '';
+    const headsetName = headsetInUse.split(' - ')[0] || '';
+    const multipleConnectionTypesExist = await ipcRenderer.invoke('multipleConnectionTypesExist-get', headsetName, companyName);
+
+    buttons = document.querySelectorAll('button');
+    if (multipleConnectionTypesExist) {
+        await updateScenarioId(101, buttons, ViewNames.SETTINGS);
+    } else {
+        await updateScenarioId(102, buttons, ViewNames.SETTINGS);
+    }
 }
 
 function showStimuliSettings() {
@@ -62,9 +74,12 @@ function showStimuliSettings() {
     setCloseButtonMode('back');
 }
 
-function showSettingsSelection() {
+async function showSettingsSelection() {
     updateVisibility('settingsSelection');
     setCloseButtonMode('close');
+
+    buttons = document.querySelectorAll('button');
+    await updateScenarioId(100, buttons, ViewNames.SETTINGS);
 }
 
 
@@ -84,7 +99,7 @@ function updateVisibility(containerIdToShow) {
                     break;
                 case 'generalSettings':
                     titleElement.textContent = 'General Settings';
-                    container.style.display = 'block';
+                    container.style.display = 'flex';
                     break;
                 case 'stimuliSettings':
                     titleElement.textContent = 'Stimuli Settings';
@@ -102,49 +117,108 @@ function populateGeneralSettings() {
     const container = document.getElementById('generalSettings');
     container.innerHTML = ''; // Clear existing content
 
+    const cardsContainer = document.createElement('div');
+    cardsContainer.classList.add('cardsContainer');
+    container.appendChild(cardsContainer);
+
+    // const description = document.createElement('p');
+    // description.classList.add('descriptionText');
+    // description.textContent = 'Focus on the flickering buttons below to change the default settings for Boggle';
+    // container.appendChild(description);
+
+    const disclaimer = document.createElement('p');
+    disclaimer.classList.add('disclaimerText');
+    disclaimer.textContent = '* Changes to these settings will take effect the next time the application is started';
+
+    // -------------------------------
+    // Home URL Setting
+    // -------------------------------
     const homeUrlCard = document.createElement('div');
     homeUrlCard.classList.add('settingCard');
-    const homeUrlH3 = document.createElement('h3');
-    homeUrlH3.textContent = 'Home URL';
-    homeUrlCard.appendChild(homeUrlH3);
+
+    const homeTextContainer = document.createElement('div');
+
+    const homeUrlTitle = document.createElement('h3');
+    homeUrlTitle.textContent = Settings.DEFAULT_URL.LABEL;
+    // homeUrlCard.appendChild(homeUrlTitle);
+    homeTextContainer.appendChild(homeUrlTitle);
+
+    const homeUrlDesc = document.createElement('p');
+    homeUrlDesc.textContent = Settings.DEFAULT_URL.DESCRIPTION;
+    // homeUrlCard.appendChild(homeUrlDesc);
+    homeTextContainer.appendChild(homeUrlDesc);
+    homeUrlCard.appendChild(homeTextContainer);
+
     const homeUrlBtn = document.createElement('button');
     homeUrlBtn.id = 'homeUrlBtn';
     homeUrlBtn.classList.add('button');
     homeUrlBtn.rel = 'noreferrer noopener';
     homeUrlCard.appendChild(homeUrlBtn);
-    container.appendChild(homeUrlCard);
 
+    // -------------------------------
+    // Default Headset Setting
+    // -------------------------------
     const headsetCard = document.createElement('div');
     headsetCard.classList.add('settingCard');
-    const headsetCardH3 = document.createElement('h3');
-    headsetCardH3.textContent = 'Headset';
-    headsetCard.appendChild(headsetCardH3);
-    const headsetValue = document.createElement('span');
-    headsetValue.id = 'generalSettingsHeadset';
-    headsetCard.appendChild(headsetValue);
-    container.appendChild(headsetCard);
 
+    const headsetTextContainer = document.createElement('div');
+
+    const headsetCardH3 = document.createElement('h3');
+    headsetCardH3.innerHTML = `${Settings.DEFAULT_HEADSET.LABEL}<span class="asterisk"> *</span>`;
+    headsetTextContainer.appendChild(headsetCardH3);
+
+    const headsetDesc = document.createElement('p');
+    headsetDesc.textContent = Settings.DEFAULT_HEADSET.DESCRIPTION;
+    headsetTextContainer.appendChild(headsetDesc);
+    headsetCard.appendChild(headsetTextContainer);
+
+    const headsetBtn = document.createElement('button');
+    headsetBtn.id = 'headsetBtn';
+    headsetBtn.classList.add('button');
+    headsetBtn.rel = 'noreferrer noopener';
+    headsetCard.appendChild(headsetBtn);
+
+    // -------------------------------
+    // Default Connection Type Setting
+    // ------------------------------- 
     const connectionTypeCard = document.createElement('div');
     connectionTypeCard.classList.add('settingCard');
+
+    const connectionTypeTextContainer = document.createElement('div');
+
     const connectionTypeCardH3 = document.createElement('h3');
-    connectionTypeCardH3.textContent = 'Connection Type';
-    connectionTypeCard.appendChild(connectionTypeCardH3);
-    const connectionTypeValue = document.createElement('span');
-    connectionTypeValue.id = 'generalSettingsConnectionType';
-    connectionTypeCard.appendChild(connectionTypeValue);
-    container.appendChild(connectionTypeCard);
+    connectionTypeCardH3.innerHTML = `${Settings.DEFAULT_CONNECTION_TYPE.LABEL}<span class="asterisk"> *</span>`;
+    connectionTypeTextContainer.appendChild(connectionTypeCardH3);
+
+    const connectionTypeDesc = document.createElement('p');
+    connectionTypeDesc.textContent = Settings.DEFAULT_CONNECTION_TYPE.DESCRIPTION;
+    connectionTypeTextContainer.appendChild(connectionTypeDesc);
+    connectionTypeCard.appendChild(connectionTypeTextContainer);
+
+    const connectionTypeBtn = document.createElement('button');
+    connectionTypeBtn.id = 'connectionTypeBtn';
+    connectionTypeBtn.classList.add('button');
+    connectionTypeBtn.rel = 'noreferrer noopener';
+    connectionTypeCard.appendChild(connectionTypeBtn);
+
+    cardsContainer.appendChild(homeUrlCard);
+    cardsContainer.appendChild(headsetCard);    
+    cardsContainer.appendChild(connectionTypeCard);
+
+    // container.appendChild(description);
+    container.appendChild(cardsContainer);
+    container.appendChild(disclaimer);
 
     if (homeUrlBtn) {
-        homeUrlBtn.textContent = homeUrl ? homeUrl : 'Not configured';
+        homeUrlBtn.innerHTML = `<span>${homeUrl ? homeUrl : 'Not configured'}</span>`;
     }
 
-    if (headsetValue) {
-        headsetValue.textContent = headsetInUse || 'Unknown';
+    if (headsetBtn) {
+        headsetBtn.innerHTML = `<span>${headsetInUse || 'Unknown'}</span>`;
     }
-    if (connectionTypeValue) {
-        connectionTypeValue.textContent = connectionTypeInUse || 'Unknown';
+    if (connectionTypeBtn) {
+        connectionTypeBtn.innerHTML = `<span>${connectionTypeInUse || 'Unknown'}</span>`;
     }
-
 
     homeUrlBtn.addEventListener('click', async () => {
         // Disable the button immediately to prevent multiple clicks
@@ -207,6 +281,8 @@ function attachEventListeners() {
             const buttonId = button.getAttribute('id');
 
             setTimeout(async () => {
+                await stopManager();
+
                 switch (buttonId) {
                     case "generalSettingsBtn":
                         showGeneralSettings();
@@ -221,7 +297,6 @@ function attachEventListeners() {
                         if (closeSettingsButton?.dataset.mode === 'back') { // Back to main settings
                             showSettingsSelection();
                         } else { // Close settings overlay
-                            await stopManager();
                             await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.SETTINGS);
                         }
                         break;

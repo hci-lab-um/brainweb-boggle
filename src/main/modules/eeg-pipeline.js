@@ -274,18 +274,16 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
         } else {
             // Run fbcca in Python
             return runPythonFbcca(eegData, currentScenarioID).then((selectedButtonId) => {
-                const parsedButtonId = parseInt(selectedButtonId, 10);
-
-                if (!Number.isNaN(parsedButtonId) && parsedButtonId !== -1) {
-                    console.log('PYTHON - User selected button', parsedButtonId);
+                if (parseInt(selectedButtonId) !== -1) {
+                    console.log('PYTHON - User selected button', selectedButtonId);
 
                     let topMostView = viewsList[viewsList.length - 1];
-                    topMostView.webContentsView.webContents.send('selectedButton-click', parsedButtonId);
+                    topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
                 } else {
                     console.log('PYTHON - User is in Idle State!');
                 }
 
-                return parsedButtonId;
+                return selectedButtonId;
             }).catch((error) => {
                 console.error('Error when executing Python:', error);
                 return -1;

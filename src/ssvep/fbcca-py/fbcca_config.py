@@ -2,7 +2,7 @@ import math
 
 class fbcca_config:
     # Class attributes (constants)
-    channels = 14  # Updated to support all Emotiv EPOC X channels (was 6)
+    channels = 4  # Updated to support all Emotiv EPOC X channels (was 6)
     subBands = 5
     harmonics = 5
     idleStateLabel = -1
@@ -13,8 +13,8 @@ class fbcca_config:
     # samplingRate = 512
 
     # correlationThreshold = 0.5
-    correlationThreshold = 0.9
-    # correlationThreshold = 0.85
+    # correlationThreshold = 0.9
+    correlationThreshold = 0.85
     # correlationThreshold = 0.7
 
     # Timing

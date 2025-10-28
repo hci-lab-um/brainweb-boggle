@@ -95,7 +95,7 @@ function updateVisibility(containerIdToShow) {
             switch (container.id) {
                 case 'settingsSelection':
                     titleElement.textContent = 'Settings';
-                    container.style.display = 'grid';
+                    container.style.display = 'flex';
                     break;
                 case 'generalSettings':
                     titleElement.textContent = 'General Settings';

@@ -31,7 +31,7 @@ h4 {
     }
 }
 
-#settingsSelection {
+#buttonsContainer {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 3vw;
@@ -55,7 +55,7 @@ h4 {
     display: none;
 }
 
-#generalSettings {
+#generalSettings, #settingsSelection {
     display: flex;
     flex-direction: column;
     gap: 2vw;

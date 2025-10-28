@@ -350,18 +350,18 @@ h4 {
   margin-bottom: 0;
 }
 
-#settingsSelection {
+#buttonsContainer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 3vw;
   width: 100%;
   height: 100%;
 }
-#settingsSelection button {
+#buttonsContainer button {
   width: 100%;
   font-size: 32px;
 }
-#settingsSelection button:nth-child(3) {
+#buttonsContainer button:nth-child(3) {
   grid-column: 1/-1;
   justify-self: center;
   max-width: calc(50% - 10px);
@@ -372,7 +372,7 @@ h4 {
   display: none;
 }
 
-#generalSettings {
+#generalSettings, #settingsSelection {
   display: flex;
   flex-direction: column;
   gap: 2vw;

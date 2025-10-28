@@ -11,8 +11,8 @@ const fbccaConfiguration = {
     samplingRate: 256,  // Emotiv EPOC X sampling rate
 
     // correlationThreshold: 0.7,
-    correlationThreshold: 0.85,
-    // correlationThreshold: 0.9,
+    // correlationThreshold: 0.85,
+    correlationThreshold: 0.9,
 
     // Timing
     gazeLengthInSecs: 4,

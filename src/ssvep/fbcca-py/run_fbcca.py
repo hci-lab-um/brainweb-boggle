@@ -10,7 +10,8 @@ def load_scenario_config():
     # Get the root directory of the project (3 levels up from current script)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-    config_path = os.path.join(project_root, 'configs', 'scenarioConfig.json')
+    # config_path = os.path.join(project_root, 'configs', 'scenarioConfig.json')
+    config_path = os.path.join(project_root, 'configs', 'scenarioConfig_lowFreqs.json')
     
     try:
         with open(config_path, 'r') as f:

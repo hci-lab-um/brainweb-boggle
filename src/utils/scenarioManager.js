@@ -1,5 +1,6 @@
 const stimuli = require("ssvep-stimuli");
-const scenarioConfig = require('../../configs/scenarioConfig.json');
+// const scenarioConfig = require('../../configs/scenarioConfig.json');
+const scenarioConfig = require('../../configs/scenarioConfig_lowFreqs.json');
 const { browserConfig } = require('../../configs/browserConfig');
 const { ipcRenderer } = require("electron");
 const logger = require('../main/modules/logger');
@@ -27,7 +28,7 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         buttons.forEach((button) => {
             const currentBtnId = button.getAttribute('id');
             const buttonIdIndex = buttonIds.indexOf(currentBtnId);
-            
+
             if (buttonIdIndex !== -1) {
                 button.setAttribute('data-phase-shift', phases[buttonIdIndex]);
                 button.setAttribute('data-frequency', frequencies[buttonIdIndex]);

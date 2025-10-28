@@ -195,7 +195,7 @@ function createMainWindow() {
                 if (splashWindow) {
                     splashWindow.close();
                 }
-                mainWindowContent.webContents.openDevTools();
+                // mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
                 logger.error('Error showing main window:', err.message);
@@ -508,7 +508,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             logger.error('Error loading URL:', err.message);
         }
 
-        thisTabView.webContents.openDevTools();
+        // thisTabView.webContents.openDevTools();
     } catch (err) {
         logger.error('Error creating tab view:', err.message);
     }

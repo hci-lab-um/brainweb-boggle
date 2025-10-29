@@ -63,6 +63,28 @@ function resolveHeadsetImagePath(imagePathFromEnum) {
     }
 }
 
+function bufferToDataUrl(imageBuffer) {
+    try {
+        if (!imageBuffer) return null;
+        // Headset assets are stored as PNG resources; default to that mimetype.
+        return `data:image/png;base64,${imageBuffer.toString('base64')}`;
+    } catch (e) {
+        logger.warn(`Error converting headset image buffer: ${e.message}`);
+        return null;
+    }
+}
+
+function safeParseJson(rawValue, fallback = []) {
+    try {
+        if (!rawValue) return fallback;
+        const parsed = JSON.parse(rawValue);
+        return Array.isArray(parsed) ? parsed : fallback;
+    } catch (e) {
+        logger.warn(`Error parsing JSON value '${rawValue}': ${e.message}`);
+        return fallback;
+    }
+}
+
 
 // =================================
 // ======== CREATING TABLES ========
@@ -658,6 +680,14 @@ function updateDefaultURL(newUrl) {
     return updateSetting(Settings.DEFAULT_URL.NAME, newUrl);
 }
 
+function updateDefaultHeadset(newHeadset) {
+    return updateSetting(Settings.DEFAULT_HEADSET.NAME, newHeadset);
+}
+
+function updateDefaultConnectionType(newConnectionType) {
+    return updateSetting(Settings.DEFAULT_CONNECTION_TYPE.NAME, newConnectionType);
+}
+
 function updateDefaultStimuliPattern(newPattern) {
     return updateSetting(Settings.DEFAULT_STIMULI_PATTERN.NAME, newPattern);
 }
@@ -698,6 +728,47 @@ function multipleConnectionTypesExist(headsetName, companyName) {
     });
 }
 
+function getAvailableHeadsets() {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialised'));
+            return;
+        }
+
+        const query = `
+            SELECT
+                h.company_name AS companyName,
+                h.headset_name AS headsetName,
+                h.used_electrodes AS usedElectrodes,
+                h.image AS imageBlob,
+                GROUP_CONCAT(DISTINCT hct.connection_type) AS connectionTypes
+            FROM headsets h
+            LEFT JOIN headset_connection_types hct
+                ON h.company_name = hct.company_name AND h.headset_name = hct.headset_name
+            GROUP BY h.company_name, h.headset_name
+            ORDER BY h.headset_name COLLATE NOCASE
+        `;
+
+        db.all(query, (err, rows) => {
+            if (err) {
+                logger.error('Error retrieving available headsets:', err.message);
+                reject(err);
+                return;
+            }
+
+            const mappedHeadsets = rows.map(row => ({
+                company: row.companyName,
+                name: row.headsetName,
+                usedElectrodes: safeParseJson(row.usedElectrodes, []),
+                connectionTypes: row.connectionTypes ? row.connectionTypes.split(',').filter(Boolean) : [],
+                image: bufferToDataUrl(row.imageBlob)
+            }));
+
+            resolve(mappedHeadsets);
+        });
+    });
+}
+
 module.exports = {
     connect,
     close,
@@ -723,9 +794,12 @@ module.exports = {
     deleteSettingsTable,
 
     updateDefaultURL,
+    updateDefaultHeadset,
+    updateDefaultConnectionType,
     updateDefaultStimuliPattern,
     updateDefaultStimuliLightColor,
     updateDefaultStimuliDarkColor,
 
     multipleConnectionTypesExist,
+    getAvailableHeadsets,
 };

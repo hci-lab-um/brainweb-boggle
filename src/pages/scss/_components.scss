@@ -204,6 +204,12 @@
     gap: 20px;
     align-items: center;
 
+    &--headsetSelection {
+        flex-direction: column;
+        text-align: center;
+        gap: 50px;
+    }
+
     &--deleteAllConfirmation {
         flex-direction: column;
         text-align: center;
@@ -268,6 +274,10 @@
         &--itemAction {
             flex-direction: column;
             gap: 14%;
+        }
+
+        &--headsetSelection {
+            gap: 2vw;
         }
     }
 

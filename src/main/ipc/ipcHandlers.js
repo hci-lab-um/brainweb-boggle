@@ -117,9 +117,11 @@ async function registerIpcHandlers(context) {
             bookmarksList: bookmarksList,
             tabsList: serialisableTabsList,
             optionsList: elementProperties ? elementProperties.options : null,
-            homeUrl: await db.getDefaultURL(),
-            headsetInUse: await db.getDefaultHeadset(),
-            connectionTypeInUse: await db.getDefaultConnectionType(),
+            settingsObject: {
+                homeUrl: await db.getDefaultURL(),
+                headsetInUse: await db.getDefaultHeadset(),
+                connectionTypeInUse: await db.getDefaultConnectionType(),
+            }
         }
 
         overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
@@ -320,6 +322,15 @@ async function registerIpcHandlers(context) {
             return await db.multipleConnectionTypesExist(headsetName, companyName);
         } catch (err) {
             logger.error('Error checking multiple connection types existence:', err.message);
+        }
+    });
+
+    ipcMain.handle('available-headsets-get', async () => {
+        try {
+            return await db.getAvailableHeadsets();
+        } catch (err) {
+            logger.error('Error retrieving available headsets:', err.message);
+            return [];
         }
     });
 

@@ -317,9 +317,26 @@ async function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.handle('multipleConnectionTypesExist-get', async (event, headsetName, companyName) => {
+    ipcMain.on('defaultHeadset-update', async (event, newHeadset) => {
         try {
-            return await db.multipleConnectionTypesExist(headsetName, companyName);
+            // Updates the default headset in the database
+            db.updateDefaultHeadset(newHeadset);
+        } catch (err) {
+            logger.error('Error updating default headset:', err.message);
+        }
+    });
+
+    ipcMain.on('defaultConnectionType-update', async (event, newConnectionType) => {
+        try {
+            db.updateDefaultConnectionType(newConnectionType);
+        } catch (err) {
+            logger.error('Error updating default connection type:', err.message);
+        }
+    });
+
+    ipcMain.handle('headsetConnectionTypes-get', async (event, headsetName, companyName) => {
+        try {
+            return await db.getHeadsetConnectionTypes(headsetName, companyName);
         } catch (err) {
             logger.error('Error checking multiple connection types existence:', err.message);
         }

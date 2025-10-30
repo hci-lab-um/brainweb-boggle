@@ -705,7 +705,7 @@ function updateDefaultStimuliDarkColor(newColor) {
 // ============ QUERIES ============
 // =================================
 
-function multipleConnectionTypesExist(headsetName, companyName) {
+function getHeadsetConnectionTypes(headsetName, companyName) {
     return new Promise((resolve, reject) => {
         if (!db) {
             reject(new Error('Database not initialised'));
@@ -713,16 +713,16 @@ function multipleConnectionTypesExist(headsetName, companyName) {
         }
 
         const query = `
-            SELECT COUNT(DISTINCT connection_type) as count
+            SELECT DISTINCT connection_type
             FROM headset_connection_types
             WHERE headset_name = ? AND company_name = ?
         `;
-        db.get(query, [headsetName, companyName], (err, row) => {
+        db.all(query, [headsetName, companyName], (err, rows) => {
             if (err) {
-                logger.error('Error checking multiple connection types:', err.message);
+                logger.error('Error retrieving connection types:', err.message);
                 reject(err);
             } else {
-                resolve(row.count > 1);
+                resolve(rows.map(row => row.connection_type));
             }
         });
     });
@@ -800,6 +800,6 @@ module.exports = {
     updateDefaultStimuliLightColor,
     updateDefaultStimuliDarkColor,
 
-    multipleConnectionTypesExist,
+    getHeadsetConnectionTypes,
     getAvailableHeadsets,
 };

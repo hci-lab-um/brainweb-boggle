@@ -56,17 +56,7 @@ async function showGeneralSettings() {
     populateGeneralSettings();
     setCloseButtonMode('back');
 
-    // Extracting company and headset name from headsetInUse to be used in the database query
-    const companyName = headsetInUse.split(' - ')[1] || '';
-    const headsetName = headsetInUse.split(' - ')[0] || '';
-    const multipleConnectionTypesExist = await ipcRenderer.invoke('multipleConnectionTypesExist-get', headsetName, companyName);
-
-    buttons = document.querySelectorAll('button');
-    if (multipleConnectionTypesExist) {
-        await updateScenarioId(101, buttons, ViewNames.SETTINGS);
-    } else {
-        await updateScenarioId(102, buttons, ViewNames.SETTINGS);
-    }
+    await selectScenarioIdForHeadset();
 }
 
 function showStimuliSettings() {
@@ -83,6 +73,19 @@ async function showSettingsSelection() {
     await updateScenarioId(100, buttons, ViewNames.SETTINGS);
 }
 
+async function selectScenarioIdForHeadset() {
+    // Extracting company and headset name from headsetInUse to be used in the database query
+    const companyName = headsetInUse.split(' - ')[1] || '';
+    const headsetName = headsetInUse.split(' - ')[0] || '';
+    const multipleConnectionTypesExist = (await ipcRenderer.invoke('headsetConnectionTypes-get', headsetName, companyName)).length > 1;
+
+    buttons = document.querySelectorAll('button');
+    if (multipleConnectionTypesExist) {
+        await updateScenarioId(101, buttons, ViewNames.SETTINGS);
+    } else {
+        await updateScenarioId(102, buttons, ViewNames.SETTINGS);
+    }
+}
 
 function updateVisibility(containerIdToShow) {
     // Makes the required container visible and all other containers hidden
@@ -206,7 +209,7 @@ function populateGeneralSettings() {
     connectionTypeCard.appendChild(connectionTypeBtn);
 
     cardsContainer.appendChild(homeUrlCard);
-    cardsContainer.appendChild(headsetCard);    
+    cardsContainer.appendChild(headsetCard);
     cardsContainer.appendChild(connectionTypeCard);
 
     // container.appendChild(description);
@@ -317,21 +320,40 @@ async function showHeadsetSelectionPopup(buttonId) {
             headsetCard.appendChild(headsetDesc);
 
             // Create buttons
-            const selectBtn = document.createElement('button');
-            selectBtn.setAttribute('id', `${idSuffix}HeadsetBtn`);
-            selectBtn.classList.add('button', 'popup__btn');
-            selectBtn.textContent = `${headset.name}`;
-            selectBtn.onclick = () => {
-                addButtonSelectionAnimation(selectBtn);
-                setTimeout(() => {
+            const selectHeadsetBtn = document.createElement('button');
+            selectHeadsetBtn.setAttribute('id', `${idSuffix}HeadsetBtn`);
+            selectHeadsetBtn.classList.add('button', 'popup__btn');
+            selectHeadsetBtn.textContent = `${headset.name}`;
+            selectHeadsetBtn.onclick = () => {
+                addButtonSelectionAnimation(selectHeadsetBtn);
+                setTimeout(async () => {
                     popupElements.close();
-                    // tbi: set the selected headset as default in the database
 
+                    // Update the UI
+                    headsetInUse = `${headset.name} - ${headset.company}`;
+                    const headsetBtn = document.getElementById('headsetBtn');
+                    headsetBtn.innerHTML = `<span>${headsetInUse || 'Unknown'}</span>`;
+
+                    // Update the default headset in the db
+                    ipcRenderer.send('defaultHeadset-update', `${headset.name} - ${headset.company}`);
+
+                    const headsetConnectionTypes = await ipcRenderer.invoke('headsetConnectionTypes-get', headset.name, headset.company);
+                    if (!headsetConnectionTypes.includes(connectionTypeInUse)) {
+                        // Update the UI
+                        connectionTypeInUse = headsetConnectionTypes[0] || '';
+                        const connectionTypeBtn = document.getElementById('connectionTypeBtn');
+                        connectionTypeBtn.innerHTML = `<span>${connectionTypeInUse || 'Unknown'}</span>`;
+
+                        // Update the default connection type in the db
+                        ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
+                    }
+
+                    selectScenarioIdForHeadset();
                 }, CssConstants.SELECTION_ANIMATION_DURATION);
             };
-            headsetCard.appendChild(selectBtn);
+            headsetCard.appendChild(selectHeadsetBtn);
 
-            buttonsList.push(selectBtn);
+            buttonsList.push(selectHeadsetBtn);
             headsetCards.push(headsetCard);
         });
 

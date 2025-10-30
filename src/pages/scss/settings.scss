@@ -128,3 +128,29 @@ p:not(.disclaimerText) {
 .asterisk {
     color: colors.$secondary-muted;
 }
+
+.headsetDesc {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: colors.$text-muted;
+}
+
+.headsetImage {
+    height: 45%;
+    width: 75%;
+    background-color: colors.$primary;
+    padding: 34px;
+    border-radius: 12px;
+}
+
+.headsetCard {
+    background-color: colors.$bg-black-transparent-25;
+    border-radius: 20px;
+    padding: 2vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    align-items: center;
+}

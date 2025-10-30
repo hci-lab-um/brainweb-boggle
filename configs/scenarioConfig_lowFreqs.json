@@ -502,5 +502,12 @@
         "buttonIds": ["homeUrlBtn", "headsetBtn", "closeSettingsBtn"],
         "frequencies": [6.5, 7.5, 8],
         "phases": [0.5, 1.5, 1.5]
+    },
+    "scenario_103": {
+        "name": "SETTINGS - General Settings",
+        "description": "Headset Selection Modal with 3 buttons",
+        "buttonIds": ["firstHeadsetBtn", "secondHeadsetBtn", "thirdHeadsetBtn"],
+        "frequencies": [6.5, 7.5, 8],
+        "phases": [0.5, 1.5, 1.5]  
     }
 }

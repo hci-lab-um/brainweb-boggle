@@ -258,6 +258,11 @@
   gap: 20px;
   align-items: center;
 }
+.popup--headsetSelection {
+  flex-direction: column;
+  text-align: center;
+  gap: 50px;
+}
 .popup--deleteAllConfirmation {
   flex-direction: column;
   text-align: center;
@@ -314,6 +319,9 @@
 .popup__btnsContainer--itemAction {
   flex-direction: column;
   gap: 14%;
+}
+.popup__btnsContainer--headsetSelection {
+  gap: 2vw;
 }
 .popup__btn {
   padding: 20px 30px;

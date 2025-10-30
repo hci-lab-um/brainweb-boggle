@@ -3,6 +3,7 @@ const { ViewNames, CssConstants, Settings } = require('../utils/constants/enums'
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
+const { createPopup } = require('../utils/utilityFunctions');
 
 let buttons = [];
 let settingsContentContainer = null;
@@ -18,9 +19,9 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         buttons = document.querySelectorAll('button');
         settingsContentContainer = document.querySelector('.settingsContent');
         closeSettingsButton = document.getElementById('closeSettingsBtn');
-        homeUrl = overlayData.homeUrl || '';
-        headsetInUse = overlayData.headsetInUse || '';
-        connectionTypeInUse = overlayData.connectionTypeInUse || '';
+        homeUrl = overlayData.settingsObject.homeUrl || '';
+        headsetInUse = overlayData.settingsObject.headsetInUse || '';
+        connectionTypeInUse = overlayData.settingsObject.connectionTypeInUse || '';
 
         setCloseButtonMode('close');
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
@@ -150,6 +151,7 @@ function populateGeneralSettings() {
     homeUrlCard.appendChild(homeTextContainer);
 
     const homeUrlBtn = document.createElement('button');
+    homeUrlBtn.innerHTML = `<span>${homeUrl ? homeUrl : 'Not configured'}</span>`;
     homeUrlBtn.id = 'homeUrlBtn';
     homeUrlBtn.classList.add('button');
     homeUrlBtn.rel = 'noreferrer noopener';
@@ -173,6 +175,7 @@ function populateGeneralSettings() {
     headsetCard.appendChild(headsetTextContainer);
 
     const headsetBtn = document.createElement('button');
+    headsetBtn.innerHTML = `<span>${headsetInUse || 'Unknown'}</span>`;
     headsetBtn.id = 'headsetBtn';
     headsetBtn.classList.add('button');
     headsetBtn.rel = 'noreferrer noopener';
@@ -196,6 +199,7 @@ function populateGeneralSettings() {
     connectionTypeCard.appendChild(connectionTypeTextContainer);
 
     const connectionTypeBtn = document.createElement('button');
+    connectionTypeBtn.innerHTML = `<span>${connectionTypeInUse || 'Unknown'}</span>`;
     connectionTypeBtn.id = 'connectionTypeBtn';
     connectionTypeBtn.classList.add('button');
     connectionTypeBtn.rel = 'noreferrer noopener';
@@ -209,17 +213,9 @@ function populateGeneralSettings() {
     container.appendChild(cardsContainer);
     container.appendChild(disclaimer);
 
-    if (homeUrlBtn) {
-        homeUrlBtn.innerHTML = `<span>${homeUrl ? homeUrl : 'Not configured'}</span>`;
-    }
-
-    if (headsetBtn) {
-        headsetBtn.innerHTML = `<span>${headsetInUse || 'Unknown'}</span>`;
-    }
-    if (connectionTypeBtn) {
-        connectionTypeBtn.innerHTML = `<span>${connectionTypeInUse || 'Unknown'}</span>`;
-    }
-
+    // -------------------------------
+    // Event Listeners for Buttons
+    // ------------------------------- 
     homeUrlBtn.addEventListener('click', async () => {
         // Disable the button immediately to prevent multiple clicks
         homeUrlBtn.disabled = true;
@@ -236,6 +232,23 @@ function populateGeneralSettings() {
         } catch (error) {
             logger.error('Error creating keyboard overlay:', error);
         }
+    });
+
+    headsetBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        headsetBtn.disabled = true;
+        setTimeout(() => { headsetBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(headsetBtn);
+
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showHeadsetSelectionPopup();
+            } catch (error) {
+                logger.error('Error creating headset selection modal:', error);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
 }
 
@@ -267,6 +280,71 @@ function setCloseButtonMode(mode) {
             closeSettingsButton.textContent = 'Close';
         }
         closeSettingsButton.setAttribute('aria-label', 'Close Settings');
+    }
+}
+
+async function showHeadsetSelectionPopup(buttonId) {
+    try {
+        // Get a list of available headsets from the main process
+        const availableHeadsets = await ipcRenderer.invoke('available-headsets-get');
+        console.log(availableHeadsets);
+        const buttonsList = [];
+        const headsetCards = [];
+
+        availableHeadsets.forEach((headset, index) => {
+            const idSuffix = ['first', 'second', 'third', 'fourth'][index];
+
+            const headsetCard = document.createElement('div');
+            headsetCard.classList.add('headsetCard');
+
+            const headsetImage = document.createElement('img');
+            headsetImage.classList.add('headsetImage');
+            headsetImage.alt = `${headset.name} headset`;
+            if (headset.image) {
+                headsetImage.src = headset.image;
+            } else {
+                headsetImage.classList.add('headsetImage--placeholder');
+            }
+            headsetCard.appendChild(headsetImage);
+
+            const headsetDesc = document.createElement('div');
+            headsetDesc.classList.add('headsetDesc');
+            const electrodeCount = headset.usedElectrodes.length;
+            headsetDesc.innerHTML = `<span>${electrodeCount} Electrodes</span>`;
+            const listOfElectrodes = headset.usedElectrodes;
+            headsetDesc.innerHTML += `<span>${listOfElectrodes.join(', ')}</span>`;
+            headsetDesc.innerHTML += `<span>Manufacturer — ${headset.company}</span>`;
+            headsetCard.appendChild(headsetDesc);
+
+            // Create buttons
+            const selectBtn = document.createElement('button');
+            selectBtn.setAttribute('id', `${idSuffix}HeadsetBtn`);
+            selectBtn.classList.add('button', 'popup__btn');
+            selectBtn.textContent = `${headset.name}`;
+            selectBtn.onclick = () => {
+                addButtonSelectionAnimation(selectBtn);
+                setTimeout(() => {
+                    popupElements.close();
+                    // tbi: set the selected headset as default in the database
+
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+            };
+            headsetCard.appendChild(selectBtn);
+
+            buttonsList.push(selectBtn);
+            headsetCards.push(headsetCard);
+        });
+
+        const popupElements = createPopup({
+            name: 'headsetSelection',
+            message: 'Choose Headset',
+            classes: ['popup--headsetSelection'],
+            buttons: headsetCards
+        });
+
+        await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
+    } catch (error) {
+        logger.error('Error opening headset selection popup:', error.message);
     }
 }
 

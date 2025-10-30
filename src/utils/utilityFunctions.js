@@ -64,7 +64,8 @@ function createPopup({
     if (buttons.length > 0) {
         const buttonsContainer = document.createElement('div');
         buttonsContainer.classList.add('popup__btnsContainer');
-        if (name === 'itemAction') buttonsContainer.classList.add('popup__btnsContainer--itemAction');
+        if (name === 'itemAction') buttonsContainer.classList.add('popup__btnsContainer--itemAction')
+        else if (name === 'headsetSelection') buttonsContainer.classList.add('popup__btnsContainer--headsetSelection')
         buttons.forEach(btn => buttonsContainer.appendChild(btn));
         popup.appendChild(buttonsContainer);
     }

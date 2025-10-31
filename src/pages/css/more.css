@@ -258,10 +258,13 @@
   gap: 20px;
   align-items: center;
 }
-.popup--headsetSelection {
+.popup--headsetSelection, .popup--connectionTypeSelection {
   flex-direction: column;
   text-align: center;
   gap: 50px;
+}
+.popup--connectionTypeSelection {
+  width: 70%;
 }
 .popup--deleteAllConfirmation {
   flex-direction: column;
@@ -328,6 +331,9 @@
   font-size: 1.75rem;
   width: 300px;
   height: 125px;
+}
+.popup__btn--connectionType {
+  width: -webkit-fill-available;
 }
 
 #moreOptions {

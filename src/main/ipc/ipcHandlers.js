@@ -342,6 +342,14 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.handle('connectionTypeData-get', async (event, connectionType) => {
+        try {
+            return await db.getConnectionTypeData(connectionType);
+        } catch (err) {
+            logger.error('Error retrieving connection type data:', err.message);
+        }
+    });
+
     ipcMain.handle('available-headsets-get', async () => {
         try {
             return await db.getAvailableHeadsets();

@@ -204,10 +204,14 @@
     gap: 20px;
     align-items: center;
 
-    &--headsetSelection {
+    &--headsetSelection, &--connectionTypeSelection {
         flex-direction: column;
         text-align: center;
         gap: 50px;
+    }
+
+    &--connectionTypeSelection {
+        width: 70%;
     }
 
     &--deleteAllConfirmation {
@@ -286,5 +290,9 @@
         font-size: 1.75rem;
         width: 300px;
         height: 125px;
+
+        &--connectionType {
+            width: -webkit-fill-available;
+        }
     }
 }

@@ -16,13 +16,28 @@ const CssConstants = Object.freeze({
     SELECTION_ANIMATION_DURATION: 500, // This is in milliseconds. It is used in the addButtonSelectionAnimation function.
 });
 
+const ConnectionTypes = Object.freeze({
+    LSL: {
+        NAME: "LSL",
+        DESCRIPTION: "Connects through a local data stream. Choose this if your headset sends data via LSL."
+    },
+    TCP_IP: {
+        NAME: "TCP/IP",
+        DESCRIPTION: "Connects using your network address. Choose this for direct local or remote connections."
+    },
+    CORTEX_API: {
+        NAME: "Cortex API",
+        DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets."
+    }
+});
+
 const Headsets = Object.freeze({
     EPOC_X: {
         NAME: "EPOC X",
         COMPANY: "Emotiv",
         USED_ELECTRODES: ["O1", "P7", "P8", "O2"],
         CONNECTION_TYPE: {
-            CONNECTION_TYPE_1: "Cortex API"
+            CONNECTION_TYPE_1: ConnectionTypes.CORTEX_API.NAME,
         },
         IMAGE: "../../resources/epocx_headset.png"
     },
@@ -31,8 +46,8 @@ const Headsets = Object.freeze({
         COMPANY: "Wearable Sensing",
         USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
         CONNECTION_TYPE: {
-            CONNECTION_TYPE_1: "LSL",
-            CONNECTION_TYPE_2: "TCP/IP",
+            CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
+            CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME,
         },
         IMAGE: "../../resources/dsi_vr300_headset.png"
     },
@@ -41,7 +56,7 @@ const Headsets = Object.freeze({
         COMPANY: "g.tec",
         USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
         CONNECTION_TYPE: {
-            CONNECTION_TYPE_1: "LSL"
+            CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME
         },
         IMAGE: "../../resources/gusbamp_headset.png"
     }
@@ -100,6 +115,7 @@ const Settings = Object.freeze({
 module.exports = {
     ViewNames,
     CssConstants,
+    ConnectionTypes,
     Headsets,
     Settings,
     SettingCategories

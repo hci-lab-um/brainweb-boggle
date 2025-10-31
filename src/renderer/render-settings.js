@@ -253,6 +253,23 @@ function populateGeneralSettings() {
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
+
+    connectionTypeBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        connectionTypeBtn.disabled = true;
+        setTimeout(() => { connectionTypeBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(connectionTypeBtn);
+
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showConnectionTypeSelectionPopup();
+            } catch (error) {
+                logger.error('Error creating connection type selection modal:', error);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
 }
 
 function populateStimuliSettings() {
@@ -286,7 +303,7 @@ function setCloseButtonMode(mode) {
     }
 }
 
-async function showHeadsetSelectionPopup(buttonId) {
+async function showHeadsetSelectionPopup() {
     try {
         // Get a list of available headsets from the main process
         const availableHeadsets = await ipcRenderer.invoke('available-headsets-get');
@@ -321,7 +338,7 @@ async function showHeadsetSelectionPopup(buttonId) {
 
             // Create buttons
             const selectHeadsetBtn = document.createElement('button');
-            selectHeadsetBtn.setAttribute('id', `${idSuffix}HeadsetBtn`);
+            selectHeadsetBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
             selectHeadsetBtn.classList.add('button', 'popup__btn');
             selectHeadsetBtn.textContent = `${headset.name}`;
             selectHeadsetBtn.onclick = () => {
@@ -348,7 +365,7 @@ async function showHeadsetSelectionPopup(buttonId) {
                         ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
                     }
 
-                    selectScenarioIdForHeadset();
+                    await selectScenarioIdForHeadset();
                 }, CssConstants.SELECTION_ANIMATION_DURATION);
             };
             headsetCard.appendChild(selectHeadsetBtn);
@@ -367,6 +384,72 @@ async function showHeadsetSelectionPopup(buttonId) {
         await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
     } catch (error) {
         logger.error('Error opening headset selection popup:', error.message);
+    }
+}
+
+async function showConnectionTypeSelectionPopup() {
+    try {
+        // Get a list of available connection types for the current headset from the main process
+        const headsetName = headsetInUse.split(' - ')[0] || '';
+        const companyName = headsetInUse.split(' - ')[1] || '';
+        const availableConnectionTypes = await ipcRenderer.invoke('headsetConnectionTypes-get', headsetName, companyName);
+
+        // get connection type descriptions
+        const connectionTypeData = await Promise.all(availableConnectionTypes.map(type => {
+            return ipcRenderer.invoke('connectionTypeData-get', type);
+        }));
+
+        const buttonsList = [];
+        const connectionTypeCards = [];
+
+        connectionTypeData.forEach((connectionType, index) => {
+            const idSuffix = ['first', 'second', 'third', 'fourth'][index];
+
+            const connectionTypeCard = document.createElement('div');
+            connectionTypeCard.classList.add('connectionTypeCard');
+
+            const connectionTypeDesc = document.createElement('div');
+            connectionTypeDesc.classList.add('connectionTypeDesc');
+            connectionTypeDesc.innerHTML = `<span>${connectionType.description}</span>`;
+            connectionTypeCard.appendChild(connectionTypeDesc);
+
+            const selectConnectionTypeBtn = document.createElement('button');
+            selectConnectionTypeBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
+            selectConnectionTypeBtn.classList.add('button', 'popup__btn', 'popup__btn--connectionType');
+            selectConnectionTypeBtn.textContent = `${connectionType.name}`;
+            selectConnectionTypeBtn.onclick = async () => {
+                addButtonSelectionAnimation(selectConnectionTypeBtn);
+                setTimeout(async () => {
+                    popupElements.close();
+
+                    // Update the UI
+                    connectionTypeInUse = connectionType.name;
+                    const connectionTypeBtn = document.getElementById('connectionTypeBtn');
+                    connectionTypeBtn.innerHTML = `<span>${connectionTypeInUse || 'Unknown'}</span>`;
+
+                    // Update the default connection type in the db
+                    ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
+                    await selectScenarioIdForHeadset();
+
+                    connectionTypeCards.push(connectionTypeCard);
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+            }
+            connectionTypeCard.appendChild(selectConnectionTypeBtn);
+
+            buttonsList.push(selectConnectionTypeBtn);
+            connectionTypeCards.push(connectionTypeCard);
+        });
+
+        const popupElements = createPopup({
+            name: 'connectionTypeSelection',
+            message: 'Choose Connection Type',
+            classes: ['popup--connectionTypeSelection'],
+            buttons: connectionTypeCards
+        });
+
+        await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
+    } catch (error) {
+        logger.error('Error creating connection type selection modal:', error);
     }
 }
 

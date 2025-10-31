@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const dbPath = path.join(app.getPath('userData'), 'boggle.db');
 const logger = require('./logger');
-const { Headsets, Settings } = require('../../utils/constants/enums');
+const { ConnectionTypes, Headsets, Settings } = require('../../utils/constants/enums');
 let db;
 
 function connect() {
@@ -211,7 +211,8 @@ function createConnectionTypesTable() {
     return new Promise((resolve, reject) => {
         const createTable = `
             CREATE TABLE IF NOT EXISTS connection_types (
-                name TEXT PRIMARY KEY
+                name TEXT PRIMARY KEY,
+                description TEXT NOT NULL
             );
         `;
         db.run(createTable, (err) => {
@@ -228,21 +229,16 @@ function createConnectionTypesTable() {
 
 function populateConnectionTypesTable() {
     return new Promise((resolve, reject) => {
-        const typesSet = new Set();
-        // Collect all unique connection types from headsets (by using Set)
-        Object.values(Headsets).forEach((headset) => {
-            Object.values(headset.CONNECTION_TYPE || {}).forEach((t) => typesSet.add(t));
-        });
-
-        const types = Array.from(typesSet);
+        const types = Object.keys(ConnectionTypes);
         if (types.length === 0) {
             resolve();
             return;
         }
 
-        const placeholders = types.map(() => '(?)').join(', ');
-        const sql = `INSERT OR IGNORE INTO connection_types (name) VALUES ${placeholders}`;
-        db.run(sql, types, (err) => {
+        const placeholders = types.map(() => '(?, ?)').join(', ');
+        const sql = `INSERT OR IGNORE INTO connection_types (name, description) VALUES ${placeholders}`;
+        const values = types.map((type) => [ConnectionTypes[type].NAME, ConnectionTypes[type].DESCRIPTION]).flat();
+        db.run(sql, values, (err) => {
             if (err) {
                 logger.error('Error populating connection_types table:', err.message);
                 reject(err);
@@ -769,6 +765,26 @@ function getAvailableHeadsets() {
     });
 }
 
+function getConnectionTypeData(connectionType) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialised'));
+            return;
+        }
+        const query = `SELECT name, description FROM connection_types WHERE name = ?`;
+        db.get(query, [connectionType], (err, row) => {
+            if (err) {
+                logger.error('Error retrieving connection type data:', err.message);
+                reject(err);
+            } else {
+                resolve(row ? { name: row.name, description: row.description } : null);
+            }
+        });
+    }).catch(err => {
+        logger.error('Error getting connection type data:', err.message);
+    });
+}
+
 module.exports = {
     connect,
     close,
@@ -802,4 +818,5 @@ module.exports = {
 
     getHeadsetConnectionTypes,
     getAvailableHeadsets,
+    getConnectionTypeData
 };

@@ -484,30 +484,37 @@
     },
     "scenario_100": {
         "name": "SETTINGS",
-        "description": "Settings menu with 4 buttons",
-        "buttonIds": ["generalSettingsBtn", "stimuliSettingsBtn", "calibrationBtn", "closeSettingsBtn"],
-        "frequencies": [6.5, 7.5, 8, 7],
-        "phases": [0.5, 1.5, 1.5, 0]
+        "description": "Settings menu with 5 buttons",
+        "buttonIds": ["generalSettingsBtn", "headsetSettingsBtn", "stimuliSettingsBtn", "calibrationBtn", "closeSettingsBtn"],
+        "frequencies": [6.5, 7.5, 8, 7, 8.5],
+        "phases": [0.5, 1.5, 1.5, 0, 1]
     },
     "scenario_101": {
-        "name": "SETTINGS - General Settings",
-        "description": "General Settings menu with 4 buttons",
-        "buttonIds": ["homeUrlBtn", "headsetBtn", "connectionTypeBtn", "closeSettingsBtn"],
-        "frequencies": [6.5, 7.5, 8, 7],
-        "phases": [0.5, 1.5, 1.5, 0]
-    },
-    "scenario_102": {
-        "name": "SETTINGS - General Settings",
-        "description": "General Settings menu with 3 buttons - no connection type",
-        "buttonIds": ["homeUrlBtn", "headsetBtn", "closeSettingsBtn"],
+        "name": "SETTINGS - Headset Settings",
+        "description": "Headset Settings menu with 4 buttons",
+        "buttonIds": ["headsetBtn", "connectionTypeBtn", "closeSettingsBtn"],
         "frequencies": [6.5, 7.5, 8],
         "phases": [0.5, 1.5, 1.5]
     },
+    "scenario_102": {
+        "name": "SETTINGS - Headset Settings",
+        "description": "Headset Settings menu with 3 buttons - no connection type",
+        "buttonIds": ["headsetBtn", "closeSettingsBtn"],
+        "frequencies": [6.5, 7.5],
+        "phases": [0.5, 1.5]
+    },
     "scenario_103": {
-        "name": "SETTINGS - General Settings",
+        "name": "SETTINGS - Headset Settings",
         "description": "Headset/Connection Selection Modal with 3 buttons",
         "buttonIds": ["firstSettingOptionBtn", "secondSettingOptionBtn", "thirdSettingOptionBtn"],
         "frequencies": [6.5, 7.5, 8],
         "phases": [0.5, 1.5, 1.5]  
+    },
+    "scenario_104": {
+        "name": "SETTINGS - General Settings",
+        "description": "General Settings menu with 4 buttons",
+        "buttonIds": ["homeUrlBtn", "KeyboardLayoutBtn", "switchIntegrationBtn", "closeSettingsBtn"],
+        "frequencies": [6.5, 7.5, 8, 7],
+        "phases": [0.5, 1.5, 1.5, 0]
     }
 }

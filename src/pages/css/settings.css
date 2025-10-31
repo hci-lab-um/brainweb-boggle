@@ -375,18 +375,16 @@ h4 {
   width: 100%;
   font-size: 32px;
 }
-#buttonsContainer button:nth-child(3) {
-  grid-column: 1/-1;
-  justify-self: center;
-  max-width: calc(50% - 10px);
-}
 
 #generalSettings,
+#headsetSettings,
 #stimuliSettings {
   display: none;
 }
 
-#generalSettings, #settingsSelection {
+#generalSettings,
+#headsetSettings,
+#settingsSelection {
   display: flex;
   flex-direction: column;
   gap: 2vw;

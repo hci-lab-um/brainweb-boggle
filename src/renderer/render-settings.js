@@ -56,6 +56,14 @@ async function showGeneralSettings() {
     populateGeneralSettings();
     setCloseButtonMode('back');
 
+    await updateScenarioId(104, buttons, ViewNames.SETTINGS);
+}
+
+async function showHeadsetSettings() {
+    updateVisibility('headsetSettings');
+    populateHeadsetSettings();
+    setCloseButtonMode('back');
+    
     await selectScenarioIdForHeadset();
 }
 
@@ -109,6 +117,10 @@ function updateVisibility(containerIdToShow) {
                     titleElement.textContent = 'Stimuli Settings';
                     container.style.display = 'block';
                     break;
+                case 'headsetSettings':
+                    titleElement.textContent = 'Headset Settings';
+                    container.style.display = 'flex';
+                    break;
                 default:
                     logger.warn(`Unknown containerIdToShow: ${containerIdToShow}`);
                     return;
@@ -124,15 +136,6 @@ function populateGeneralSettings() {
     const cardsContainer = document.createElement('div');
     cardsContainer.classList.add('cardsContainer');
     container.appendChild(cardsContainer);
-
-    // const description = document.createElement('p');
-    // description.classList.add('descriptionText');
-    // description.textContent = 'Focus on the flickering buttons below to change the default settings for Boggle';
-    // container.appendChild(description);
-
-    const disclaimer = document.createElement('p');
-    disclaimer.classList.add('disclaimerText');
-    disclaimer.textContent = '* Changes to these settings will take effect the next time the application is started';
 
     // -------------------------------
     // Home URL Setting
@@ -159,6 +162,47 @@ function populateGeneralSettings() {
     homeUrlBtn.classList.add('button');
     homeUrlBtn.rel = 'noreferrer noopener';
     homeUrlCard.appendChild(homeUrlBtn);
+
+    cardsContainer.appendChild(homeUrlCard);
+
+    // -------------------------------
+    // Event Listeners for Buttons
+    // ------------------------------- 
+    homeUrlBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        homeUrlBtn.disabled = true;
+        setTimeout(() => { homeUrlBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(homeUrlBtn);
+
+        try {
+            const homeUrlBtn = document.getElementById('homeUrlBtn');
+            let elementProperties = {
+                id: 'homeUrl',
+                value: homeUrlBtn.textContent || ''
+            }
+            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
+        } catch (error) {
+            logger.error('Error creating keyboard overlay:', error);
+        }
+    });
+}
+
+function populateHeadsetSettings() {
+    const container = document.getElementById('headsetSettings');
+    container.innerHTML = ''; // Clear existing content
+
+    const cardsContainer = document.createElement('div');
+    cardsContainer.classList.add('cardsContainer');
+    container.appendChild(cardsContainer);
+
+    // const description = document.createElement('p');
+    // description.classList.add('descriptionText');
+    // description.textContent = 'Focus on the flickering buttons below to change the default settings for Boggle';
+    // container.appendChild(description);
+
+    const disclaimer = document.createElement('p');
+    disclaimer.classList.add('disclaimerText');
+    disclaimer.textContent = '* Changes to these settings will take effect the next time the application is started';
 
     // -------------------------------
     // Default Headset Setting
@@ -208,7 +252,6 @@ function populateGeneralSettings() {
     connectionTypeBtn.rel = 'noreferrer noopener';
     connectionTypeCard.appendChild(connectionTypeBtn);
 
-    cardsContainer.appendChild(homeUrlCard);
     cardsContainer.appendChild(headsetCard);
     cardsContainer.appendChild(connectionTypeCard);
 
@@ -219,24 +262,6 @@ function populateGeneralSettings() {
     // -------------------------------
     // Event Listeners for Buttons
     // ------------------------------- 
-    homeUrlBtn.addEventListener('click', async () => {
-        // Disable the button immediately to prevent multiple clicks
-        homeUrlBtn.disabled = true;
-        setTimeout(() => { homeUrlBtn.disabled = false; }, 1500);
-        addButtonSelectionAnimation(homeUrlBtn);
-
-        try {
-            const homeUrlBtn = document.getElementById('homeUrlBtn');
-            let elementProperties = {
-                id: 'homeUrl',
-                value: homeUrlBtn.textContent || ''
-            }
-            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
-        } catch (error) {
-            logger.error('Error creating keyboard overlay:', error);
-        }
-    });
-
     headsetBtn.addEventListener('click', async () => {
         // Disable the button immediately to prevent multiple clicks
         headsetBtn.disabled = true;
@@ -469,6 +494,9 @@ function attachEventListeners() {
                 switch (buttonId) {
                     case "generalSettingsBtn":
                         showGeneralSettings();
+                        break;
+                    case "headsetSettingsBtn":
+                        showHeadsetSettings();
                         break;
                     case "stimuliSettingsBtn":
                         showStimuliSettings();

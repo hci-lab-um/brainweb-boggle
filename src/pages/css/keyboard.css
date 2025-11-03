@@ -357,6 +357,38 @@ body {
   flex-direction: row;
   gap: 4vw;
 }
+.keyboard__gridContainer {
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #1f1f1f;
+  display: grid;
+  gap: 3vw;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas: "autocompleteArea lettersArea numbersArea" "controlsArea symbolsArea submitArea" "close close close";
+}
+.keyboard__gridContainer #minimisedAutocompleteBtn {
+  grid-area: autocompleteArea;
+}
+.keyboard__gridContainer #minimisedLettersBtn {
+  grid-area: lettersArea;
+}
+.keyboard__gridContainer #minimisedNumbersBtn {
+  grid-area: numbersArea;
+}
+.keyboard__gridContainer #minimisedControlsBtn {
+  grid-area: controlsArea;
+}
+.keyboard__gridContainer #minimisedSymbolsBtn {
+  grid-area: symbolsArea;
+}
+.keyboard__gridContainer #minimisedKeyboardSendBtn {
+  grid-area: submitArea;
+}
+.keyboard__gridContainer #minimisedCloseKeyboardBtn {
+  grid-area: close;
+}
 .keyboard__column {
   display: flex;
   flex-direction: column;

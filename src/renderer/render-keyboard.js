@@ -16,6 +16,7 @@ let webpageBounds = null;   // This is set when the keyboard is loaded
 let suggestion = '';
 let autoCompleteButton;
 let needsNumpad;
+let currentKeyboardLayout;
 let elementTypeAttribute = null;
 let maskOverlay = null; // Reference to the mask overlay
 
@@ -32,7 +33,8 @@ const INPUT_MASKS = {
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
-        ({ elementProperties, webpageBounds } = overlayData)
+        ({ elementProperties, webpageBounds, settingsObject } = overlayData)
+        currentKeyboardLayout = settingsObject.keyboardLayout;
 
         const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week', 'range'];
 
@@ -45,17 +47,16 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         const numericKeyboard = document.querySelector('.keyboard--numeric');
 
         if (needsNumpad) {
-            setupNumericKeyboard(alphaFullKeyboard, numericKeyboard);
+            setupNumericKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
             handleRangeType(elementTypeAttribute);
             maskOverlay = setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
         } else {
-            if (overlayData.settingsObject.keyboardLayout === KeyboardLayouts.FULL.NAME) {
+            if (currentKeyboardLayout === KeyboardLayouts.FULL.NAME) {
                 setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
-            } else {
+            } else if (currentKeyboardLayout === KeyboardLayouts.MINIMISED.NAME) {
                 setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
             }
 
-            inputField = document.querySelector('#textarea');
             setupPasswordAndAutoComplete(elementTypeAttribute);
             maskOverlay = null;
         }
@@ -221,13 +222,6 @@ function applyInputMask(value, mask, type = '') {
     return maskedValue;
 }
 
-function setupNumericKeyboard(alphaKeyboard, numericKeyboard) {
-    alphaKeyboard.style.display = 'none';
-    numericKeyboard.style.display = '';
-    inputField = document.querySelector('#numericTextarea');
-    inputField.type = 'textarea';
-}
-
 function handleRangeType(elementTypeAttribute) {
     if (elementTypeAttribute === 'range') {
         document.getElementById('numericSymbolMinus').style.display = 'none';
@@ -309,16 +303,29 @@ function getInitialRawValue(elementTypeAttribute, initialValue) {
     }
 }
 
+function setupNumericKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
+    alphaFullKeyboard.style.display = 'none';
+    alphaMinimisedKeyboard.style.display = 'none';
+    numericKeyboard.style.display = '';
+
+    inputField = document.querySelector('#numericTextarea');
+    inputField.type = 'textarea';
+}
+
 function setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
     alphaFullKeyboard.style.display = '';
     alphaMinimisedKeyboard.style.display = 'none';
     numericKeyboard.style.display = 'none';
+
+    inputField = document.querySelector('#textarea');
 }
 
 function setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
     alphaFullKeyboard.style.display = 'none';
     alphaMinimisedKeyboard.style.display = '';
     numericKeyboard.style.display = 'none';
+
+    inputField = document.querySelector('#minimisedTextarea');
 }
 
 function setupPasswordAndAutoComplete(elementTypeAttribute) {
@@ -479,25 +486,36 @@ async function getScenarioNumber() {
         const cursorAtStart = inputField.selectionStart === 0;
         const cursorAtEnd = inputField.selectionStart === inputField.value.length;
 
-        if (!textAreaPopulated) {
-            return 80; // Scenario: No text in search field
-        }
+        if (currentKeyboardLayout === KeyboardLayouts.FULL.NAME) {
+            if (!textAreaPopulated) {
+                return 80; // Scenario: No text in search field
+            }
 
-        if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
-            return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
-        }
+            if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
+                return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
+            }
 
-        if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
-            // It doesn't matter if suggestion is available or not because the cursor is at the start position
-            return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
-        }
+            if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
+                // It doesn't matter if suggestion is available or not because the cursor is at the start position
+                return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
+            }
 
-        if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
-            return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
+            if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
+                return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
+            }
+
+        } else if (currentKeyboardLayout === KeyboardLayouts.MINIMISED.NAME) {
+            console.log('Minimised keyboard scenario check', { textAreaPopulated });
+            if (!textAreaPopulated || (textAreaPopulated && !suggestionAvailable)) {
+                return 71; // Scenario: Minimised Keyboard - No text in search field or there is text but no suggestion available
+            }
+
+            if (textAreaPopulated && suggestionAvailable) {
+                return 70; // Scenario: Text in search field, word suggestion available
+            }
         }
 
         logger.error("No matching scenario");
-
     }
 }
 

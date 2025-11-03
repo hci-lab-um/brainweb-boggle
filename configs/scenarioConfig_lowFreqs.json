@@ -391,13 +391,22 @@
         "frequencies": [6.5, 7.5, 8, 7, 8.5, 9, 9.5],
         "phases": [0.5, 1.5, 1.5, 0, 1, 0.5, 0]
     },
+    
     "scenario_70": {
         "name": "KEYBOARD",
-        "description": "Minimised Keyboard Layout",
-        "buttonIds": ["minimisedCloseKeyboardBtn", "minimisedNumbersBtn", "minimisedSymbolsBtn", "minimisedLettersBtn", "minimisedControlsBtn", "minimisedAutoCompleteBtn", "minimisedKeyboardSendBtn"],
+        "description": "Minimised Keyboard Layout - All buttons enabled",
+        "buttonIds": ["minimisedCloseKeyboardBtn", "minimisedNumbersBtn", "minimisedSymbolsBtn", "minimisedLettersBtn", "minimisedControlsBtn", "minimisedKeyboardSendBtn", "minimisedAutoCompleteBtn"],
         "frequencies": [6.5, 7.5, 8, 7, 8.5, 9, 9.5],
         "phases": [0.5, 1.5, 1.5, 0, 1, 0.5, 0]
     },
+    "scenario_71": {
+        "name": "KEYBOARD",
+        "description": "Minimised Keyboard Layout - No AutoComplete",
+        "buttonIds": ["minimisedCloseKeyboardBtn", "minimisedNumbersBtn", "minimisedSymbolsBtn", "minimisedLettersBtn", "minimisedControlsBtn", "minimisedKeyboardSendBtn"],
+        "frequencies": [6.5, 7.5, 8, 7, 8.5, 9],
+        "phases": [0.5, 1.5, 1.5, 0, 1, 0.5]
+    },
+
     "scenario_80": {
         "name": "KEYBOARD",
         "description": "Full Keyboard Layout - No text in search field",

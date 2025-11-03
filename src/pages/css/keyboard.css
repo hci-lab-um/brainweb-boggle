@@ -358,15 +358,11 @@ body {
   gap: 4vw;
 }
 .keyboard__gridContainer {
-  padding: 20px;
-  box-sizing: border-box;
-  background-color: #1f1f1f;
+  flex: 1;
   display: grid;
   gap: 3vw;
-  width: 100%;
-  height: 100%;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-areas: "autocompleteArea lettersArea numbersArea" "controlsArea symbolsArea submitArea" "close close close";
+  grid-template-areas: "autocompleteArea lettersArea numbersArea" "controlsArea symbolsArea submitArea";
 }
 .keyboard__gridContainer #minimisedAutocompleteBtn {
   grid-area: autocompleteArea;
@@ -385,9 +381,6 @@ body {
 }
 .keyboard__gridContainer #minimisedKeyboardSendBtn {
   grid-area: submitArea;
-}
-.keyboard__gridContainer #minimisedCloseKeyboardBtn {
-  grid-area: close;
 }
 .keyboard__column {
   display: flex;
@@ -416,6 +409,12 @@ body {
 }
 .keyboard__row--largeGap {
   gap: 4vh;
+}
+.keyboard__row--minimisedFirst {
+  flex: 0.4;
+}
+.keyboard__row--minimisedLast {
+  flex: 0.3;
 }
 .keyboard__textarea {
   position: relative;
@@ -451,6 +450,9 @@ body {
 .keyboard__key--center {
   height: 100%;
 }
+.keyboard__key--unsetHeight {
+  height: unset;
+}
 .keyboard__key--activatable::after {
   content: "";
   position: absolute;
@@ -463,6 +465,9 @@ body {
 }
 .keyboard__key--active::after {
   background: #08FF00;
+}
+.keyboard--minimised {
+  gap: 5vh;
 }
 
 .textarea {

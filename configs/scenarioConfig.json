@@ -397,32 +397,38 @@
         "frequencies": [6, 8, 12.5, 9, 7.5, 11, 9.5],
         "phases": [1, 1.5, 0, 0.5, 1.5, 0, 0]
     },
-
+    "scenario_70": {
+        "name": "KEYBOARD",
+        "description": "Minimised Keyboard Layout",
+        "buttonIds": ["closeKeyboardBtn", "numbersBtn", "symbolsBtn", "lettersBtn", "controlsBtn", "autoCompleteBtn", "keyboardSendBtn"],
+        "frequencies": [6, 8, 12.5, 9, 7.5, 11, 9.5],
+        "phases": [1, 1.5, 0, 0.5, 1.5, 0, 0]
+    },
 
     "scenario_80": {
         "name": "KEYBOARD",
-        "description": "No text in search field",
+        "description": "Full Keyboard Layout - No text in search field",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn"],
         "frequencies": [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11],
         "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0]
     },
     "scenario_81": {
         "name": "KEYBOARD",
-        "description": "Text in search field, word suggestion available, cursor at end position. The autoCompleteBtn and showHidePasswordBtn have the same frequency and phase because they are used interchangeably.",
+        "description": "Full Keyboard Layout - Text in search field, word suggestion available, cursor at end position. The autoCompleteBtn and showHidePasswordBtn have the same frequency and phase because they are used interchangeably.",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn", "clearAllBtn", "arrowKeysBtn", "backspaceBtn", "autoCompleteBtn", "showHidePasswordBtn"],
         "frequencies": [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 12.5, 14.5, 14.5],
         "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0, 0.5, 0.5]
     },
     "scenario_82": {
         "name": "KEYBOARD",
-        "description": "Text in search field, word suggestion unavailable, cursor at start position (autocomplete and backspace buttons disabled)",
+        "description": "Full Keyboard Layout - Text in search field, word suggestion unavailable, cursor at start position (autocomplete and backspace buttons disabled)",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn", "clearAllBtn", "arrowKeysBtn", "showHidePasswordBtn"],
         "frequencies": [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 14.5],
         "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0.5]
     },
     "scenario_83": {
         "name": "KEYBOARD",
-        "description": "Text in search field, word suggestion unavailable, cursor NOT at start position",
+        "description": "Full Keyboard Layout - Text in search field, word suggestion unavailable, cursor NOT at start position",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn", "clearAllBtn", "arrowKeysBtn", "backspaceBtn", "showHidePasswordBtn"],
         "frequencies": [7, 6.5, 6, 10.5, 8, 14, 12, 10, 7.5, 9.5, 11.5, 13.5, 13, 11, 9, 8.5, 12.5, 14.5],
         "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 1.5, 0, 0.5, 1, 0, 0.5]
@@ -485,6 +491,13 @@
         "frequencies": [7, 6.5, 8.5, 12.5],
         "phases": [0, 0.5, 1, 0]
     },
+    "scenario_97": {
+        "name": "KEYBOARD_KEYS",
+        "description": "2 keys, and cancel button",
+        "buttonIds": ["firstKeyBtn", "secondKeyBtn", "cancelBtn"],
+        "frequencies": [7, 6.5, 8.5],
+        "phases": [0, 0.5, 1]
+    },
 
 
     "scenario_100": {
@@ -514,5 +527,12 @@
         "buttonIds": ["firstHeadsetBtn", "secondHeadsetBtn", "thirdHeadsetBtn"],
         "frequencies": [6, 7.5, 7],
         "phases": [1, 1.5, 0]  
+    },
+        "scenario_104": {
+        "name": "SETTINGS - General Settings",
+        "description": "General Settings menu with 4 buttons",
+        "buttonIds": ["homeUrlBtn", "keyboardLayoutBtn", "switchIntegrationBtn", "closeSettingsBtn"],
+        "frequencies": [6.5, 7.5, 8, 7],
+        "phases": [0.5, 1.5, 1.5, 0]
     }
 }

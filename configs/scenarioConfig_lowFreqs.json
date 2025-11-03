@@ -394,7 +394,7 @@
     "scenario_70": {
         "name": "KEYBOARD",
         "description": "Minimised Keyboard Layout",
-        "buttonIds": ["closeKeyboardBtn", "numbersBtn", "symbolsBtn", "lettersBtn", "controlsBtn", "autoCompleteBtn", "keyboardSendBtn"],
+        "buttonIds": ["minimisedCloseKeyboardBtn", "minimisedNumbersBtn", "minimisedSymbolsBtn", "minimisedLettersBtn", "minimisedControlsBtn", "minimisedAutoCompleteBtn", "minimisedKeyboardSendBtn"],
         "frequencies": [6.5, 7.5, 8, 7, 8.5, 9, 9.5],
         "phases": [0.5, 1.5, 1.5, 0, 1, 0.5, 0]
     },

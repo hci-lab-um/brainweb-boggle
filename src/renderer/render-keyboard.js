@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants } = require('../utils/constants/enums');
+const { ViewNames, CssConstants, KeyboardLayouts } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const fs = require('original-fs')
@@ -40,15 +40,21 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         console.log('Element type:', elementTypeAttribute);
         needsNumpad = NUMPAD_REQUIRED_ELEMENTS.includes(elementTypeAttribute);
 
-        const alphaKeyboard = document.querySelector('.keyboard');
+        const alphaFullKeyboard = document.querySelector('.keyboard');
+        const alphaMinimisedKeyboard = document.querySelector('.keyboard--minimised');
         const numericKeyboard = document.querySelector('.keyboard--numeric');
 
         if (needsNumpad) {
-            setupNumericKeyboard(alphaKeyboard, numericKeyboard);
+            setupNumericKeyboard(alphaFullKeyboard, numericKeyboard);
             handleRangeType(elementTypeAttribute);
             maskOverlay = setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
         } else {
-            setupAlphaKeyboard(alphaKeyboard, numericKeyboard);
+            if (overlayData.settingsObject.keyboardLayout === KeyboardLayouts.FULL.NAME) {
+                setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
+            } else {
+                setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
+            }
+
             inputField = document.querySelector('#textarea');
             setupPasswordAndAutoComplete(elementTypeAttribute);
             maskOverlay = null;
@@ -303,8 +309,15 @@ function getInitialRawValue(elementTypeAttribute, initialValue) {
     }
 }
 
-function setupAlphaKeyboard(alphaKeyboard, numericKeyboard) {
-    alphaKeyboard.style.display = '';
+function setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
+    alphaFullKeyboard.style.display = '';
+    alphaMinimisedKeyboard.style.display = 'none';
+    numericKeyboard.style.display = 'none';
+}
+
+function setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
+    alphaFullKeyboard.style.display = 'none';
+    alphaMinimisedKeyboard.style.display = '';
     numericKeyboard.style.display = 'none';
 }
 

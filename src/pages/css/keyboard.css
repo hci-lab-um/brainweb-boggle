@@ -258,13 +258,15 @@
   gap: 20px;
   align-items: center;
 }
-.popup--headsetSelection, .popup--connectionTypeSelection {
+.popup--headsetSelection, .popup--connectionTypeSelection, .popup--keyboardLayoutSelection {
   flex-direction: column;
   text-align: center;
   gap: 50px;
 }
-.popup--connectionTypeSelection {
-  width: 70%;
+@media (max-width: 1366px) {
+  .popup--connectionTypeSelection, .popup--keyboardLayoutSelection {
+    width: 70%;
+  }
 }
 .popup--deleteAllConfirmation {
   flex-direction: column;
@@ -332,8 +334,9 @@
   width: 300px;
   height: 125px;
 }
-.popup__btn--connectionType {
+.popup__btn--connectionType, .popup__btn--keyboardLayout {
   width: -webkit-fill-available;
+  padding: 40px 50px;
 }
 
 body {

@@ -258,13 +258,15 @@
   gap: 20px;
   align-items: center;
 }
-.popup--headsetSelection, .popup--connectionTypeSelection {
+.popup--headsetSelection, .popup--connectionTypeSelection, .popup--keyboardLayoutSelection {
   flex-direction: column;
   text-align: center;
   gap: 50px;
 }
-.popup--connectionTypeSelection {
-  width: 70%;
+@media (max-width: 1366px) {
+  .popup--connectionTypeSelection, .popup--keyboardLayoutSelection {
+    width: 70%;
+  }
 }
 .popup--deleteAllConfirmation {
   flex-direction: column;
@@ -332,8 +334,9 @@
   width: 300px;
   height: 125px;
 }
-.popup__btn--connectionType {
+.popup__btn--connectionType, .popup__btn--keyboardLayout {
   width: -webkit-fill-available;
+  padding: 40px 50px;
 }
 
 @media (max-height: 729px) {
@@ -455,18 +458,18 @@ p:not(.disclaimerText) {
   color: #ff7474;
 }
 
-.headsetDesc, .connectionTypeDesc {
+.headsetDesc, .connectionTypeDesc, .keyboardLayoutDesc {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   color: #b5c2cd;
 }
 
-.connectionTypeDesc {
+.connectionTypeDesc, .keyboardLayoutDesc {
   font-size: 1.3rem;
 }
 
-.headsetImage {
+.headsetImage, .keyboardLayoutImage {
   height: 45%;
   width: 75%;
   background-color: #1d2b5d;
@@ -474,7 +477,7 @@ p:not(.disclaimerText) {
   border-radius: 12px;
 }
 
-.headsetCard, .connectionTypeCard {
+.headsetCard, .connectionTypeCard, .keyboardLayoutCard {
   background-color: rgba(0, 0, 0, 0.25);
   border-radius: 20px;
   padding: 2vw;

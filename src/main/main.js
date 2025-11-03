@@ -32,6 +32,8 @@ app.whenReady().then(async () => {
     try {
         await db.connect();
         await db.createTables();
+        // await db.deleteKeyboardLayoutsTable(); // For development purposes only
+        // await db.deleteSettingsTable(); // For development purposes only
         await initialiseVariables();
     } catch (err) {
         logger.error('Error initialising database:', err.message);

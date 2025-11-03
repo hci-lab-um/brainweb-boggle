@@ -119,6 +119,7 @@ async function registerIpcHandlers(context) {
             optionsList: elementProperties ? elementProperties.options : null,
             settingsObject: {
                 homeUrl: await db.getDefaultURL(),
+                keyboardLayout: await db.getDefaultKeyboardLayout(),
                 headsetInUse: await db.getDefaultHeadset(),
                 connectionTypeInUse: await db.getDefaultConnectionType(),
             }
@@ -317,6 +318,21 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('keyboardLayout-update', (event, layout) => {
+        try {
+            // Updates the default keyboard layout in the database
+            db.updateDefaultKeyboardLayout(layout);
+
+            // Updates the keyboardLayout button inner text in settings overlay if it is open
+            let settingsOverlay = viewsList.find(view => view.name === ViewNames.SETTINGS);
+            if (settingsOverlay) {
+                settingsOverlay.webContentsView.webContents.send('keyboardLayout-update', layout);
+            }
+        } catch (err) {
+            logger.error('Error updating keyboard layout:', err.message);
+        }
+    });
+
     ipcMain.on('defaultHeadset-update', async (event, newHeadset) => {
         try {
             // Updates the default headset in the database
@@ -350,9 +366,18 @@ async function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.handle('available-headsets-get', async () => {
+    ipcMain.handle('headsets-get', async () => {
         try {
-            return await db.getAvailableHeadsets();
+            return await db.getHeadsets();
+        } catch (err) {
+            logger.error('Error retrieving available headsets:', err.message);
+            return [];
+        }
+    });
+
+    ipcMain.handle('keyboardLayouts-get', async () => {
+        try {
+            return await db.getKeyboardLayouts();
         } catch (err) {
             logger.error('Error retrieving available headsets:', err.message);
             return [];

@@ -8,6 +8,7 @@ const { createPopup } = require('../utils/utilityFunctions');
 let buttons = [];
 let settingsContentContainer = null;
 let homeUrl = '';
+let keyboardLayoutInUse = '';
 let headsetInUse = '';
 let connectionTypeInUse = '';
 let closeSettingsButton = null;
@@ -20,6 +21,7 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         settingsContentContainer = document.querySelector('.settingsContent');
         closeSettingsButton = document.getElementById('closeSettingsBtn');
         homeUrl = overlayData.settingsObject.homeUrl || '';
+        keyboardLayoutInUse = overlayData.settingsObject.keyboardLayout || '';
         headsetInUse = overlayData.settingsObject.headsetInUse || '';
         connectionTypeInUse = overlayData.settingsObject.connectionTypeInUse || '';
 
@@ -48,6 +50,18 @@ ipcRenderer.on('homeUrl-update', (event, newUrl) => {
         }
     } catch (error) {
         logger.error('Error in homeUrl-update handler:', error);
+    }
+});
+
+ipcRenderer.on('keyboardLayout-update', (event, newLayout) => {
+    try {
+        keyboardLayoutInUse = newLayout;
+        const keyboardLayoutBtn = document.getElementById('keyboardLayoutBtn');
+        if (keyboardLayoutBtn) {
+            keyboardLayoutBtn.textContent = keyboardLayoutInUse ? keyboardLayoutInUse : 'Not configured';
+        }
+    } catch (error) {
+        logger.error('Error in keyboardLayout-update handler:', error);
     }
 });
 
@@ -147,12 +161,10 @@ function populateGeneralSettings() {
 
     const homeUrlTitle = document.createElement('h3');
     homeUrlTitle.textContent = Settings.DEFAULT_URL.LABEL;
-    // homeUrlCard.appendChild(homeUrlTitle);
     homeTextContainer.appendChild(homeUrlTitle);
 
     const homeUrlDesc = document.createElement('p');
     homeUrlDesc.textContent = Settings.DEFAULT_URL.DESCRIPTION;
-    // homeUrlCard.appendChild(homeUrlDesc);
     homeTextContainer.appendChild(homeUrlDesc);
     homeUrlCard.appendChild(homeTextContainer);
 
@@ -163,7 +175,33 @@ function populateGeneralSettings() {
     homeUrlBtn.rel = 'noreferrer noopener';
     homeUrlCard.appendChild(homeUrlBtn);
 
+    // -------------------------------
+    // Keyboard Layout Setting
+    // -------------------------------
+    const keyboardLayoutCard = document.createElement('div');
+    keyboardLayoutCard.classList.add('settingCard');
+
+    const keyboardLayoutTextContainer = document.createElement('div');
+
+    const keyboardLayoutTitle = document.createElement('h3');
+    keyboardLayoutTitle.textContent = Settings.DEFAULT_KEYBOARD_LAYOUT.LABEL;
+    keyboardLayoutTextContainer.appendChild(keyboardLayoutTitle);
+
+    const keyboardLayoutDesc = document.createElement('p');
+    keyboardLayoutDesc.textContent = Settings.DEFAULT_KEYBOARD_LAYOUT.DESCRIPTION;
+    keyboardLayoutTextContainer.appendChild(keyboardLayoutDesc);
+
+    keyboardLayoutCard.appendChild(keyboardLayoutTextContainer);
+
+    const keyboardLayoutBtn = document.createElement('button');
+    keyboardLayoutBtn.innerHTML = `<span>${keyboardLayoutInUse ? keyboardLayoutInUse : 'Not configured'}</span>`;
+    keyboardLayoutBtn.id = 'keyboardLayoutBtn';
+    keyboardLayoutBtn.classList.add('button');
+    keyboardLayoutBtn.rel = 'noreferrer noopener';
+    keyboardLayoutCard.appendChild(keyboardLayoutBtn);
+
     cardsContainer.appendChild(homeUrlCard);
+    cardsContainer.appendChild(keyboardLayoutCard);
 
     // -------------------------------
     // Event Listeners for Buttons
@@ -184,6 +222,23 @@ function populateGeneralSettings() {
         } catch (error) {
             logger.error('Error creating keyboard overlay:', error);
         }
+    });
+
+    keyboardLayoutBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        keyboardLayoutBtn.disabled = true;
+        setTimeout(() => { keyboardLayoutBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(keyboardLayoutBtn);
+
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showKeyboardLayoutSelectionPopup();
+            } catch (error) {
+                logger.error('Error creating keyboard layout selection modal:', error);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
 }
 
@@ -331,7 +386,7 @@ function setCloseButtonMode(mode) {
 async function showHeadsetSelectionPopup() {
     try {
         // Get a list of available headsets from the main process
-        const availableHeadsets = await ipcRenderer.invoke('available-headsets-get');
+        const availableHeadsets = await ipcRenderer.invoke('headsets-get');
         console.log(availableHeadsets);
         const buttonsList = [];
         const headsetCards = [];
@@ -475,6 +530,75 @@ async function showConnectionTypeSelectionPopup() {
         await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
     } catch (error) {
         logger.error('Error creating connection type selection modal:', error);
+    }
+}
+
+async function showKeyboardLayoutSelectionPopup() {
+    try {
+        // Get a list of available headsets from the main process
+        const availableKeyboardLayouts = await ipcRenderer.invoke('keyboardLayouts-get');
+        console.log(availableKeyboardLayouts);
+        const buttonsList = [];
+        const keyboardLayoutCards = [];
+
+        availableKeyboardLayouts.forEach((keyboardLayout, index) => {
+            const idSuffix = ['first', 'second', 'third', 'fourth'][index];
+
+            const keyboardLayoutCard = document.createElement('div');
+            keyboardLayoutCard.classList.add('keyboardLayoutCard');
+
+            const keyboardLayoutImage = document.createElement('img');
+            keyboardLayoutImage.classList.add('keyboardLayoutImage');
+            keyboardLayoutImage.alt = `${keyboardLayout.name} keyboard layout`;
+            if (keyboardLayout.image) {
+                keyboardLayoutImage.src = keyboardLayout.image;
+            } else {
+                keyboardLayoutImage.classList.add('keyboardLayoutImage--placeholder');
+            }
+            keyboardLayoutCard.appendChild(keyboardLayoutImage);
+
+            const keyboardLayoutDesc = document.createElement('div');
+            keyboardLayoutDesc.classList.add('keyboardLayoutDesc');
+            keyboardLayoutDesc.innerHTML = `<span>${keyboardLayout.description}</span>`;
+            keyboardLayoutCard.appendChild(keyboardLayoutDesc);
+
+            // Create buttons
+            const selectKeyboardLayoutBtn = document.createElement('button');
+            selectKeyboardLayoutBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
+            selectKeyboardLayoutBtn.classList.add('button', 'popup__btn', 'popup__btn--keyboardLayout');
+            selectKeyboardLayoutBtn.textContent = `${keyboardLayout.name}`;
+            selectKeyboardLayoutBtn.onclick = () => {
+                addButtonSelectionAnimation(selectKeyboardLayoutBtn);
+                setTimeout(async () => {
+                    popupElements.close();
+
+                    // Update the UI
+                    keyboardLayoutInUse = keyboardLayout.name;
+                    const keyboardLayoutBtn = document.getElementById('keyboardLayoutBtn');
+                    keyboardLayoutBtn.innerHTML = `<span>${keyboardLayoutInUse || 'Unknown'}</span>`;
+
+                    // Update the default keyboard layout in the db
+                    ipcRenderer.send('defaultKeyboardLayout-update', keyboardLayoutInUse);
+
+                    await updateScenarioId(104, buttonsList, ViewNames.SETTINGS);
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+            };
+            keyboardLayoutCard.appendChild(selectKeyboardLayoutBtn);
+
+            buttonsList.push(selectKeyboardLayoutBtn);
+            keyboardLayoutCards.push(keyboardLayoutCard);
+        });
+
+        const popupElements = createPopup({
+            name: 'keyboardLayoutSelection',
+            message: 'Choose Keyboard Layout',
+            classes: ['popup--keyboardLayoutSelection'],
+            buttons: keyboardLayoutCards
+        });
+
+        await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
+    } catch (error) {
+        logger.error('Error opening keyboard layout selection popup:', error.message);
     }
 }
 

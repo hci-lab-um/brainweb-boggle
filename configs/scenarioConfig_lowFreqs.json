@@ -505,7 +505,7 @@
     },
     "scenario_103": {
         "name": "SETTINGS - Headset Settings",
-        "description": "Headset/Connection Selection Modal with 3 buttons",
+        "description": "Headset/Connection Selection Popup with 3 buttons",
         "buttonIds": ["firstSettingOptionBtn", "secondSettingOptionBtn", "thirdSettingOptionBtn"],
         "frequencies": [6.5, 7.5, 8],
         "phases": [0.5, 1.5, 1.5]  
@@ -513,7 +513,7 @@
     "scenario_104": {
         "name": "SETTINGS - General Settings",
         "description": "General Settings menu with 4 buttons",
-        "buttonIds": ["homeUrlBtn", "KeyboardLayoutBtn", "switchIntegrationBtn", "closeSettingsBtn"],
+        "buttonIds": ["homeUrlBtn", "keyboardLayoutBtn", "switchIntegrationBtn", "closeSettingsBtn"],
         "frequencies": [6.5, 7.5, 8, 7],
         "phases": [0.5, 1.5, 1.5, 0]
     }

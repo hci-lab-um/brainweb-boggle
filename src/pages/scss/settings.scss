@@ -126,18 +126,18 @@ p:not(.disclaimerText) {
     color: colors.$secondary-muted;
 }
 
-.headsetDesc, .connectionTypeDesc {
+.headsetDesc, .connectionTypeDesc, .keyboardLayoutDesc {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     color: colors.$text-muted;
 }
 
-.connectionTypeDesc {
+.connectionTypeDesc, .keyboardLayoutDesc {
     font-size: 1.3rem;
 }
 
-.headsetImage {
+.headsetImage, .keyboardLayoutImage {
     height: 45%;
     width: 75%;
     background-color: colors.$primary;
@@ -145,7 +145,7 @@ p:not(.disclaimerText) {
     border-radius: 12px;
 }
 
-.headsetCard, .connectionTypeCard {
+.headsetCard, .connectionTypeCard, .keyboardLayoutCard {
     background-color: colors.$bg-black-transparent-25;
     border-radius: 20px;
     padding: 2vw;

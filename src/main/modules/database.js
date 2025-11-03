@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const dbPath = path.join(app.getPath('userData'), 'boggle.db');
 const logger = require('./logger');
-const { ConnectionTypes, Headsets, Settings } = require('../../utils/constants/enums');
+const { ConnectionTypes, Headsets, KeyboardLayouts, Settings } = require('../../utils/constants/enums');
 let db;
 
 function connect() {
@@ -44,8 +44,8 @@ function close() {
 // ======== HELPER FUNCTIONS ========
 // ==================================
 
-// Helper to resolve headset IMAGE paths from enums to an absolute file path
-function resolveHeadsetImagePath(imagePathFromEnum) {
+// Helper to resolve IMAGE paths from enums to an absolute file path
+function resolveImagePath(imagePathFromEnum) {
     try {
         if (!imagePathFromEnum) return null;
 
@@ -55,10 +55,10 @@ function resolveHeadsetImagePath(imagePathFromEnum) {
         const resourcesCandidate = path.join(appRoot, 'resources', fileName);
         if (fs.existsSync(resourcesCandidate)) return resourcesCandidate;
 
-        logger.warn(`Headset image not found for path: ${imagePathFromEnum}`);
+        logger.warn(`Image not found for path: ${imagePathFromEnum}`);
         return null;
     } catch (e) {
-        logger.warn(`Error resolving headset image path ${imagePathFromEnum}: ${e.message}`);
+        logger.warn(`Error resolving image path ${imagePathFromEnum}: ${e.message}`);
         return null;
     }
 }
@@ -171,7 +171,7 @@ function populateHeadsetsTable() {
             // Attempt to read the image as a Buffer; if missing, store NULL
             let imageBuffer = null;
             try {
-                const imgPath = resolveHeadsetImagePath(headset.IMAGE);
+                const imgPath = resolveImagePath(headset.IMAGE);
                 if (imgPath) {
                     imageBuffer = fs.readFileSync(imgPath);
                 }
@@ -307,6 +307,66 @@ function populateHeadsetConnectionTypesTable() {
     });
 }
 
+function createKeyboardLayoutsTable() {
+    return new Promise((resolve, reject) => {
+        const createKeyboardLayoutsTable = `
+            CREATE TABLE IF NOT EXISTS keyboard_layouts (
+                name TEXT PRIMARY KEY,
+                description TEXT NOT NULL,
+                image BLOB NOT NULL
+            );
+        `;
+        db.run(createKeyboardLayoutsTable, (err) => {
+            if (err) {
+                logger.error('Error creating keyboard_layouts table:', err.message);
+                reject(err);
+            } else {
+                logger.info('keyboard_layouts table created successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+function populateKeyboardLayoutsTable() {
+    return new Promise((resolve, reject) => {
+        const allRows = [];
+        const values = [];
+
+        Object.values(KeyboardLayouts).forEach((layout) => {
+            // Attempt to read the image as a Buffer; if missing, store NULL
+            let imageBuffer = null;
+            try {
+                const imgPath = resolveImagePath(layout.IMAGE);
+                if (imgPath) {
+                    imageBuffer = fs.readFileSync(imgPath);
+                }
+            } catch (e) {
+                logger.warn(`Could not read keyboard layout image for ${layout.NAME}: ${e.message}`);
+            }
+
+            allRows.push('(?, ?, ?)');
+            values.push(layout.NAME, layout.DESCRIPTION, imageBuffer);
+        });
+
+        if (allRows.length === 0) {
+            resolve();
+            return;
+        }
+
+        const sql = `INSERT OR IGNORE INTO keyboard_layouts (name, description, image) VALUES ${allRows.join(', ')}`;
+        db.run(sql, values, (err) => {
+            if (err) {
+                logger.error('Error populating keyboard_layouts table:', err.message);
+                reject(err);
+            } else {
+                logger.info('keyboard_layouts table populated successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
 function createSettingsTable() {
     return new Promise((resolve, reject) => {
         const createSettingsTable = `
@@ -338,6 +398,11 @@ function populateSettingsTable() {
                 name: Settings.DEFAULT_URL.NAME,
                 value: Settings.DEFAULT_URL.DEFAULT,
                 category: Settings.DEFAULT_URL.CATEGORY,
+            },
+            {
+                name: Settings.DEFAULT_KEYBOARD_LAYOUT.NAME,
+                value: Settings.DEFAULT_KEYBOARD_LAYOUT.DEFAULT,
+                category: Settings.DEFAULT_KEYBOARD_LAYOUT.CATEGORY,
             },
             {
                 name: Settings.DEFAULT_HEADSET.NAME,
@@ -387,9 +452,11 @@ async function createTables() {
         .then(createHeadsetTable)
         .then(createConnectionTypesTable)
         .then(createHeadsetConnectionTypesTable)
+        .then(createKeyboardLayoutsTable)
         .then(populateHeadsetsTable)
         .then(populateConnectionTypesTable)
         .then(populateHeadsetConnectionTypesTable)
+        .then(populateKeyboardLayoutsTable)
         .then(createSettingsTable)
         .then(populateSettingsTable)
         .catch((err) => {
@@ -538,6 +605,21 @@ function deleteHeadsetsTable() {
     });
 }
 
+function deleteKeyboardLayoutsTable() {
+    return new Promise((resolve, reject) => {
+        const deleteLayouts = `DROP TABLE IF EXISTS keyboard_layouts`;
+        db.run(deleteLayouts, function (err) {
+            if (err) {
+                logger.error('Error deleting Keyboard layouts table:', err.message);
+                reject(err);
+            } else {
+                logger.info('Keyboard layouts table has been deleted');
+                resolve();
+            }
+        });
+    });
+}
+
 function deleteSettingsTable() {
     return new Promise((resolve, reject) => {
         const deleteTable = `DROP TABLE IF EXISTS settings`;
@@ -557,76 +639,213 @@ function deleteSettingsTable() {
 // ============ GETTERS ============
 // =================================
 
-function getBookmarks() {
-    return new Promise((resolve, reject) => {
-        const query = `SELECT * FROM bookmarks`;
-        db.all(query, (err, rows) => {
-            if (err) {
-                logger.error('Error retrieving bookmarks:', err.message);
-                reject(err);
-            } else {
-                // Convert each snapshot (BLOB) to a Base64 string
-                rows.forEach(row => {
-                    if (row.snapshot) {
-                        row.snapshot = `data:image/png;base64,${row.snapshot.toString("base64")}`;
-                    }
-                });
+async function getBookmarks() {
+    try {
+        return await new Promise((resolve, reject) => {
+            const query = `SELECT * FROM bookmarks`;
+            db.all(query, (err, rows) => {
+                if (err) {
+                    logger.error('Error retrieving bookmarks:', err.message);
+                    reject(err);
+                } else {
+                    // Convert each snapshot (BLOB) to a Base64 string
+                    rows.forEach(row => {
+                        if (row.snapshot) {
+                            row.snapshot = `data:image/png;base64,${row.snapshot.toString("base64")}`;
+                        }
+                    });
 
-                resolve(rows);
-            }
+                    resolve(rows);
+                }
+            });
+        }).catch(err => {
+            logger.error('Error getting bookmarks:', err.message);
         });
-    }).catch(err => {
+    } catch (err) {
         logger.error('Error getting bookmarks:', err.message);
-    });
+    }
 }
 
-function getTabs() {
-    return new Promise((resolve, reject) => {
-        const query = `SELECT * FROM tabs`;
-        db.all(query, (err, rows) => {
-            if (err) {
-                logger.error('Error retrieving tabs:', err.message);
-                reject(err);
-            } else {
-                // Convert each snapshot (BLOB) to a Base64 string if snapshot is present
-                rows.forEach(row => {
-                    if (row.snapshot) {
-                        row.snapshot = `data:image/png;base64,${row.snapshot.toString("base64")}`;
-                    }
-                });
+async function getTabs() {
+    try {
+        return await new Promise((resolve, reject) => {
+            const query = `SELECT * FROM tabs`;
+            db.all(query, (err, rows) => {
+                if (err) {
+                    logger.error('Error retrieving tabs:', err.message);
+                    reject(err);
+                } else {
+                    // Convert each snapshot (BLOB) to a Base64 string if snapshot is present
+                    rows.forEach(row => {
+                        if (row.snapshot) {
+                            row.snapshot = `data:image/png;base64,${row.snapshot.toString("base64")}`;
+                        }
+                    });
 
-                resolve(rows);
-            }
+                    resolve(rows);
+                }
+            });
+        }).catch(err => {
+            logger.error('Error getting tabs:', err.message);
         });
-    }).catch(err => {
+    } catch (err) {
         logger.error('Error getting tabs:', err.message);
-    });
+    }
 }
 
-function getSetting(setting) {
-    return new Promise((resolve, reject) => {
-        if (!db) {
-            reject(new Error('Database not initialised'));
-            return;
-        }
-
-        const query = `SELECT value FROM settings WHERE name = ?`;
-        db.get(query, [setting], (err, row) => {
-            if (err) {
-                logger.error(`Error retrieving ${setting}:`, err.message);
-                reject(err);
-            } else {
-                resolve(row.value);
+async function getHeadsetConnectionTypes(headsetName, companyName) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
             }
+
+            const query = `
+            SELECT DISTINCT connection_type
+            FROM headset_connection_types
+            WHERE headset_name = ? AND company_name = ?
+        `;
+            db.all(query, [headsetName, companyName], (err, rows) => {
+                if (err) {
+                    logger.error('Error retrieving connection types:', err.message);
+                    reject(err);
+                } else {
+                    resolve(rows.map(row => row.connection_type));
+                }
+            });
         });
-    }).catch(err => {
+    } catch (err) {
+        logger.error('Error getting connection types for headset:', err.message);
+    }
+}
+
+async function getHeadsets() {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `
+            SELECT
+                h.company_name AS companyName,
+                h.headset_name AS headsetName,
+                h.used_electrodes AS usedElectrodes,
+                h.image AS imageBlob,
+                GROUP_CONCAT(DISTINCT hct.connection_type) AS connectionTypes
+            FROM headsets h
+            LEFT JOIN headset_connection_types hct
+                ON h.company_name = hct.company_name AND h.headset_name = hct.headset_name
+            GROUP BY h.company_name, h.headset_name
+            ORDER BY h.headset_name COLLATE NOCASE
+        `;
+
+            db.all(query, (err, rows) => {
+                if (err) {
+                    logger.error('Error retrieving available headsets:', err.message);
+                    reject(err);
+                    return;
+                }
+
+                const mappedHeadsets = rows.map(row => ({
+                    company: row.companyName,
+                    name: row.headsetName,
+                    usedElectrodes: safeParseJson(row.usedElectrodes, []),
+                    connectionTypes: row.connectionTypes ? row.connectionTypes.split(',').filter(Boolean) : [],
+                    image: bufferToDataUrl(row.imageBlob)
+                }));
+
+                resolve(mappedHeadsets);
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting available headsets:', err.message);
+    }
+}
+
+async function getConnectionTypeData(connectionType) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+            const query = `SELECT name, description FROM connection_types WHERE name = ?`;
+            db.get(query, [connectionType], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving connection type data:', err.message);
+                    reject(err);
+                } else {
+                    resolve(row ? { name: row.name, description: row.description } : null);
+                }
+            });
+        });
+    } catch (err_1) {
+        logger.error('Error getting connection type data:', err_1.message);
+    }
+}
+
+async function getKeyboardLayouts() {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `SELECT name, description, image FROM keyboard_layouts`;
+            db.all(query, [], (err, rows) => {
+                if (err) {
+                    logger.error('Error retrieving keyboard layouts:', err.message);
+                    reject(err);
+                } else {
+                    resolve(rows.map(row => ({
+                        name: row.name,
+                        description: row.description,
+                        image: bufferToDataUrl(row.image)
+                    })));
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting keyboard layouts:', err.message);
+    }
+}
+
+async function getSetting(setting) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `SELECT value FROM settings WHERE name = ?`;
+            db.get(query, [setting], (err, row) => {
+                if (err) {
+                    logger.error(`Error retrieving ${setting}:`, err.message);
+                    reject(err);
+                } else {
+                    resolve(row.value);
+                }
+            });
+        }).catch(err => {
+            logger.error(`Error getting ${setting}:`, err.message);
+        });
+    } catch (err) {
         logger.error(`Error getting ${setting}:`, err.message);
-    });
+    }
 }
 
 // These get the values in the database and not the defaults from enums.js
 function getDefaultURL() {
     return getSetting(Settings.DEFAULT_URL.NAME);
+}
+
+function getDefaultKeyboardLayout() {
+    return getSetting(Settings.DEFAULT_KEYBOARD_LAYOUT.NAME);
 }
 
 function getDefaultHeadset() {
@@ -653,23 +872,27 @@ function getDefaultStimuliDarkColor() {
 // ============ SETTERS ============
 // =================================
 
-function updateSetting(setting, value) {
-    return new Promise((resolve, reject) => {
-        if (!db) {
-            reject(new Error('Database not initialised'));
-            return;
-        }
-
-        const query = `UPDATE settings SET value = ? WHERE name = ?`;
-        db.run(query, [value, setting], function (err) {
-            if (err) {
-                logger.error(`Error updating ${setting}:`, err.message);
-                reject(err);
-            } else {
-                resolve();
+async function updateSetting(setting, value) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
             }
+
+            const query = `UPDATE settings SET value = ? WHERE name = ?`;
+            db.run(query, [value, setting], function (err) {
+                if (err) {
+                    logger.error(`Error updating ${setting}:`, err.message);
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
         });
-    });
+    } catch (err) {
+        logger.error(`Error updating ${setting}:`, err.message);
+    }
 }
 
 function updateDefaultURL(newUrl) {
@@ -696,95 +919,6 @@ function updateDefaultStimuliDarkColor(newColor) {
     return updateSetting(Settings.DEFAULT_STIMULI_DARK_COLOR.NAME, newColor);
 }
 
-
-// =================================
-// ============ QUERIES ============
-// =================================
-
-function getHeadsetConnectionTypes(headsetName, companyName) {
-    return new Promise((resolve, reject) => {
-        if (!db) {
-            reject(new Error('Database not initialised'));
-            return;
-        }
-
-        const query = `
-            SELECT DISTINCT connection_type
-            FROM headset_connection_types
-            WHERE headset_name = ? AND company_name = ?
-        `;
-        db.all(query, [headsetName, companyName], (err, rows) => {
-            if (err) {
-                logger.error('Error retrieving connection types:', err.message);
-                reject(err);
-            } else {
-                resolve(rows.map(row => row.connection_type));
-            }
-        });
-    });
-}
-
-function getAvailableHeadsets() {
-    return new Promise((resolve, reject) => {
-        if (!db) {
-            reject(new Error('Database not initialised'));
-            return;
-        }
-
-        const query = `
-            SELECT
-                h.company_name AS companyName,
-                h.headset_name AS headsetName,
-                h.used_electrodes AS usedElectrodes,
-                h.image AS imageBlob,
-                GROUP_CONCAT(DISTINCT hct.connection_type) AS connectionTypes
-            FROM headsets h
-            LEFT JOIN headset_connection_types hct
-                ON h.company_name = hct.company_name AND h.headset_name = hct.headset_name
-            GROUP BY h.company_name, h.headset_name
-            ORDER BY h.headset_name COLLATE NOCASE
-        `;
-
-        db.all(query, (err, rows) => {
-            if (err) {
-                logger.error('Error retrieving available headsets:', err.message);
-                reject(err);
-                return;
-            }
-
-            const mappedHeadsets = rows.map(row => ({
-                company: row.companyName,
-                name: row.headsetName,
-                usedElectrodes: safeParseJson(row.usedElectrodes, []),
-                connectionTypes: row.connectionTypes ? row.connectionTypes.split(',').filter(Boolean) : [],
-                image: bufferToDataUrl(row.imageBlob)
-            }));
-
-            resolve(mappedHeadsets);
-        });
-    });
-}
-
-function getConnectionTypeData(connectionType) {
-    return new Promise((resolve, reject) => {
-        if (!db) {
-            reject(new Error('Database not initialised'));
-            return;
-        }
-        const query = `SELECT name, description FROM connection_types WHERE name = ?`;
-        db.get(query, [connectionType], (err, row) => {
-            if (err) {
-                logger.error('Error retrieving connection type data:', err.message);
-                reject(err);
-            } else {
-                resolve(row ? { name: row.name, description: row.description } : null);
-            }
-        });
-    }).catch(err => {
-        logger.error('Error getting connection type data:', err.message);
-    });
-}
-
 module.exports = {
     connect,
     close,
@@ -795,7 +929,12 @@ module.exports = {
 
     getBookmarks,
     getTabs,
+    getHeadsetConnectionTypes,
+    getHeadsets,
+    getConnectionTypeData,
+    getKeyboardLayouts,
     getDefaultURL,
+    getDefaultKeyboardLayout,
     getDefaultHeadset,
     getDefaultConnectionType,
     getDefaultStimuliPattern,
@@ -808,6 +947,7 @@ module.exports = {
     deleteAllTabs,
     deleteHeadsetsTable,
     deleteSettingsTable,
+    deleteKeyboardLayoutsTable,
 
     updateDefaultURL,
     updateDefaultHeadset,
@@ -815,8 +955,4 @@ module.exports = {
     updateDefaultStimuliPattern,
     updateDefaultStimuliLightColor,
     updateDefaultStimuliDarkColor,
-
-    getHeadsetConnectionTypes,
-    getAvailableHeadsets,
-    getConnectionTypeData
 };

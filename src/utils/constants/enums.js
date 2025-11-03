@@ -62,9 +62,23 @@ const Headsets = Object.freeze({
     }
 });
 
+const KeyboardLayouts = Object.freeze({
+    FULL: {
+        NAME: "Full",
+        DESCRIPTION: "A QWERTY keyboard layout where keys are selectable from the start. Recommended for use with g.USBamp.",
+        IMAGE: "../../resources/full_keyboard_layout.png"
+    },
+    MINIMISED: {
+        NAME: "Minimised",
+        DESCRIPTION: "A compact keyboard layout with fewer flickering stimuli at one time. Recommended for use with Epoc X.",
+        IMAGE: "../../resources/minimised_keyboard_layout.png"
+    }
+});
+
 const SettingCategories = Object.freeze({
     GENERAL: "General",
-    STIMULI: "Stimuli"
+    STIMULI: "Stimuli",
+    HEADSET: "Headset"
 });
 
 const Settings = Object.freeze({
@@ -75,19 +89,26 @@ const Settings = Object.freeze({
         DEFAULT: "https://www.google.com",
         CATEGORY: SettingCategories.GENERAL,
     },
+    DEFAULT_KEYBOARD_LAYOUT: {
+        NAME: "keyboardLayout",
+        LABEL: "Keyboard Layout",
+        DESCRIPTION: "The keyboard layout to be used throughout the browser.",
+        DEFAULT: KeyboardLayouts.MINIMISED.NAME,
+        CATEGORY: SettingCategories.GENERAL,
+    },
     DEFAULT_HEADSET: {
         NAME: "defaultHeadset",
         LABEL: "Headset",
         DESCRIPTION: "The headset that will be used by default when the application starts.",
         DEFAULT: `${Headsets.EPOC_X.NAME} - ${Headsets.EPOC_X.COMPANY}`,
-        CATEGORY: SettingCategories.GENERAL,
+        CATEGORY: SettingCategories.HEADSET,
     },
     DEFAULT_CONNECTION_TYPE: {
         NAME: "defaultConnectionType",
         LABEL: "Connection Type",
         DESCRIPTION: "The connection type that will be used to obtain the data from the default headset.",
         DEFAULT: Headsets.EPOC_X.CONNECTION_TYPE.CONNECTION_TYPE_1,
-        CATEGORY: SettingCategories.GENERAL,
+        CATEGORY: SettingCategories.HEADSET,
     },
     DEFAULT_STIMULI_PATTERN: {
         NAME: "defaultStimuliPattern",
@@ -117,6 +138,7 @@ module.exports = {
     CssConstants,
     ConnectionTypes,
     Headsets,
+    KeyboardLayouts,
     Settings,
     SettingCategories
 };

@@ -899,6 +899,10 @@ function updateDefaultURL(newUrl) {
     return updateSetting(Settings.DEFAULT_URL.NAME, newUrl);
 }
 
+function updateDefaultKeyboardLayout(newKeyboardLayout) {
+    return updateSetting(Settings.DEFAULT_KEYBOARD_LAYOUT.NAME, newKeyboardLayout);
+}
+
 function updateDefaultHeadset(newHeadset) {
     return updateSetting(Settings.DEFAULT_HEADSET.NAME, newHeadset);
 }
@@ -950,6 +954,7 @@ module.exports = {
     deleteKeyboardLayoutsTable,
 
     updateDefaultURL,
+    updateDefaultKeyboardLayout,
     updateDefaultHeadset,
     updateDefaultConnectionType,
     updateDefaultStimuliPattern,

@@ -578,7 +578,7 @@ async function showKeyboardLayoutSelectionPopup() {
                     keyboardLayoutBtn.innerHTML = `<span>${keyboardLayoutInUse || 'Unknown'}</span>`;
 
                     // Update the default keyboard layout in the db
-                    ipcRenderer.send('defaultKeyboardLayout-update', keyboardLayoutInUse);
+                    ipcRenderer.send('keyboardLayout-update', keyboardLayoutInUse);
 
                     await updateScenarioId(104, buttonsList, ViewNames.SETTINGS);
                 }, CssConstants.SELECTION_ANIMATION_DURATION);

@@ -53,16 +53,17 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         } else {
             if (currentKeyboardLayout === KeyboardLayouts.FULL.NAME) {
                 setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
+                autoCompleteButton = document.getElementById('autoCompleteBtn');
             } else if (currentKeyboardLayout === KeyboardLayouts.MINIMISED.NAME) {
                 setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
+                autoCompleteButton = document.getElementById('minimisedAutoCompleteBtn');
             }
 
             setupPasswordAndAutoComplete(elementTypeAttribute);
             maskOverlay = null;
         }
 
-        buttons = document.querySelectorAll('button');
-        autoCompleteButton = document.getElementById('autoCompleteBtn');
+        buttons = document.querySelectorAll('button');        
 
         // Ensure inputField.value is always in the correct format for date-like types
         if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
@@ -635,8 +636,9 @@ function attachEventListeners() {
                 if (buttonId !== 'upperCaseBtn') await stopManager();
 
                 switch (buttonId) {
-                    case "closeKeyboardBtn":
-                    case "numericCloseKeyboardBtn":
+                    case 'closeKeyboardBtn':
+                    case 'minimisedCloseKeyboardBtn':
+                    case 'numericCloseKeyboardBtn':
                         await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'numbersBtn':
@@ -697,6 +699,7 @@ function attachEventListeners() {
                         inputField.focus();
                         break;
                     case 'keyboardSendBtn':
+                    case 'minimisedKeyboardSendBtn':
                     case 'numericKeyboardSendBtn':
                         let input = inputField.value.trim();
                         if (!input) break;
@@ -735,6 +738,7 @@ function attachEventListeners() {
                     case 'backspaceBtn':
                         updateTextareaAtCursor();
                         break;
+                    case 'minimisedAutoCompleteBtn':
                     case 'autoCompleteBtn':
                         if (suggestion && inputField.selectionStart === inputField.value.length) {
                             updateTextareaAtCursor(suggestion);

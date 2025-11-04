@@ -1,15 +1,20 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants } = require('../utils/constants/enums');
+const { ViewNames, CssConstants, KeyboardLayouts } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
 const logger = require('../main/modules/logger');
+const { Key } = require('@nut-tree-fork/nut-js');
 
 let buttons = [];
+let isMinimisedKeyboard;
 
 ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     try {
-        const { scenarioId, buttonId, isUpperCase } = overlayData;
+        const { scenarioId, buttonId, isUpperCase, settingsObject } = overlayData;
+
+        // Determine if the keyboard layout is minimised so that we can adjust the key clicking behaviour
+        isMinimisedKeyboard = settingsObject.keyboardLayout === KeyboardLayouts.MINIMISED.NAME;
 
         await initKeyboardKeys(buttonId, isUpperCase);
         buttons = document.querySelectorAll('button');
@@ -49,6 +54,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
             const pageSize = 8;  // Number of symbols per page
 
             switch (buttonId) {
+                // This is for the FULL KEYBOARD layout
                 case 'numbersBtn':
                     keys = '1234567890'.split('');
                     keysContainer.classList.add('keyboard__keysContainer--doubleRow');
@@ -67,6 +73,25 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                 case 'numericSymbolsBtn':
                     keys = `+-.`.split('');
                     break;
+
+                // This is for MINIMISED KEYBOARD layout
+                case 'minimisedNumbersBtn':
+                    keys = '0 1 2 3 4 | 5 6 7 8 9'.split('|');
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
+                    break;
+                case 'minimisedLettersBtn':
+                    keys = 'A B C D E | F G H I J | K L M N O | P Q R S T | U V W X Y Z'.split('|');
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
+                    break;
+                case 'minimisedSymbolsBtn':
+                    keys = `. , ; : ' | " ? ! + - | * = / ( ) | @ # € % & | _ ^ [ ]`.split('|');
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
+                    break;
+                case 'minimisedControlsBtn':
+                    keys = ['space_bar', 'backspace', 'keyboard_return', 'keyboard_capslock', 'AC', 'ARROW_CLUSTER'];
+                    keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
+                    break;
+
                 default:
                     keys = buttonId.replace('Btn', '').split('');
             }
@@ -83,6 +108,16 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                         keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
                         key.innerHTML = createMaterialIcon('l', keyValue);
                         key.classList.add('arrowKeyBtn');
+                    } 
+                    else if (buttonId === 'minimisedControlsBtn') {
+                        // Minimised controls overlay: render icons for controls
+                        if (keyValue === 'ARROW_CLUSTER') {
+                            // Render a single composite button containing the six arrow icons
+                            key.setAttribute('id', `${idSuffix}KeyBtn`);
+                            key.appendChild(createArrowKeyCluster());
+                        } else {
+                            key.innerHTML = createMaterialIcon('l', keyValue);
+                        }
                     } else {
                         key.textContent = isUpperCase ? keyValue.toUpperCase() : keyValue.toLowerCase();
                     }
@@ -105,6 +140,24 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                         await updateScenarioId(90, buttons, ViewNames.KEYBOARD_KEYS);
                     }
                 });
+            };
+
+            const createArrowKeyCluster = () => {
+                const cluster = document.createElement('div');
+                cluster.style.display = 'grid';
+                cluster.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                cluster.style.gap = '2px';
+                cluster.style.alignItems = 'center';
+                cluster.style.justifyItems = 'center';
+
+                const arrowIcons = ['first_page', 'keyboard_arrow_up', 'last_page', 'keyboard_arrow_left', 'keyboard_arrow_down', 'keyboard_arrow_right'];
+                arrowIcons.forEach(iconName => {
+                    const span = document.createElement('span');
+                    span.innerHTML = createMaterialIcon('l', iconName);
+                    cluster.appendChild(span);
+                });
+
+                return cluster;
             };
 
             const renderPage = () => {

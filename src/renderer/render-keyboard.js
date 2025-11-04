@@ -764,6 +764,20 @@ function attachEventListeners() {
                         inputField.focus();
                         break;
 
+                    // The following are the keys inside the MINIMISED keyboard
+                    case 'minimisedNumbersBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 97, 'minimisedNumbersBtn');
+                        break;
+                    case 'minimisedLettersBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedLettersBtn', isUpperCase);
+                        break;
+                    case 'minimisedControlsBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'minimisedControlsBtn');
+                        break;
+                    case 'minimisedSymbolsBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedSymbolsBtn');
+                        break;
+
                     // The following are the keys inside the NUMERIC keyboard
                     case 'numericSymbolsBtn':
                         if (elementTypeAttribute !== 'range') ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 96, 'numericSymbolsBtn');

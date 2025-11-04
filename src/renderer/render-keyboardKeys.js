@@ -7,13 +7,13 @@ const logger = require('../main/modules/logger');
 const { Key } = require('@nut-tree-fork/nut-js');
 
 let buttons = [];
-let currentIsUpperCase = false;          // Track case preference for rendering single keys
 
 // ONLY USED FOR MINIMISED LAYOUT
-let isMinimisedKeyboard;                 // ONLY USED FOR MINIMISED LAYOUT - tracks if the current keyboard layout is minimised
+let isMinimisedKeyboard;                 // ONLY USED FOR MINIMISED LAYOUT - keeps track if the current keyboard layout is minimised
 let lastMinimisedButtonId = null;        // ONLY USED FOR MINIMISED LAYOUT - keeps track of the last buttonId pressed (e.g., minimisedLettersBtn)
 let lastScenarioId = null;               // ONLY USED FOR MINIMISED LAYOUT - keeps track of the last scenarioId for last grouped view
 let isInSingleKeysState = false;         // ONLY USED FOR MINIMISED LAYOUT - keeps track of whether the user is viewing single keys from a group
+let currentIsUpperCase = false;          // ONLY USED FOR MINIMISED LAYOUT - keeps track of the case for rendering single keys
 
 ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
     try {
@@ -21,13 +21,13 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
 
         // Determine if the keyboard layout is minimised so that we can adjust the key clicking behaviour
         isMinimisedKeyboard = settingsObject.keyboardLayout === KeyboardLayouts.MINIMISED.NAME;
-        currentIsUpperCase = !!isUpperCase;
+        currentIsUpperCase = isUpperCase;
 
         // Remember the originating context so we can restore grouped view on cancel
         lastMinimisedButtonId = buttonId;
         lastScenarioId = scenarioId;
 
-        await initKeyboardKeys(buttonId, isUpperCase);
+        await initKeyboardKeys(buttonId, currentIsUpperCase);
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
     } catch (error) {
@@ -382,7 +382,8 @@ function attachEventListeners() {
                 else if (buttonText === 'keyboard_capslock') {
                     // Toggle case for single-key renders
                     currentIsUpperCase = !currentIsUpperCase;
-                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);                    
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+                    ipcRenderer.send('keyboard-upperCaseToggle', currentIsUpperCase);
                 }
                 else if (buttonText === 'AC') {
                     ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);

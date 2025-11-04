@@ -346,6 +346,17 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('keyboard-upperCaseToggle', (event, isUpperCase) => {
+        try {
+            let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
+            if (keyboardOverlay) {
+                keyboardOverlay.webContentsView.webContents.send('keyboard-upperCaseToggle', isUpperCase);
+            }
+        } catch (err) {
+            logger.error('Error updating keyboard upper case preference:', err.message);
+        }
+    });
+
     ipcMain.on('defaultHeadset-update', async (event, newHeadset) => {
         try {
             // Updates the default headset in the database

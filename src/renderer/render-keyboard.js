@@ -155,6 +155,36 @@ ipcRenderer.on('textarea-clearAll', () => {
     }
 });
 
+ipcRenderer.on('keyboard-upperCaseToggle', (event, toUpper) => {
+    try {
+        isUpperCase = toUpper;
+
+        getScenarioNumber().then(async scenarioNumber => {
+            await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+        });
+
+        // Add another span in the minimisedLettersBtn stating Caps lock is on if toUpper is true
+        minimisedLettersBtn = document.getElementById('minimisedLettersBtn');
+        if (minimisedLettersBtn) {
+            const capsIndicator = minimisedLettersBtn.querySelector('.keyboard__key--capsIndicator');
+            if (toUpper) {
+                if (!capsIndicator) {
+                    const span = document.createElement('span');
+                    span.classList.add('keyboard__key--capsIndicator');
+                    span.textContent = 'CAPS lock is on';
+                    minimisedLettersBtn.appendChild(span);
+                }
+            } else {
+                if (capsIndicator) {
+                    minimisedLettersBtn.removeChild(capsIndicator);
+                }
+            }
+        }
+    } catch (error) {
+        logger.error('Error in keyboard-toggleCase handler:', error);
+    }
+});
+
 // Function to apply mask to input
 function applyInputMask(value, mask, type = '') {
     let maskedValue = '';
@@ -780,16 +810,16 @@ function attachEventListeners() {
 
                     // The following are the keys inside the MINIMISED keyboard
                     case 'minimisedNumbersBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 97, 'minimisedNumbersBtn');
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 97, 'minimisedNumbersBtn', isUpperCase);
                         break;
                     case 'minimisedLettersBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedLettersBtn', isUpperCase);
                         break;
                     case 'minimisedControlsBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'minimisedControlsBtn');
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'minimisedControlsBtn', isUpperCase);
                         break;
                     case 'minimisedSymbolsBtn':
-                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedSymbolsBtn');
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedSymbolsBtn', isUpperCase);
                         break;
 
                     // The following are the keys inside the NUMERIC keyboard

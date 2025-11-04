@@ -7,10 +7,10 @@ const logger = require('../main/modules/logger');
 const { Key } = require('@nut-tree-fork/nut-js');
 
 let buttons = [];
-let isMinimisedKeyboard;
 let currentIsUpperCase = false;          // Track case preference for rendering single keys
 
 // ONLY USED FOR MINIMISED LAYOUT
+let isMinimisedKeyboard;                 // ONLY USED FOR MINIMISED LAYOUT - tracks if the current keyboard layout is minimised
 let lastMinimisedButtonId = null;        // ONLY USED FOR MINIMISED LAYOUT - keeps track of the last buttonId pressed (e.g., minimisedLettersBtn)
 let lastScenarioId = null;               // ONLY USED FOR MINIMISED LAYOUT - keeps track of the last scenarioId for last grouped view
 let isInSingleKeysState = false;         // ONLY USED FOR MINIMISED LAYOUT - keeps track of whether the user is viewing single keys from a group
@@ -60,7 +60,9 @@ function initKeyboardKeys(buttonId, isUpperCase) {
         const keyboard = document.querySelector('#keyboard');
         const keysContainer = document.querySelector('.keyboard__keysContainer');
         let keysAndArrowsContainer = null;
-        const isMinimisedGroupOverlay = ['minimisedNumbersBtn', 'minimisedLettersBtn', 'minimisedSymbolsBtn'].includes(buttonId);
+
+        // ONLY USED FOR MINIMISED LAYOUT - this is done so that we can treat letters/numbers/symbols buttons as groups and NOT the control buttons
+        isMinimisedKeyboard = isMinimisedKeyboard && ['minimisedNumbersBtn', 'minimisedLettersBtn', 'minimisedSymbolsBtn'].includes(buttonId);
 
         if (keysContainer) {
             let keys = [];
@@ -124,10 +126,13 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                         key.classList.add('arrowKeyBtn');
                     }
                     else if (buttonId === 'minimisedControlsBtn') {
-                        // Minimised controls overlay: render icons for controls
                         if (keyValue === 'ARROW_CLUSTER') {
-                            // Render a single composite button containing the six arrow icons
                             key.setAttribute('id', `${idSuffix}KeyBtn`);
+
+                            // Adding class to identify that the arrows are a group
+                            key.classList.add('arrowClusterBtn', 'groupKeyBtn');
+
+                            // Creating a single composite button containing the six arrow icons
                             key.appendChild(createArrowKeyCluster());
                         } else {
                             key.innerHTML = createMaterialIcon('l', keyValue);
@@ -206,9 +211,9 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     keys.forEach((keyValue, index) => {
                         const keyElement = createKey(keyValue, index);
 
-                        // If this is a minimised group overlay (letters/numbers/symbols), treat each button as a group
-                        if (isMinimisedGroupOverlay) {
-                            // Mark this as a group key; handling is done in the global click listener
+                        // ONLY USED FOR MINIMISED LAYOUT - If this is a minimised group overlay (letters/numbers/symbols), treat each button as a group
+                        if (isMinimisedKeyboard) {
+                            // Adding groupKeyBtn class to the group key so that specific logic for the click listener can be attached
                             keyElement.classList.add('groupKeyBtn');
                         }
 
@@ -229,7 +234,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
     });
 }
 
-// Rendering a drilled-down list of single keys (used ONLY FOR MINIMISED KEYBOARD LAYOUT)
+// Rendering a drilled-down list of single keys (used ONLY USED FOR MINIMISED LAYOUT)
 async function showGroupItems(items) {
     try {
         const keysContainer = document.querySelector('.keyboard__keysContainer');
@@ -305,21 +310,6 @@ function attachEventListeners() {
         const isArrowKey = button.classList.contains('arrowKeyBtn');
         const isGroupKey = button.classList.contains('groupKeyBtn');
 
-        // ONLY FOR MINIMISED KEYBOARD LAYOUT - handle group key clicks
-        if (isGroupKey) {
-            // Splitting the button text into individual items using spaces 
-            const items = buttonText
-                .split(/\s+/)
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
-
-            setTimeout(async () => {
-                await stopManager();
-                await showGroupItems(items);
-            }, CssConstants.SELECTION_ANIMATION_DURATION);
-            return;
-        }
-
         // Navigation buttons (pagination) should NOT be delayed
         if (['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
             await stopManager();
@@ -330,17 +320,38 @@ function attachEventListeners() {
         setTimeout(async () => {
             await stopManager();
 
+            // ONLY USED FOR MINIMISED LAYOUT - handle group key clicks
+            if (isGroupKey) {
+                // Splitting the button text into individual items using spaces 
+                const items = buttonText
+                    .split(/\s+/)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                // Arrows need to be opened to single arrow keys view
+                if (button.classList.contains('arrowClusterBtn')) {
+                    await initKeyboardKeys('arrowKeysBtn', currentIsUpperCase);
+
+                    buttons = document.querySelectorAll('button');
+                    await updateScenarioId(93, buttons, ViewNames.KEYBOARD_KEYS);
+                    return;
+                }
+
+                await showGroupItems(items);
+                return;
+            }
+
             if (isArrowKey) {
                 ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
                 ipcRenderer.send('textarea-moveCursor', buttonText);
             } else if (buttonId === 'cancelBtn') {
-                // ONLY FOR MINIMISED KEYBOARD LAYOUT - If we are in the SINGLE KEYS, return to the grouped view NOT close the overlay
+                // ONLY USED FOR MINIMISED LAYOUT - If we are in the SINGLE KEYS, return to the grouped view NOT close the overlay
                 if (isInSingleKeysState && lastMinimisedButtonId) {
                     try {
                         await initKeyboardKeys(lastMinimisedButtonId, currentIsUpperCase);
                         buttons = document.querySelectorAll('button');
-                        
-                        const scenarioToRestore = lastScenarioId ?? undefined;                        
+
+                        const scenarioToRestore = lastScenarioId ?? undefined;
                         if (scenarioToRestore) {
                             await updateScenarioId(scenarioToRestore, buttons, ViewNames.KEYBOARD_KEYS);
                         }
@@ -354,8 +365,34 @@ function attachEventListeners() {
                 await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD_KEYS);
 
             } else if (!['firstArrowKeyBtn', 'secondArrowKeyBtn'].includes(buttonId)) {
-                ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
-                ipcRenderer.send('textarea-populate', buttonText);
+
+                // ONLY USED FOR MINIMISED LAYOUT - mapping control icons to proper behaviour like that in render-keyboard.js
+                if (buttonText === 'space_bar') {
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+                    ipcRenderer.send('textarea-populate', ' ');
+                }
+                else if (buttonText === 'backspace') {
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+                    ipcRenderer.send('textarea-populate', null);
+                }
+                else if (buttonText === 'keyboard_return') {
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+                    ipcRenderer.send('textarea-populate', '\n');
+                }
+                else if (buttonText === 'keyboard_capslock') {
+                    // Toggle case for single-key renders
+                    currentIsUpperCase = !currentIsUpperCase;
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);                    
+                }
+                else if (buttonText === 'AC') {
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+                    ipcRenderer.send('textarea-clearAll');
+                }
+                else {
+                    // DEFAULT BEHAVIOUR - FULL KEYBOARD LAYOUT
+                    ipcRenderer.send('overlay-close', ViewNames.KEYBOARD_KEYS);
+                    ipcRenderer.send('textarea-populate', buttonText);
+                }
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });

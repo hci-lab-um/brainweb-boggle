@@ -286,6 +286,19 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('textarea-clearAll', (event) => {
+        try {
+            // Clearing the keyboard entry from the scenarioIdDict
+            delete scenarioIdDict[ViewNames.KEYBOARD];
+
+            // Finding the overlay with name keyboard
+            let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
+            keyboardOverlay.webContentsView.webContents.send('textarea-clearAll');
+        } catch (err) {
+            logger.error('Error clearing all the textarea:', err.message);
+        }
+    });
+
     ipcMain.on('url-load', (event, url) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);

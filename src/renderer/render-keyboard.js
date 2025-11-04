@@ -63,7 +63,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
             maskOverlay = null;
         }
 
-        buttons = document.querySelectorAll('button');        
+        buttons = document.querySelectorAll('button');
 
         // Ensure inputField.value is always in the correct format for date-like types
         if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
@@ -144,6 +144,14 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
         inputField.focus();
     } catch (error) {
         logger.error('Error in textarea-moveCursor handler:', error);
+    }
+});
+
+ipcRenderer.on('textarea-clearAll', () => {
+    try {
+        clearAllTextarea();
+    } catch (error) {
+        logger.error('Error in textarea-clearAll handler:', error);
     }
 });
 
@@ -369,6 +377,25 @@ function toggleLetterCase(toUpper) {
             });
         }
     });
+}
+
+function clearAllTextarea() {
+    if (!inputField) return;
+
+    inputField.value = '';
+    if (!needsNumpad) updateAutoCompleteButton();
+
+    // Update mask overlay if present
+    if (maskOverlay) {
+        const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
+        maskOverlay.textContent = maskTemplate;
+    }
+
+    getScenarioNumber().then(async scenarioNumber => {
+        await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+    });
+
+    inputField.focus();
 }
 
 function updateTextareaAtCursor(insertText = null) {
@@ -683,20 +710,7 @@ function attachEventListeners() {
                         break;
                     case 'clearAllBtn':
                     case 'numericClearAllBtn':
-                        inputField.value = '';
-                        if (!needsNumpad) updateAutoCompleteButton();
-
-                        // Update mask overlay if present
-                        if (maskOverlay) {
-                            const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
-                            maskOverlay.textContent = maskTemplate;
-                        }
-
-                        getScenarioNumber().then(scenarioNumber => {
-                            updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-                        });
-
-                        inputField.focus();
+                        clearAllTextarea();
                         break;
                     case 'keyboardSendBtn':
                     case 'minimisedKeyboardSendBtn':

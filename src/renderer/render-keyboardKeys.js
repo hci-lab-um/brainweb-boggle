@@ -134,7 +134,20 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
                             // Creating a single composite button containing the six arrow icons
                             key.appendChild(createArrowKeyCluster());
-                        } else {
+                        }
+                        else if (keyValue === 'keyboard_capslock') {
+                            // ONLY USED FOR MINIMISED LAYOUT - making the caps lock key activatable
+                            const span = document.createElement('span');
+                            span.classList.add('keyboard__key', 'keyboard__key--activatable');
+
+                            const icon = document.createElement('i');
+                            icon.classList.add('material-icons');
+                            icon.textContent = 'keyboard_capslock';
+
+                            span.appendChild(icon);
+                            key.appendChild(span);
+                        }
+                        else {
                             key.innerHTML = createMaterialIcon('l', keyValue);
                         }
                     } else {
@@ -219,6 +232,18 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
                         keysContainer.appendChild(keyElement);
                     });
+
+                    // ONLY USED FOR MINIMISED LAYOUT - Toggle the caps lock key active state if needed
+                    if (buttonId === 'minimisedControlsBtn') {
+                        const capsBtn = Array.from(keysContainer.querySelectorAll('button.keyboard__key'))
+                            .find(btn => btn.textContent.includes('keyboard_capslock'));
+
+                        if (capsBtn) {
+                            const span = capsBtn.querySelector('.keyboard__key');
+
+                            if (span) span.classList.toggle('keyboard__key--active', isUpperCase);
+                        }
+                    }
                 }
 
                 buttons = document.querySelectorAll('button');

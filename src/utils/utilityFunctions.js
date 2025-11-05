@@ -3,6 +3,11 @@ function createMaterialIcon(size, icon_name) {
     return `<i class="material-icons--${size}">${icon_name}</i>`;
 }
 
+// Utility function to coerce DB/IPC values ("true"/"false", 1/0, true/false) into a boolean
+function toBoolean(val) {
+    return val === true || val === 'true' || val === 1 || val === '1';
+}
+
 // Utility function to capture a snapshot of the active tab - used for the bookmark and tabs feature
 async function captureSnapshot(activeTab) {
     try {
@@ -213,6 +218,7 @@ function getCenterCoordinates(elementToClick, webpageBounds) {
 
 module.exports = {
     createMaterialIcon,
+    toBoolean,
     captureSnapshot,
     createPopup,
     createNavigationButton,

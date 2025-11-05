@@ -24,7 +24,7 @@ async function registerIpcHandlers(context) {
         bookmarksList,
         tabsList,
         db,
-        adaptiveSwitchInUse,
+        setAdaptiveSwitchInUse,
         updateWebpageBounds,
         createTabView,
         deleteAndInsertAllTabs,
@@ -352,7 +352,11 @@ async function registerIpcHandlers(context) {
         try {
             // Updates the adaptive switch status in the database
             await db.updateAdaptiveSwitchStatus(isEnabled);
-            adaptiveSwitchInUse = isEnabled; // Update the local variable
+            
+            // Updates the variable in main.js immediately
+            if (typeof setAdaptiveSwitchInUse === 'function') {
+                setAdaptiveSwitchInUse(isEnabled);
+            }
 
             // Updates the adaptive switch button inner text in settings overlay if it is open
             let settingsOverlay = viewsList.find(view => view.name === ViewNames.SETTINGS);

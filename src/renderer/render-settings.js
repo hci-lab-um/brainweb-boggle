@@ -3,7 +3,7 @@ const { ViewNames, CssConstants, Settings } = require('../utils/constants/enums'
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
-const { createPopup } = require('../utils/utilityFunctions');
+const { createPopup, toBoolean } = require('../utils/utilityFunctions');
 
 let buttons = [];
 let settingsContentContainer = null;
@@ -13,10 +13,6 @@ let headsetInUse = '';
 let connectionTypeInUse = '';
 let closeSettingsButton = null;
 let adaptiveSwitchInUse;
-
-function toBoolean(val) {
-    return val === true || val === 'true' || val === 1 || val === '1';
-}
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {

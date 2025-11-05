@@ -4,7 +4,7 @@ const path = require('path')
 const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
-const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
+const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFunctions');
 const logger = require('./modules/logger');
 const { startEegWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
 
@@ -57,7 +57,7 @@ app.whenReady().then(async () => {
     globalShortcut.register(SwitchShortcut.TOGGLE_BUTTON_GROUPINGS, () => {
         try {
             // Checking if adaptive switch is enabled
-            if (parseInt(adaptiveSwitchInUse) === 1) {
+            if (toBoolean(adaptiveSwitchInUse)) {
 
                 // Implementing a cooldown to prevent rapid toggling
                 const now = Date.now();
@@ -189,7 +189,8 @@ function createMainWindow() {
                                     bookmarksList,
                                     tabsList,
                                     db,
-                                    adaptiveSwitchInUse,
+                                    // Setter lets IPC handlers update the live value of the adaptiveSwitchInUse variable in main.js
+                                    setAdaptiveSwitchInUse: (val) => { adaptiveSwitchInUse = val; }, 
                                     updateWebpageBounds,
                                     createTabView,
                                     deleteAndInsertAllTabs,

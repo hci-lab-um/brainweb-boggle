@@ -539,7 +539,7 @@
         "scenario_104": {
         "name": "SETTINGS - General Settings",
         "description": "General Settings menu with 4 buttons",
-        "buttonIds": ["homeUrlBtn", "keyboardLayoutBtn", "switchIntegrationBtn", "closeSettingsBtn"],
+        "buttonIds": ["homeUrlBtn", "keyboardLayoutBtn", "adaptiveSwitchBtn", "closeSettingsBtn"],
         "frequencies": [6.5, 7.5, 8, 7],
         "phases": [0.5, 1.5, 1.5, 0]
     }

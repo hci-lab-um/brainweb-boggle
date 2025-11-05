@@ -12,6 +12,11 @@ let keyboardLayoutInUse = '';
 let headsetInUse = '';
 let connectionTypeInUse = '';
 let closeSettingsButton = null;
+let adaptiveSwitchInUse;
+
+function toBoolean(val) {
+    return val === true || val === 'true' || val === 1 || val === '1';
+}
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
@@ -24,6 +29,7 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         keyboardLayoutInUse = overlayData.settingsObject.keyboardLayout || '';
         headsetInUse = overlayData.settingsObject.headsetInUse || '';
         connectionTypeInUse = overlayData.settingsObject.connectionTypeInUse || '';
+        adaptiveSwitchInUse = toBoolean(overlayData.settingsObject.adaptiveSwitchInUse);
 
         setCloseButtonMode('close');
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
@@ -77,7 +83,7 @@ async function showHeadsetSettings() {
     updateVisibility('headsetSettings');
     populateHeadsetSettings();
     setCloseButtonMode('back');
-    
+
     await selectScenarioIdForHeadset();
 }
 
@@ -204,6 +210,38 @@ function populateGeneralSettings() {
     cardsContainer.appendChild(keyboardLayoutCard);
 
     // -------------------------------
+    // Adaptive Switch Setting
+    // -------------------------------
+    const adaptiveSwitchCard = document.createElement('div');
+    adaptiveSwitchCard.classList.add('settingCard');
+
+    const adaptiveSwitchTextContainer = document.createElement('div');
+
+    const adaptiveSwitchTitle = document.createElement('h3');
+    adaptiveSwitchTitle.textContent = Settings.ADAPTIVE_SWITCH_CONNECTED.LABEL;
+    adaptiveSwitchTextContainer.appendChild(adaptiveSwitchTitle);
+
+    const adaptiveSwitchDesc = document.createElement('p');
+    adaptiveSwitchDesc.textContent = Settings.ADAPTIVE_SWITCH_CONNECTED.DESCRIPTION;
+    adaptiveSwitchTextContainer.appendChild(adaptiveSwitchDesc);
+
+    adaptiveSwitchCard.appendChild(adaptiveSwitchTextContainer);
+
+    const adaptiveSwitchBtn = document.createElement('button');
+    adaptiveSwitchBtn.innerHTML = `<span>${adaptiveSwitchInUse ? 'Enabled' : 'Disabled'}</span>`;
+    adaptiveSwitchBtn.id = 'adaptiveSwitchBtn';
+    adaptiveSwitchBtn.classList.add('button');
+    adaptiveSwitchBtn.rel = 'noreferrer noopener';
+    adaptiveSwitchCard.appendChild(adaptiveSwitchBtn);
+
+    // --------------------------------
+    // Attaching all cards to container
+    // --------------------------------     
+    cardsContainer.appendChild(homeUrlCard);
+    cardsContainer.appendChild(keyboardLayoutCard);
+    cardsContainer.appendChild(adaptiveSwitchCard);
+
+    // -------------------------------
     // Event Listeners for Buttons
     // ------------------------------- 
     homeUrlBtn.addEventListener('click', async () => {
@@ -237,6 +275,26 @@ function populateGeneralSettings() {
                 await showKeyboardLayoutSelectionPopup();
             } catch (error) {
                 logger.error('Error creating keyboard layout selection modal:', error);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    adaptiveSwitchBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        adaptiveSwitchBtn.disabled = true;
+        setTimeout(() => { adaptiveSwitchBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(adaptiveSwitchBtn);
+
+        setTimeout(async () => {
+            try {
+                // Toggle the adaptive switch status
+                adaptiveSwitchInUse = !adaptiveSwitchInUse;
+                // Update the UI
+                adaptiveSwitchBtn.innerHTML = `<span>${adaptiveSwitchInUse ? 'Enabled' : 'Disabled'}</span>`;
+                // Update the adaptive switch status in the db
+                ipcRenderer.send('adaptiveSwitch-update', adaptiveSwitchInUse);
+            } catch (error) {
+                logger.error('Error toggling adaptive switch status:', error);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });

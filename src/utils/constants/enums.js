@@ -103,7 +103,7 @@ const Settings = Object.freeze({
     ADAPTIVE_SWITCH_CONNECTED: {
         NAME: "adaptiveSwitchConnected",
         LABEL: "Adaptive Switch Connected",
-        DESCRIPTION: "Whether an adaptive switch is currently connected.",
+        DESCRIPTION: "Adjust whether an adaptive switch is currently connected to your computer.",
         DEFAULT: true,
         CATEGORY: SettingCategories.GENERAL,
     },

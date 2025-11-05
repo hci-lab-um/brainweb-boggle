@@ -22,6 +22,7 @@ let tabsFromDatabase = [];                  // This will hold the tabs fetched f
 let isMainWindowLoaded = false;             // This is a flag to track if main window is fully loaded
 let lastAdaptiveToggleTs = 0;               // This is a timestamp of the last adaptive toggle event
 const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to prevent rapid toggling
+let adaptiveSwitchInUse;                    // This flag indicates if the adaptive switch feature is enabled
 
 app.whenReady().then(async () => {
     try {
@@ -34,9 +35,11 @@ app.whenReady().then(async () => {
     try {
         await db.connect();
         await db.createTables();
-        // await db.deleteKeyboardLayoutsTable(); // For development purposes only
-        // await db.deleteSettingsTable(); // For development purposes only
+        // await db.deleteKeyboardLayoutsTable();   // For development purposes only
+        // await db.deleteSettingsTable();          // For development purposes only
         await initialiseVariables();
+
+        adaptiveSwitchInUse = await db.getAdaptiveSwitchConnected();
     } catch (err) {
         logger.error('Error initialising database:', err.message);
     }
@@ -53,21 +56,28 @@ app.whenReady().then(async () => {
     // This is 'Space' key by default, can be changed to any key combination from enums.js
     globalShortcut.register(SwitchShortcut.TOGGLE_BUTTON_GROUPINGS, () => {
         try {
-            // Implementing a cooldown to prevent rapid toggling
-            const now = Date.now();
-            if (now - lastAdaptiveToggleTs < ADAPTIVE_TOGGLE_COOLDOWN_MS) return;
-            lastAdaptiveToggleTs = now;
+            // Checking if adaptive switch is enabled
+            if (parseInt(adaptiveSwitchInUse) === 1) {
 
-            // Sending the space event to the topmost overlay if present, otherwise to main window content
-            const targetView = viewsList.length > 0
-                ? viewsList[viewsList.length - 1]
-                : mainWindowContent;
+                // Implementing a cooldown to prevent rapid toggling
+                const now = Date.now();
+                if (now - lastAdaptiveToggleTs < ADAPTIVE_TOGGLE_COOLDOWN_MS) return;
+                lastAdaptiveToggleTs = now;
 
-            const topViewName = targetView.name;
-            const currentScenarioId = (scenarioIdDict[topViewName] || []).slice(-1)[0] ?? -1;
+                // Sending the space event to the topmost overlay if present, otherwise to main window content
+                const targetView = viewsList.length > 0
+                    ? viewsList[viewsList.length - 1]
+                    : mainWindowContent;
 
-            if (targetView) {
-                targetView.webContentsView.webContents.send('adaptiveSwitch-toggle', currentScenarioId);
+                const topViewName = targetView.name;
+                const currentScenarioId = (scenarioIdDict[topViewName] || []).slice(-1)[0] ?? -1;
+
+                if (targetView) {
+                    targetView.webContentsView.webContents.send('adaptiveSwitch-toggle', currentScenarioId);
+                }
+            }
+            else {
+                console.log('ADAPTIVE SWITCH IS NOT ENABLED');
             }
         } catch (err) {
             logger.error('Error broadcasting adaptiveSwitch-toggle:', err.message);
@@ -179,6 +189,7 @@ function createMainWindow() {
                                     bookmarksList,
                                     tabsList,
                                     db,
+                                    adaptiveSwitchInUse,
                                     updateWebpageBounds,
                                     createTabView,
                                     deleteAndInsertAllTabs,

@@ -921,6 +921,10 @@ function updateDefaultKeyboardLayout(newKeyboardLayout) {
     return updateSetting(Settings.DEFAULT_KEYBOARD_LAYOUT.NAME, newKeyboardLayout);
 }
 
+function updateAdaptiveSwitchStatus(newStatus) {
+    return updateSetting(Settings.ADAPTIVE_SWITCH_CONNECTED.NAME, newStatus);
+}
+
 function updateDefaultHeadset(newHeadset) {
     return updateSetting(Settings.DEFAULT_HEADSET.NAME, newHeadset);
 }
@@ -975,6 +979,7 @@ module.exports = {
 
     updateDefaultURL,
     updateDefaultKeyboardLayout,
+    updateAdaptiveSwitchStatus,
     updateDefaultHeadset,
     updateDefaultConnectionType,
     updateDefaultStimuliPattern,

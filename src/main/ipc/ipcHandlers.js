@@ -24,6 +24,7 @@ async function registerIpcHandlers(context) {
         bookmarksList,
         tabsList,
         db,
+        adaptiveSwitchInUse,
         updateWebpageBounds,
         createTabView,
         deleteAndInsertAllTabs,
@@ -122,6 +123,7 @@ async function registerIpcHandlers(context) {
                 keyboardLayout: await db.getDefaultKeyboardLayout(),
                 headsetInUse: await db.getDefaultHeadset(),
                 connectionTypeInUse: await db.getDefaultConnectionType(),
+                adaptiveSwitchInUse: await db.getAdaptiveSwitchConnected(),
             }
         }
 
@@ -343,6 +345,22 @@ async function registerIpcHandlers(context) {
             }
         } catch (err) {
             logger.error('Error updating keyboard layout:', err.message);
+        }
+    });
+
+    ipcMain.on('adaptiveSwitch-update', async (event, isEnabled) => {
+        try {
+            // Updates the adaptive switch status in the database
+            await db.updateAdaptiveSwitchStatus(isEnabled);
+            adaptiveSwitchInUse = isEnabled; // Update the local variable
+
+            // Updates the adaptive switch button inner text in settings overlay if it is open
+            let settingsOverlay = viewsList.find(view => view.name === ViewNames.SETTINGS);
+            if (settingsOverlay) {
+                settingsOverlay.webContentsView.webContents.send('adaptiveSwitch-update', isEnabled);
+            }
+        } catch (err) {
+            logger.error('Error updating adaptive switch status:', err.message);
         }
     });
 
@@ -682,7 +700,7 @@ async function registerIpcHandlers(context) {
     ipcMain.on('bookmarks-deleteAll', async (event) => {
         try {
             await db.deleteAllBookmarks();
-            bookmarksList = [];
+            bookmarksList.length = 0;
         } catch (err) {
             logger.error('Error deleting all bookmarks:', err.message);
         }

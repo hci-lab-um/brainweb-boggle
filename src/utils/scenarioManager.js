@@ -11,13 +11,24 @@ let currentAdaptiveGroupIndex = -1;
 
 ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
     try {
-        const groupedButtons = Array.from(document.querySelectorAll('button[data-group]'));
-        if (groupedButtons.length === 0) return;
+        // Collecting buttons that have a data-group attribute and buttons that are defined in the current scenario
+        const groupedButtons = Array.from(document.querySelectorAll('button[data-group]')) || [];        
+        const scenarioButtonIds = scenarioConfig[`scenario_${currentScenarioId}`]?.buttonIds || [];
 
-        const totalGroups = Array.from(new Set(groupedButtons.map(b => b.getAttribute('data-group')))).length;
+        // Filtering grouped buttons by scenario button IDs
+        const filteredButtons = groupedButtons.filter(b => scenarioButtonIds.includes(b.getAttribute('id')));
+        console.log('Filtered buttons for adaptive switch:', filteredButtons);
+        if (filteredButtons.length === 0) return;
 
-        // Cycle: -1 (all) -> 0 (off) -> 1 -> 2 -> ... -> N -> -1 (all) ...
-        currentAdaptiveGroupIndex = (currentAdaptiveGroupIndex + 2) % (totalGroups + 2) - 1;
+        const totalGroups = Array.from(new Set(filteredButtons.map(b => b.getAttribute('data-group')))).length;
+
+        // If only one group exists, toggle only between ALL (-1) and OFF (0)
+        if (totalGroups <= 1) {
+            currentAdaptiveGroupIndex = currentAdaptiveGroupIndex === -1 ? 0 : -1;
+        } else {
+            // Cycle: -1 (all) -> 0 (off) -> 1 -> 2 -> ... -> N -> -1 (all) ...
+            currentAdaptiveGroupIndex = (currentAdaptiveGroupIndex + 2) % (totalGroups + 2) - 1;
+        }
 
         await stopManager();
 
@@ -28,8 +39,8 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
         }
 
         const activeButtons = currentAdaptiveGroupIndex === -1
-            ? groupedButtons // all buttons are active
-            : groupedButtons.filter(b => b.getAttribute('data-group') === `group${currentAdaptiveGroupIndex}`); // only buttons in the current group are active
+            ? filteredButtons // all buttons are active
+            : filteredButtons.filter(b => b.getAttribute('data-group') === `group${currentAdaptiveGroupIndex}`); // only buttons in the current group are active
 
         manager = new stimuli.CSS('approximation', activeButtons.length);
         activeButtons.forEach(b => manager.set(b));

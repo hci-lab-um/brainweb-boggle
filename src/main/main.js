@@ -12,14 +12,16 @@ let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
-let viewsList = [];             // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
-let scenarioIdDict = {};        // This is a dictionary that contains the scenarioId for each view
+let viewsList = [];                         // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
+let scenarioIdDict = {};                    // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
-let bookmarksList = [];         // This will hold the bookmarks fetched from the database
-let tabsList = [];              // This will hold the list of tabs created in the main window
-let tabsFromDatabase = [];      // This will hold the tabs fetched from the database
-let isMainWindowLoaded = false; // This is a flag to track if main window is fully loaded
+let bookmarksList = [];                     // This will hold the bookmarks fetched from the database
+let tabsList = [];                          // This will hold the list of tabs created in the main window
+let tabsFromDatabase = [];                  // This will hold the tabs fetched from the database
+let isMainWindowLoaded = false;             // This is a flag to track if main window is fully loaded
+let lastAdaptiveToggleTs = 0;               // This is a timestamp of the last adaptive toggle event
+const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to prevent rapid toggling
 
 app.whenReady().then(async () => {
     try {
@@ -49,8 +51,13 @@ app.whenReady().then(async () => {
     }
 
     // This is 'Space' key by default, can be changed to any key combination from enums.js
-    globalShortcut.register(SwitchShortcut.TOGGLE_BUTTON_GROUPINGS, () => { 
+    globalShortcut.register(SwitchShortcut.TOGGLE_BUTTON_GROUPINGS, () => {
         try {
+            // Implementing a cooldown to prevent rapid toggling
+            const now = Date.now();
+            if (now - lastAdaptiveToggleTs < ADAPTIVE_TOGGLE_COOLDOWN_MS) return;
+            lastAdaptiveToggleTs = now;
+
             // Sending the space event to the topmost overlay if present, otherwise to main window content
             const targetView = viewsList.length > 0
                 ? viewsList[viewsList.length - 1]

@@ -16,6 +16,10 @@ const CssConstants = Object.freeze({
     SELECTION_ANIMATION_DURATION: 500, // This is in milliseconds. It is used in the addButtonSelectionAnimation function.
 });
 
+const SwitchShortcut = Object.freeze({
+    TOGGLE_BUTTON_GROUPINGS: 'Space'
+});
+
 const ConnectionTypes = Object.freeze({
     LSL: {
         NAME: "LSL",
@@ -96,6 +100,20 @@ const Settings = Object.freeze({
         DEFAULT: KeyboardLayouts.MINIMISED.NAME,
         CATEGORY: SettingCategories.GENERAL,
     },
+    ADAPTIVE_SWITCH_CONNECTED: {
+        NAME: "adaptiveSwitchConnected",
+        LABEL: "Adaptive Switch Connected",
+        DESCRIPTION: "Whether an adaptive switch is currently connected.",
+        DEFAULT: true,
+        CATEGORY: SettingCategories.GENERAL,
+    },
+    BEST_USER_FREQUENCIES: {
+        NAME: "bestUserFrequencies",
+        LABEL: "Best User Frequencies",
+        DESCRIPTION: "The best frequencies for the user’s brain activity.",
+        DEFAULT: [6.5, 7.5, 8.5, 7, 8],
+        CATEGORY: SettingCategories.GENERAL,
+    },
     DEFAULT_HEADSET: {
         NAME: "defaultHeadset",
         LABEL: "Headset",
@@ -114,21 +132,21 @@ const Settings = Object.freeze({
         NAME: "defaultStimuliPattern",
         LABEL: "Default Stimuli Pattern",
         DESCRIPTION: "The default pattern used for SSVEP stimuli.",
-        DEFAULT: "line",
+        DEFAULT: "line", // CREATE enum for patterns later
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_LIGHT_COLOR: {
         NAME: "defaultStimuliLightColor",
         LABEL: "Default Stimuli Light Color",
         DESCRIPTION: "The default light color used for SSVEP stimuli.",
-        DEFAULT: "255,255,255,1",
+        DEFAULT: "255,255,255,1", // CREATE enum for colors later
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_DARK_COLOR: {
         NAME: "defaultStimuliDarkColor",
         LABEL: "Default Stimuli Dark Color",
         DESCRIPTION: "The default dark color used for SSVEP stimuli.",
-        DEFAULT: "127,127,127,1",
+        DEFAULT: "127,127,127,1", // CREATE enum for colors later
         CATEGORY: SettingCategories.STIMULI,
     }
 });
@@ -136,6 +154,7 @@ const Settings = Object.freeze({
 module.exports = {
     ViewNames,
     CssConstants,
+    SwitchShortcut,
     ConnectionTypes,
     Headsets,
     KeyboardLayouts,

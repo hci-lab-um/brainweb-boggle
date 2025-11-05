@@ -405,6 +405,16 @@ function populateSettingsTable() {
                 category: Settings.DEFAULT_KEYBOARD_LAYOUT.CATEGORY,
             },
             {
+                name: Settings.ADAPTIVE_SWITCH_CONNECTED.NAME,
+                value: Settings.ADAPTIVE_SWITCH_CONNECTED.DEFAULT,
+                category: Settings.ADAPTIVE_SWITCH_CONNECTED.CATEGORY,
+            },
+            {
+                name: Settings.BEST_USER_FREQUENCIES.NAME,
+                value: Settings.BEST_USER_FREQUENCIES.DEFAULT,
+                category: Settings.BEST_USER_FREQUENCIES.CATEGORY,
+            },
+            {
                 name: Settings.DEFAULT_HEADSET.NAME,
                 value: Settings.DEFAULT_HEADSET.DEFAULT,
                 category: Settings.DEFAULT_HEADSET.CATEGORY,
@@ -848,6 +858,14 @@ function getDefaultKeyboardLayout() {
     return getSetting(Settings.DEFAULT_KEYBOARD_LAYOUT.NAME);
 }
 
+function getBestUserFrequencies() {
+    return getSetting(Settings.BEST_USER_FREQUENCIES.NAME);
+}
+
+function getAdaptiveSwitchConnected() {
+    return getSetting(Settings.ADAPTIVE_SWITCH_CONNECTED.NAME);
+}
+
 function getDefaultHeadset() {
     return getSetting(Settings.DEFAULT_HEADSET.NAME);
 }
@@ -937,6 +955,8 @@ module.exports = {
     getHeadsets,
     getConnectionTypeData,
     getKeyboardLayouts,
+    getAdaptiveSwitchConnected,
+    getBestUserFrequencies,
     getDefaultURL,
     getDefaultKeyboardLayout,
     getDefaultHeadset,

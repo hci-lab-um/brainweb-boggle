@@ -1,5 +1,5 @@
-const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
-const { ViewNames } = require('../utils/constants/enums')
+const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut } = require('electron')
+const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
 const path = require('path')
 const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
@@ -47,7 +47,31 @@ app.whenReady().then(async () => {
     } catch (err) {
         logger.error('Error during app initialisation:', err);
     }
+
+    // This is 'Space' key by default, can be changed to any key combination from enums.js
+    globalShortcut.register(SwitchShortcut.TOGGLE_BUTTON_GROUPINGS, () => { 
+        try {
+            // Sending the space event to the topmost overlay if present, otherwise to main window content
+            const targetView = viewsList.length > 0
+                ? viewsList[viewsList.length - 1]
+                : mainWindowContent;
+
+            const topViewName = targetView.name;
+            const currentScenarioId = (scenarioIdDict[topViewName] || []).slice(-1)[0] ?? -1;
+
+            if (targetView) {
+                targetView.webContentsView.webContents.send('adaptiveSwitch-toggle', currentScenarioId);
+            }
+        } catch (err) {
+            logger.error('Error broadcasting adaptiveSwitch-toggle:', err.message);
+        }
+    });
 })
+
+app.on('will-quit', () => {
+    // Cleaning up all global shortcuts
+    globalShortcut.unregisterAll();
+});
 
 app.on('window-all-closed', async () => {
     try {
@@ -197,7 +221,7 @@ function createMainWindow() {
                 if (splashWindow) {
                     splashWindow.close();
                 }
-                // mainWindowContent.webContents.openDevTools();
+                mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
                 logger.error('Error showing main window:', err.message);

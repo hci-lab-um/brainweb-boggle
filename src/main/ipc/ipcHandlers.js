@@ -408,6 +408,24 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.handle('bestUserFrequencies-get', async () => {
+        try {
+            return await db.getBestUserFrequencies();
+        } catch (err) {
+            logger.error('Error retrieving best user frequencies:', err.message);
+            return [];
+        }
+    });
+
+    ipcMain.handle('adaptiveSwitchConnected-get', async () => {
+        try {
+            return await db.getAdaptiveSwitchConnected();
+        } catch (err) {
+            logger.error('Error retrieving adaptive switch connected status:', err.message);
+            return false;
+        }
+    });
+
     function countIframeMatches(term) {
         const iframes = Array.from(document.querySelectorAll('iframe'));
         let iframeMatchCount = 0;

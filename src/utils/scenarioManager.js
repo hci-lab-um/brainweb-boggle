@@ -12,7 +12,7 @@ let currentAdaptiveGroupIndex = -1;
 ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
     try {
         // Collecting buttons that have a data-group attribute and buttons that are defined in the current scenario
-        const groupedButtons = Array.from(document.querySelectorAll('button[data-group]')) || [];        
+        const groupedButtons = Array.from(document.querySelectorAll('button[data-group]')) || [];
         const scenarioButtonIds = scenarioConfig[`scenario_${currentScenarioId}`]?.buttonIds || [];
 
         // Filtering grouped buttons by scenario button IDs
@@ -41,6 +41,14 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
         const activeButtons = currentAdaptiveGroupIndex === -1
             ? filteredButtons // all buttons are active
             : filteredButtons.filter(b => b.getAttribute('data-group') === `group${currentAdaptiveGroupIndex}`); // only buttons in the current group are active
+
+        // Getting the best user frequencies from the database, and setting them to the active buttons
+        const bestFrequenciesString = await ipcRenderer.invoke('bestUserFrequencies-get');
+        const bestFrequenciesArray = bestFrequenciesString.split(',').map(Number);
+
+        activeButtons.forEach((button, index) => {
+            button.setAttribute('data-frequency', bestFrequenciesArray[index]);
+        });
 
         manager = new stimuli.CSS('approximation', activeButtons.length);
         activeButtons.forEach(b => manager.set(b));

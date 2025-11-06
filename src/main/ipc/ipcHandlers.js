@@ -59,7 +59,10 @@ async function registerIpcHandlers(context) {
         }));
     }
 
-    ipcMain.on('bciInterval-restart', (event, scenarioId) => {
+    
+    ipcMain.on('bciInterval-restart', (event, scenarioId, stimuliFrequencies=[], activeButtonIds=[]) => { 
+        // PARAMETERS: stimuliFrequencies & activeButtonIds are not required when using the scenarioConfig file. They are required ONLY when using an adaptive switch.
+        
         // Clear the previous interval if it exists
         if (bciIntervalId) {
             clearInterval(bciIntervalId);
@@ -69,7 +72,7 @@ async function registerIpcHandlers(context) {
         bciIntervalId = setInterval(() => {
             // Process the latest data with the fbcca algorithm. 
             // viewsList will be used to determine which view to process the data for
-            processDataWithFbcca(scenarioId, viewsList);
+            processDataWithFbcca(scenarioId, viewsList, stimuliFrequencies, activeButtonIds);
         }, fbccaConfiguration.gazeLengthInSecs * 1000);
     });
 

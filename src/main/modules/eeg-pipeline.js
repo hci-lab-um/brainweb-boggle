@@ -175,7 +175,7 @@ function queuePythonTask(task) {
     return nextTask;
 }
 
-function runPythonFbcca(eegData, scenarioId) {
+function runPythonFbcca(eegData, scenarioId, stimuliFrequencies, activeButtonIds) {
     return queuePythonTask(async () => {
         const shell = await ensurePythonShell();
 
@@ -204,7 +204,12 @@ function runPythonFbcca(eegData, scenarioId) {
             try {
                 shell.once('message', handleMessage);
                 shell.once('close', handleClose);
-                shell.send({ eegData, scenario_id: scenarioId }, (error) => {
+                shell.send({
+                    eegData,
+                    scenario_id: scenarioId,
+                    stimuli_frequencies: stimuliFrequencies,
+                    active_button_ids: activeButtonIds
+                }, (error) => {
                     if (error) {
                         handleError(error);
                     }
@@ -217,7 +222,7 @@ function runPythonFbcca(eegData, scenarioId) {
 }
 
 // Function to handle incoming WebSocket data
-async function processDataWithFbcca(currentScenarioID, viewsList) {
+async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequencies, activeButtonIds) {
     if (messageResult.data && messageResult.data.length >= requiredSampleCount) {
         console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${eegDataSource.toUpperCase()}`);
 
@@ -273,7 +278,7 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
 
         } else {
             // Run fbcca in Python
-            return runPythonFbcca(eegData, currentScenarioID).then((selectedButtonId) => {
+            return runPythonFbcca(eegData, currentScenarioID, stimuliFrequencies, activeButtonIds).then((selectedButtonId) => {
                 if (parseInt(selectedButtonId) !== -1) {
                     console.log('PYTHON - User selected button', selectedButtonId);
 

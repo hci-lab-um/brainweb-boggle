@@ -49,8 +49,12 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
 
         console.log(currentAdaptiveGroupIndex === -1 ? 'Adaptive switch: ALL groups ON' : `Adaptive switch: group${currentAdaptiveGroupIndex} ON`);
 
+        // Getting the frequencies & button IDs of the active buttons to send to the main process
+        const activeFrequencies = activeButtons.map(b => parseFloat(b.getAttribute('data-frequency')));
+        const activeButtonIds = activeButtons.map(b => b.getAttribute('id'));
+
         // Restart the BCI interval to ensure correct processing with the new active buttons
-        ipcRenderer.send('bciInterval-restart', currentScenarioId);
+        ipcRenderer.send('bciInterval-restart', currentScenarioId, activeFrequencies, activeButtonIds);
     } catch (error) {
         logger.error('Error toggling adaptive switch group:', error);
     }

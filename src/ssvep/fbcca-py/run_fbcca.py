@@ -26,13 +26,29 @@ def load_scenario_config():
 # Load the scenario config at module level
 scenario_config = load_scenario_config()
 
-def run_fbcca(eeg, scenario_id):
+def run_fbcca(eeg, scenario_id, stim_freqs, active_button_ids):
     eeg_data = eeg[:, :fbcca_config.total_data_point_count()]
-    stimuli_frequencies = get_stimuli_frequencies(scenario_id)
-    
+
+    # The stimuli frequencies can be provided directly or fetched from the scenario config
+    # Provided = if using an adaptive switch; Fetched = normal operation
+    if stim_freqs is not None and len(stim_freqs) > 0:
+        stimuli_frequencies = np.array(stim_freqs)
+    else:
+        stimuli_frequencies = get_stimuli_frequencies(scenario_id)
+
     if np.any(eeg_data != 0) and np.all(stimuli_frequencies != 0):
         freq_idx = test_fbcca(eeg_data, stimuli_frequencies)
-        selected_button_id = get_selected_button_id(freq_idx, scenario_id)
+
+        # Determining the selected button ID
+        # If active_button_ids is provided, use it to map freq_idx to button ID. Provided = if using an adaptive switch
+        if active_button_ids is not None and len(active_button_ids) > 0:
+            if freq_idx != fbcca_config.idleStateLabel and freq_idx < len(active_button_ids):
+                selected_button_id = active_button_ids[freq_idx]
+            else:
+                selected_button_id = fbcca_config.idleStateLabel
+        # If not provided, use the scenario config to map freq_idx to button ID
+        else:
+            selected_button_id = get_selected_button_id(freq_idx, scenario_id)
     else:
         selected_button_id = fbcca_config.idleStateLabel
     

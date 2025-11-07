@@ -2,7 +2,7 @@ const { app, WebContentsView, BaseWindow, ipcMain, screen, View } = require('ele
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
-const { captureSnapshot } = require('../../utils/utilityFunctions');
+const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
@@ -28,7 +28,8 @@ async function registerIpcHandlers(context) {
         updateWebpageBounds,
         createTabView,
         deleteAndInsertAllTabs,
-        updateNavigationButtons
+        updateNavigationButtons,
+        broadcastStatusBarState
     } = context;
 
     // Helper function to serialise tabsList
@@ -59,8 +60,15 @@ async function registerIpcHandlers(context) {
         }));
     }
 
-    
-    ipcMain.on('bciInterval-restart', (event, scenarioId, stimuliFrequencies=[], activeButtonIds=[]) => { 
+    ipcMain.on('statusBar-updatesFromRenderer', (event, partial) => {
+        try {
+            broadcastStatusBarState(partial);
+        } catch (err) {
+            logger.error('Error updating status bar state from renderer:', err.message);
+        }
+    });
+
+    ipcMain.on('bciInterval-restart', (event, scenarioId, stimuliFrequencies = [], activeButtonIds = []) => {
         // PARAMETERS: stimuliFrequencies & activeButtonIds are not required when using the scenarioConfig file. They are required ONLY when using an adaptive switch.
         
         // Clear the previous interval if it exists
@@ -102,7 +110,14 @@ async function registerIpcHandlers(context) {
         });
 
         mainWindow.contentView.addChildView(overlayContent)
-        overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
+
+        // Checking for laptop display to set appropriate overlay height
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const isLaptopDisplay = primaryDisplay ? primaryDisplay.internal : false; // laptop panels report as internal displays
+        const overlayHeightRatio = isLaptopDisplay ? 0.93 : 0.95;
+        const overlayHeight = Math.round(mainWindowContentBounds.height * overlayHeightRatio);
+
+        overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: overlayHeight })
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
@@ -363,11 +378,17 @@ async function registerIpcHandlers(context) {
         try {
             // Updates the adaptive switch status in the database
             await db.updateAdaptiveSwitchStatus(isEnabled);
-            
+
             // Updates the variable in main.js immediately
             if (typeof setAdaptiveSwitchInUse === 'function') {
                 setAdaptiveSwitchInUse(isEnabled);
             }
+
+            broadcastStatusBarState({
+                adaptiveSwitch: {
+                    isEnabled: toBoolean(isEnabled)
+                }
+            });
 
             // Updates the adaptive switch button inner text in settings overlay if it is open
             let settingsOverlay = viewsList.find(view => view.name === ViewNames.SETTINGS);
@@ -394,6 +415,7 @@ async function registerIpcHandlers(context) {
         try {
             // Updates the default headset in the database
             db.updateDefaultHeadset(newHeadset);
+            broadcastStatusBarState({ headset: newHeadset });
         } catch (err) {
             logger.error('Error updating default headset:', err.message);
         }

@@ -2,12 +2,15 @@ const { ipcRenderer } = require('electron')
 const { ViewNames, CssConstants } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const { initStatusBar, applyStatusBarStateChange } = require('../utils/statusBar');
 const logger = require('../main/modules/logger');
 
 let buttons = [];
 
 ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
+        initStatusBar();
+
         buttons = document.querySelectorAll('button');
         // This line below was commented out because the scenario will be updated when the tab stops loading
         // await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);  
@@ -15,6 +18,14 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
         logger.error('Error in mainWindow-loaded handler:', error);
+    }
+});
+
+ipcRenderer.on('statusBar-applyStateChange', (event, changes) => {
+    try {
+        applyStatusBarStateChange(changes);
+    } catch (error) {
+        logger.error('Error handling statusBar-applyStateChange:', error);
     }
 });
 

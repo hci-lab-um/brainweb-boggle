@@ -4,6 +4,7 @@ const scenarioConfig = require('../../configs/scenarioConfig_lowFreqs.json');
 const { browserConfig } = require('../../configs/browserConfig');
 const { ipcRenderer } = require("electron");
 const logger = require('../main/modules/logger');
+const { pushStatusUpdate } = require('./statusBar');
 
 let manager;
 // -1 = all flickering; 0 = all off; 1..N = group number 
@@ -18,7 +19,11 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
         // Filtering grouped buttons by scenario button IDs
         const filteredButtons = groupedButtons.filter(b => scenarioButtonIds.includes(b.getAttribute('id')));
         console.log('Filtered buttons for adaptive switch:', filteredButtons);
-        if (filteredButtons.length === 0) return;
+
+        if (filteredButtons.length === 0) {
+            updateAdaptiveSwitchStatus(-1, 0);
+            return;
+        }
 
         const totalGroups = Array.from(new Set(filteredButtons.map(b => b.getAttribute('data-group')))).length;
         console.log('Total adaptive switch groups:', totalGroups);
@@ -32,6 +37,8 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
         }
 
         await stopManager();
+
+        updateAdaptiveSwitchStatus(currentAdaptiveGroupIndex, totalGroups);
 
         // 0 = off
         if (currentAdaptiveGroupIndex === 0) {
@@ -80,6 +87,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
 async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
     try {
         let adaptiveSwitchButtons = [];
+        let groupCount = 0;
 
         buttons = document.querySelectorAll('button');
         ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);
@@ -122,7 +130,6 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
             // - If there are fewer than 4 buttons: all in the same group
             // - If there are exactly 4 buttons: split into 2 groups (2 and 2)
             // - Otherwise: create ceil(n / 4) groups so each group has up to 4 buttons
-            let groupCount;
             if (n < 4) groupCount = 1;
             else if (n === 4) groupCount = 2;
             else groupCount = Math.ceil(n / 4);
@@ -133,11 +140,12 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
                 button.setAttribute('data-group', `group${groupIndex + 1}`);
             });
         }
-        // }
 
         currentAdaptiveGroupIndex = -1;
 
         await manager.start();
+
+        updateAdaptiveSwitchStatus(currentAdaptiveGroupIndex, groupCount);
 
         // Restart the BCI interval with the new scenario ID to be able to process the data according to the new scenario
         ipcRenderer.send('bciInterval-restart', scenarioId);
@@ -154,6 +162,15 @@ async function stopManager() {
     } catch (error) {
         logger.error('Error in stopManager:', error);
     }
+}
+
+function updateAdaptiveSwitchStatus(groupIndex, totalGroups) {
+    pushStatusUpdate({
+        adaptiveSwitch: {
+            groupIndex,
+            totalGroups: Number.isFinite(totalGroups) ? totalGroups : 0
+        }
+    });
 }
 
 module.exports = { updateScenarioId, stopManager };

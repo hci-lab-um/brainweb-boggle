@@ -5,6 +5,7 @@ const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
 const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFunctions');
+const { defaultState } = require('../utils/statusBar');
 const logger = require('./modules/logger');
 const { startEegWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
 
@@ -23,6 +24,7 @@ let isMainWindowLoaded = false;             // This is a flag to track if main w
 let lastAdaptiveToggleTs = 0;               // This is a timestamp of the last adaptive toggle event
 const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to prevent rapid toggling
 let adaptiveSwitchInUse;                    // This flag indicates if the adaptive switch feature is enabled
+let statusBarState = { ...defaultState };   // This holds the current state of the status bar
 
 app.whenReady().then(async () => {
     try {
@@ -40,6 +42,14 @@ app.whenReady().then(async () => {
         await initialiseVariables();
 
         adaptiveSwitchInUse = await db.getAdaptiveSwitchConnected();
+        const defaultHeadset = await db.getDefaultHeadset();
+
+        updateStatusBarState({
+            headset: defaultHeadset,
+            adaptiveSwitch: {
+                isEnabled: toBoolean(adaptiveSwitchInUse)
+            }
+        });
     } catch (err) {
         logger.error('Error initialising database:', err.message);
     }
@@ -118,6 +128,47 @@ async function initialiseVariables() {
     }
 }
 
+function updateStatusBarState(partial = {}) {
+    // Merging the partial updates into the current status bar state
+    if (partial && typeof partial === 'object') {
+        // Handling updates to headset
+        if (typeof partial.headset === 'string') {
+            statusBarState.headset = partial.headset;
+        }
+
+        // Handling updates to browserState
+        if (typeof partial.browserState === 'string') {
+            statusBarState.browserState = partial.browserState;
+        }
+
+        // Handling updates to adaptiveSwitch
+        if (partial.adaptiveSwitch && typeof partial.adaptiveSwitch === 'object') {
+            const incoming = partial.adaptiveSwitch;
+            const current = statusBarState.adaptiveSwitch;
+
+            statusBarState.adaptiveSwitch = {
+                isEnabled: typeof incoming.isEnabled === 'boolean' ? incoming.isEnabled : current.isEnabled,
+                groupIndex: typeof incoming.groupIndex === 'number' ? incoming.groupIndex : current.groupIndex,
+                totalGroups: typeof incoming.totalGroups === 'number' ? incoming.totalGroups : current.totalGroups
+            };
+        }
+    }
+
+    return { ...statusBarState };
+}
+
+function broadcastStatusBarState(partial = {}) {
+    const changes = updateStatusBarState(partial);
+
+    if (mainWindowContent?.webContents && !mainWindowContent.webContents.isDestroyed()) {
+        try {
+            mainWindowContent.webContents.send('statusBar-applyStateChange', changes);
+        } catch (err) {
+            logger.error('Error updating status bar state:', err.message);
+        }
+    }
+}
+
 function createSplashWindow() {
     try {
         splashWindow = new BaseWindow({
@@ -190,13 +241,23 @@ function createMainWindow() {
                                     tabsList,
                                     db,
                                     // Setter lets IPC handlers update the live value of the adaptiveSwitchInUse variable in main.js
-                                    setAdaptiveSwitchInUse: (val) => { adaptiveSwitchInUse = val; }, 
+                                    setAdaptiveSwitchInUse: (val) => { adaptiveSwitchInUse = val; },
                                     updateWebpageBounds,
                                     createTabView,
                                     deleteAndInsertAllTabs,
-                                    updateNavigationButtons
+                                    updateNavigationButtons,
+                                    broadcastStatusBarState
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
+
+                                // Performing an initial resize to set the correct bounds for the webpage due to status bar presence
+                                setTimeout(() => {
+                                    try {
+                                        resizeMainWindow();
+                                    } catch (resizeErr) {
+                                        logger.error('Error performing initial resize:', resizeErr.message);
+                                    }
+                                }, 0);
                             })
                         });
                     } catch (err) {
@@ -373,6 +434,14 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         // ------------------------------------------
         // Setting the event handlers for the tabView
         // ------------------------------------------        
+        thisTabView.webContents.on('did-start-loading', () => {
+            try {
+                broadcastStatusBarState({ browserState: 'loading' });
+            } catch (err) {
+                logger.error('Error updating status bar for loading state:', err.message);
+            }
+        });
+
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
@@ -402,6 +471,12 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                         activeTab.lastNavigationTitle = title; // Update with last loaded title
                         mainWindowContent.webContents.send('omniboxText-update', title, activeTab.isErrorPage);
                     }
+                }
+
+                if (activeTab?.isErrorPage) {
+                    broadcastStatusBarState({ browserState: 'error' });
+                } else {
+                    broadcastStatusBarState({ browserState: 'ready' });
                 }
             } catch (err) {
                 logger.error('Error during tabview stop loading:', err.message);
@@ -564,6 +639,8 @@ function handleLoadError(errorCode, attemptedURL, responseBody = null) {
         let activeTab = tabsList.find(tab => tab.isActive === true);
         activeTab.originalURL = attemptedURL;
         activeTab.isErrorPage = true;
+
+        broadcastStatusBarState({ browserState: 'error' });
 
         if (!responseBody) {
             const errorHtmlPath = path.join(__dirname, '../pages/html/error.html');

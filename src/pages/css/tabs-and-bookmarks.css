@@ -367,6 +367,7 @@ body {
 }
 .items__container {
   min-width: 0;
+  flex: 7;
   display: flex;
   flex-wrap: wrap;
   width: 100%;

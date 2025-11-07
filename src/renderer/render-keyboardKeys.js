@@ -54,9 +54,25 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
 //     }
 // });
 
+function updateCancelButtonIcon() {
+    try {
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (!cancelBtn) return;
+
+        // When user can go back to grouped keys, show back arrow
+        const iconName = isInSingleKeysState ? 'arrow_back' : 'close';
+
+        // If the button already contains a material icon, replace it; else overwrite innerHTML
+        cancelBtn.innerHTML = createMaterialIcon('l', iconName);
+    } catch (e) {
+        logger.error('Error updating cancel button icon:', e);
+    }
+}
+
 function initKeyboardKeys(buttonId, isUpperCase) {
     return new Promise((resolve, reject) => {
         isInSingleKeysState = false;
+        updateCancelButtonIcon();
 
         const keyboard = document.querySelector('#keyboard');
         const keysContainer = document.querySelector('.keyboard__keysContainer');
@@ -127,6 +143,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                         key.innerHTML = createMaterialIcon('l', keyValue);
                         key.classList.add('arrowKeyBtn');
                     }
+                    // ONLY USED FOR MINIMISED LAYOUT
                     else if (buttonId === 'minimisedControlsBtn') {
                         if (keyValue === 'ARROW_CLUSTER') {
                             key.setAttribute('id', `${idSuffix}KeyBtn`);
@@ -290,6 +307,7 @@ async function showGroupItems(items) {
 
         // Mark as drilled down so cancel returns to grouped view instead of closing
         isInSingleKeysState = true;
+        updateCancelButtonIcon();
 
         buttons = document.querySelectorAll('button');
         const scenarioId = getScenarioIdForMinimisedLayout(items);
@@ -362,6 +380,11 @@ function attachEventListeners() {
                 if (button.classList.contains('arrowClusterBtn')) {
                     await initKeyboardKeys('arrowKeysBtn', currentIsUpperCase);
 
+                    // Mark as drilled down so cancel returns to controls group
+                    isInSingleKeysState = true;
+                    lastMinimisedButtonId = 'minimisedControlsBtn';
+                    updateCancelButtonIcon();
+
                     buttons = document.querySelectorAll('button');
                     await updateScenarioId(93, buttons, ViewNames.KEYBOARD_KEYS);
                     return;
@@ -380,6 +403,8 @@ function attachEventListeners() {
                     try {
                         await initKeyboardKeys(lastMinimisedButtonId, currentIsUpperCase);
                         buttons = document.querySelectorAll('button');
+                        isInSingleKeysState = false; 
+                        updateCancelButtonIcon(); 
 
                         const scenarioToRestore = lastScenarioId ?? undefined;
                         if (scenarioToRestore) {

@@ -67,13 +67,21 @@ async function registerIpcHandlers(context) {
         if (bciIntervalId) {
             clearInterval(bciIntervalId);
         }
-
+        
         // Set new interval to process data every 4 seconds
         bciIntervalId = setInterval(() => {
             // Process the latest data with the fbcca algorithm. 
             // viewsList will be used to determine which view to process the data for
             processDataWithFbcca(scenarioId, viewsList, stimuliFrequencies, activeButtonIds);
         }, fbccaConfiguration.gazeLengthInSecs * 1000);
+    });
+
+    ipcMain.on('bciInterval-stop', (event) => {
+        // Clear the interval if it exists
+        if (bciIntervalId) {
+            clearInterval(bciIntervalId);
+            bciIntervalId = null;
+        }
     });
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {

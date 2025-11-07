@@ -36,6 +36,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
         // 0 = off
         if (currentAdaptiveGroupIndex === 0) {
             console.log('Adaptive switch: all OFF');
+            ipcRenderer.send('bciInterval-stop');
             return;
         }
 

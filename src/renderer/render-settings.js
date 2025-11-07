@@ -202,9 +202,6 @@ function populateGeneralSettings() {
     keyboardLayoutBtn.rel = 'noreferrer noopener';
     keyboardLayoutCard.appendChild(keyboardLayoutBtn);
 
-    cardsContainer.appendChild(homeUrlCard);
-    cardsContainer.appendChild(keyboardLayoutCard);
-
     // -------------------------------
     // Adaptive Switch Setting
     // -------------------------------
@@ -226,7 +223,8 @@ function populateGeneralSettings() {
     const adaptiveSwitchBtn = document.createElement('button');
     adaptiveSwitchBtn.innerHTML = `<span>${adaptiveSwitchInUse ? 'Enabled' : 'Disabled'}</span>`;
     adaptiveSwitchBtn.id = 'adaptiveSwitchBtn';
-    adaptiveSwitchBtn.classList.add('button');
+    adaptiveSwitchBtn.classList.add('button','button--activatable');
+    if (adaptiveSwitchInUse) adaptiveSwitchBtn.classList.add('button--active');
     adaptiveSwitchBtn.rel = 'noreferrer noopener';
     adaptiveSwitchCard.appendChild(adaptiveSwitchBtn);
 
@@ -286,7 +284,14 @@ function populateGeneralSettings() {
                 // Toggle the adaptive switch status
                 adaptiveSwitchInUse = !adaptiveSwitchInUse;
                 // Update the UI
-                adaptiveSwitchBtn.innerHTML = `<span>${adaptiveSwitchInUse ? 'Enabled' : 'Disabled'}</span>`;
+                if (adaptiveSwitchInUse) {
+                    adaptiveSwitchBtn.classList.add('button--active');
+                    adaptiveSwitchBtn.innerHTML = `<span>Enabled</span>`;
+                } else {
+                    adaptiveSwitchBtn.classList.remove('button--active');
+                    adaptiveSwitchBtn.innerHTML = `<span>Disabled</span>`;
+                }
+                
                 // Update the adaptive switch status in the db
                 ipcRenderer.send('adaptiveSwitch-update', adaptiveSwitchInUse);
             } catch (error) {

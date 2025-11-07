@@ -96,7 +96,7 @@ const Settings = Object.freeze({
     DEFAULT_KEYBOARD_LAYOUT: {
         NAME: "keyboardLayout",
         LABEL: "Keyboard Layout",
-        DESCRIPTION: "The keyboard layout to be used throughout the browser.",
+        DESCRIPTION: "Choose between different keyboard layouts to be used throughout the browser.",
         DEFAULT: KeyboardLayouts.MINIMISED.NAME,
         CATEGORY: SettingCategories.GENERAL,
     },

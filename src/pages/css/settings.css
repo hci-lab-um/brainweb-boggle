@@ -398,7 +398,7 @@ h4 {
   display: flex;
   flex-direction: row;
   gap: 2vw;
-  height: 90%;
+  height: 100%;
 }
 
 .settingsContent {
@@ -437,6 +437,20 @@ h4 {
   min-height: 10%;
   padding: 20px;
   line-height: 2rem;
+  position: relative;
+}
+.settingCard .button--activatable::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+.settingCard .button--active::after {
+  background: #08FF00;
 }
 
 p:not(.disclaimerText) {

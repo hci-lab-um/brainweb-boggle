@@ -16,7 +16,6 @@ let state = { ...defaultState };        // This holds the current state of the s
 let statusBarElement = null;            // This is the root element of the status bar
 let statusBarContainer = null;          // This wraps the existing body content above the status bar
 let valueNodes = {};                    // This caches the DOM nodes for status values
-let listenersRegistered = false;        // This flag ensures listeners are only registered once
 
 function pushStatusUpdate(partial) {
     ipcRenderer.send('statusBar-updatesFromRenderer', partial);

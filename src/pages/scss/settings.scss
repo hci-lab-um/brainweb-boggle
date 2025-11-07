@@ -137,11 +137,18 @@ p:not(.disclaimerText) {
     font-size: 1.3rem;
 }
 
-.headsetImage, .keyboardLayoutImage {
+.headsetImage {
     height: 45%;
     width: 75%;
     background-color: colors.$primary;
     padding: 34px;
+    border-radius: 12px;
+}
+
+.keyboardLayoutImage {
+    height: 45%;
+    width: 100%;
+    background-color: colors.$primary;
     border-radius: 12px;
 }
 

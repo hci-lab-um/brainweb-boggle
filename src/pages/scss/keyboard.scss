@@ -67,9 +67,11 @@ body {
             justify-content: center;
             padding: 0;
         }
+
         &--middle {
             flex: 3;
         }
+
         &--right {
             flex: 1;
         }
@@ -116,7 +118,7 @@ body {
         vertical-align: top;
         padding: 0;
         position: relative;
-        -webkit-tap-highlight-color: transparent;        
+        -webkit-tap-highlight-color: transparent;
 
         &--vertical {
             height: min-content;
@@ -140,6 +142,15 @@ body {
             height: unset;
         }
 
+        &--capsIndicator {
+            padding: 0.75rem 0;
+            position: absolute;
+            top: 65%;
+            font-size: 1.5rem;
+            background-color: colors.$bg-black-transparent-25;
+            width: 100%;
+        }
+
         &--activatable::after {
             content: "";
             position: absolute;
@@ -149,6 +160,13 @@ body {
             height: 10px;
             background: colors.$white;
             border-radius: 50%;
+        }
+
+        .keyboard--minimised &--activatable::after {
+            top: 20px;
+            right: 20px;
+            width: 20px;
+            height: 20px;
         }
 
         &--active::after {
@@ -212,7 +230,7 @@ body {
     }
 
     &--doubleRow {
-        & > * {
+        &>* {
             height: 40%;
         }
     }

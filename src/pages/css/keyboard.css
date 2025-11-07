@@ -453,6 +453,14 @@ body {
 .keyboard__key--unsetHeight {
   height: unset;
 }
+.keyboard__key--capsIndicator {
+  padding: 0.75rem 0;
+  position: absolute;
+  top: 65%;
+  font-size: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.25);
+  width: 100%;
+}
 .keyboard__key--activatable::after {
   content: "";
   position: absolute;
@@ -462,6 +470,12 @@ body {
   height: 10px;
   background: #ffffff;
   border-radius: 50%;
+}
+.keyboard--minimised .keyboard__key--activatable::after {
+  top: 20px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
 }
 .keyboard__key--active::after {
   background: #08FF00;

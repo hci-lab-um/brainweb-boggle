@@ -5,6 +5,7 @@ const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const { createMaterialIcon, createNavigationButton, updatePaginationIndicators, paginate } = require('../utils/utilityFunctions');
 const logger = require('../main/modules/logger');
 const { Key } = require('@nut-tree-fork/nut-js');
+const { i } = require('mathjs');
 
 let buttons = [];
 
@@ -106,6 +107,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                 case 'minimisedControlsBtn':
                     keys = ['space_bar', 'backspace', 'keyboard_return', 'keyboard_capslock', 'AC', 'ARROW_CLUSTER'];
                     keysContainer.classList.add('keyboard__keysContainer--doubleRow', 'keyboard__keysContainer--threeColumns');
+                    keyboard.classList.add('keyboard--minimised');
                     break;
 
                 default:
@@ -138,10 +140,10 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                         else if (keyValue === 'keyboard_capslock') {
                             // ONLY USED FOR MINIMISED LAYOUT - making the caps lock key activatable
                             const span = document.createElement('span');
-                            span.classList.add('keyboard__key', 'keyboard__key--activatable');
+                            span.classList.add('keyboard__key', 'keyboard__key--center', 'keyboard__key--activatable');
 
                             const icon = document.createElement('i');
-                            icon.classList.add('material-icons');
+                            icon.classList.add('material-icons--l');
                             icon.textContent = 'keyboard_capslock';
 
                             span.appendChild(icon);

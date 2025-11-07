@@ -73,7 +73,7 @@ app.whenReady().then(async () => {
                 const currentScenarioId = (scenarioIdDict[topViewName] || []).slice(-1)[0] ?? -1;
 
                 if (targetView) {
-                    targetView.webContentsView.webContents.send('adaptiveSwitch-toggle', currentScenarioId);
+                    targetView.webContentsView.webContents.send('adaptiveSwitch-toggle', currentScenarioId, targetView.name);
                 }
             }
             else {

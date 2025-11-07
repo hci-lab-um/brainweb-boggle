@@ -9,7 +9,7 @@ let manager;
 // -1 = all flickering; 0 = all off; 1..N = group number 
 let currentAdaptiveGroupIndex = -1;
 
-ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
+ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetViewName) => {
     try {
         // Collecting buttons that have a data-group attribute and buttons that are defined in the current scenario
         const groupedButtons = Array.from(document.querySelectorAll('button[data-group]')) || [];
@@ -38,6 +38,13 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
             return;
         }
 
+        // -1 = all on again -> restore full scenario via updateScenarioId
+        if (currentAdaptiveGroupIndex === -1) {
+            await updateScenarioId(currentScenarioId, undefined, targetViewName, false);
+            console.log('Adaptive switch: ALL groups ON (restored via updateScenarioId)');
+            return;
+        }
+
         const activeButtons = currentAdaptiveGroupIndex === -1
             ? filteredButtons // all buttons are active
             : filteredButtons.filter(b => b.getAttribute('data-group') === `group${currentAdaptiveGroupIndex}`); // only buttons in the current group are active
@@ -55,7 +62,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId) => {
 
         await manager.start();
 
-        console.log(currentAdaptiveGroupIndex === -1 ? 'Adaptive switch: ALL groups ON' : `Adaptive switch: group${currentAdaptiveGroupIndex} ON`);
+        console.log(`Adaptive switch: group${currentAdaptiveGroupIndex} ON`);
 
         // Getting the frequencies & button IDs of the active buttons to send to the main process
         const activeFrequencies = activeButtons.map(b => parseFloat(b.getAttribute('data-frequency')));

@@ -17,7 +17,7 @@ const CssConstants = Object.freeze({
 });
 
 const SwitchShortcut = Object.freeze({
-    TOGGLE_BUTTON_GROUPINGS: 'Space'
+    TOGGLE_BUTTON_GROUPINGS: 'Alt+Shift+S'
 });
 
 const ConnectionTypes = Object.freeze({

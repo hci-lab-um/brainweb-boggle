@@ -21,6 +21,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
         if (filteredButtons.length === 0) return;
 
         const totalGroups = Array.from(new Set(filteredButtons.map(b => b.getAttribute('data-group')))).length;
+        console.log('Total adaptive switch groups:', totalGroups);
 
         // If only one group exists, toggle only between ALL (-1) and OFF (0)
         if (totalGroups <= 1) {
@@ -77,11 +78,13 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
 
 async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
     try {
+        let adaptiveSwitchButtons = [];
+
         buttons = document.querySelectorAll('button');
         ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);
 
         if (stop) await stopManager();
-        let index = 0;
+        let numberOfActiveButtons = 0;
         const frequencies = scenarioConfig[`scenario_${scenarioId}`].frequencies;
         const phases = scenarioConfig[`scenario_${scenarioId}`].phases;
         const buttonIds = scenarioConfig[`scenario_${scenarioId}`].buttonIds;
@@ -105,13 +108,13 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
                 button.setAttribute('data-dark-color', browserConfig.stimuli.customSetup.colors.darkColor);
 
                 manager.set(button);
-                index++;
+                numberOfActiveButtons++;
+
+                adaptiveSwitchButtons.push(button);
             }
         });
 
-        // Splitting buttons into groups for adaptive switch
-        const adaptiveSwitchButtons = Array.from(buttons).filter(button => button.hasAttribute('data-frequency'));
-        const n = adaptiveSwitchButtons.length;
+        const n = numberOfActiveButtons;
 
         if (n > 0) {
             // Determine number of groups based on rules:

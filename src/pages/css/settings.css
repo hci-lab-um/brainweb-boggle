@@ -164,6 +164,9 @@
   justify-content: center;
 }
 
+.navbar {
+  height: 12.5% !important;
+}
 .navbar--opaque {
   background-color: #1f1f1f;
   gap: 2%;

@@ -60,6 +60,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
 
         const keyboard = document.querySelector('#keyboard');
         const keysContainer = document.querySelector('.keyboard__keysContainer');
+        keysContainer.className = 'keyboard__keysContainer'; // Resetting any previous layout classes
         let keysAndArrowsContainer = null;
 
         // ONLY USED FOR MINIMISED LAYOUT - this is done so that we can treat letters/numbers/symbols buttons as groups and NOT the control buttons
@@ -276,6 +277,13 @@ async function showGroupItems(items) {
         keysContainer.innerHTML = '';
         if (!keysContainer.classList.contains('keyboard__keysContainer--doubleRow')) {
             keysContainer.classList.add('keyboard__keysContainer--doubleRow');
+        }
+
+        if (items.length == 4) {
+            keysContainer.classList.add('keyboard__keysContainer--twoColumns');
+            if (keysContainer.classList.contains('keyboard__keysContainer--threeColumns')) {
+                keysContainer.classList.remove('keyboard__keysContainer--threeColumns');
+            }
         }
 
         const idSuffixes = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];

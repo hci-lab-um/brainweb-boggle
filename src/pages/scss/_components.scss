@@ -162,8 +162,6 @@
     }
 
     @else if $columns ==2 {
-        flex: 7;
-
         &>* {
             flex: 1 1 calc(50% - 10px);
             max-width: calc(50% - 65px);

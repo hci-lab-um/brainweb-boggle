@@ -370,7 +370,6 @@ body {
   height: 100%;
   justify-content: space-around;
   align-items: center;
-  flex: 7;
 }
 .items__container > * {
   flex: 1 1 calc(50% - 10px);

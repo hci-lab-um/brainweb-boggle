@@ -229,6 +229,10 @@ body {
         @include components.pagination-grid(3);
     }
 
+    &--twoColumns {
+        @include components.pagination-grid(2);
+    }
+
     &--doubleRow {
         &>* {
             height: 40%;

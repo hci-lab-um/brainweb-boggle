@@ -565,6 +565,22 @@ body {
   box-sizing: border-box;
   height: 60%;
 }
+.keyboard__keysContainer--twoColumns {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: 100%;
+  justify-content: space-around;
+  align-items: center;
+}
+.keyboard__keysContainer--twoColumns > * {
+  flex: 1 1 calc(50% - 10px);
+  max-width: calc(50% - 65px);
+}
+.keyboard__keysContainer--twoColumns > * {
+  box-sizing: border-box;
+  height: 60%;
+}
 .keyboard__keysContainer--doubleRow > * {
   height: 40%;
 }

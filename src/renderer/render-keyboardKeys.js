@@ -147,6 +147,9 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                             span.appendChild(icon);
                             key.appendChild(span);
                         }
+                        else if (keyValue === 'AC') {
+                            key.textContent = 'AC';
+                        }
                         else {
                             key.innerHTML = createMaterialIcon('l', keyValue);
                         }

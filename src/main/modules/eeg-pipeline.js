@@ -305,7 +305,6 @@ async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequen
 
 module.exports = {
     startEegWebSocket,
-    startLslWebSocket: startEegWebSocket, // Maintain backward compatibility
     connectWebSocket,
     disconnectWebSocket,
     processDataWithFbcca

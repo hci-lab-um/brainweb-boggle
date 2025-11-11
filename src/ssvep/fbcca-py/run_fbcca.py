@@ -2,8 +2,8 @@ import sys
 import json
 import os
 import numpy as np
-from fbcca_config import fbcca_config
 from test_fbcca import test_fbcca
+from fbcca_config_service import fbcca_config, total_data_point_count
 
 # Load scenario configuration
 def load_scenario_config():
@@ -27,7 +27,7 @@ def load_scenario_config():
 scenario_config = load_scenario_config()
 
 def run_fbcca(eeg, scenario_id, stim_freqs, active_button_ids):
-    eeg_data = eeg[:, :fbcca_config.total_data_point_count()]
+    eeg_data = eeg[:, :total_data_point_count()]
 
     # The stimuli frequencies can be provided directly or fetched from the scenario config
     # Provided = if using an adaptive switch; Fetched = normal operation
@@ -42,15 +42,15 @@ def run_fbcca(eeg, scenario_id, stim_freqs, active_button_ids):
         # Determining the selected button ID
         # If active_button_ids is provided, use it to map freq_idx to button ID. Provided = if using an adaptive switch
         if active_button_ids is not None and len(active_button_ids) > 0:
-            if freq_idx != fbcca_config.idleStateLabel and freq_idx < len(active_button_ids):
+            if freq_idx != fbcca_config['idleStateLabel'] and freq_idx < len(active_button_ids):
                 selected_button_id = active_button_ids[freq_idx]
             else:
-                selected_button_id = fbcca_config.idleStateLabel
+                selected_button_id = fbcca_config['idleStateLabel']
         # If not provided, use the scenario config to map freq_idx to button ID
         else:
             selected_button_id = get_selected_button_id(freq_idx, scenario_id)
     else:
-        selected_button_id = fbcca_config.idleStateLabel
+        selected_button_id = fbcca_config['idleStateLabel']
     
     return selected_button_id
 
@@ -68,7 +68,7 @@ def get_stimuli_frequencies(scenario_id):
     return stimuli_frequencies
 
 def get_selected_button_id(freq_idx, scenario_id):
-    if freq_idx != fbcca_config.idleStateLabel and scenario_config:
+    if freq_idx != fbcca_config['idleStateLabel'] and scenario_config:
         scenario_key = f"scenario_{scenario_id}"
         if scenario_key in scenario_config and 'buttonIds' in scenario_config[scenario_key]:
             button_ids = scenario_config[scenario_key]['buttonIds']
@@ -76,10 +76,10 @@ def get_selected_button_id(freq_idx, scenario_id):
                 selected_button_id = button_ids[freq_idx]
             else:
                 print(f"Warning: freq_idx {freq_idx} out of range for buttonIds", file=sys.stderr)
-                selected_button_id = fbcca_config.idleStateLabel
+                selected_button_id = fbcca_config['idleStateLabel']
         else:
             print(f"Warning: buttonIds not found for scenario {scenario_id}", file=sys.stderr)
-            selected_button_id = fbcca_config.idleStateLabel
+            selected_button_id = fbcca_config['idleStateLabel']
     else:
         selected_button_id = freq_idx
     

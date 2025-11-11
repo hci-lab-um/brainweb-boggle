@@ -3,17 +3,21 @@ const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
 // const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
-const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
+const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 const { browserConfig } = require('../../../configs/browserConfig');
 
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
 const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
-const requiredSampleCount = fbccaConfiguration.totalDataPointCount();
+const requiredSampleCount = totalDataPointCount();
 let messageResult = { data: [] };
 let ws = null;
 let pythonShellInstance = null;
 let pythonShellInitPromise = null;
 let pythonRequestQueue = Promise.resolve();
+
+function totalDataPointCount(config = fbccaConfiguration) {
+    return Math.ceil(config.samplingRate * config.gazeLengthInSecs);
+}
 
 // Function used to run the LSL or Emotiv WebSocket Server
 async function startEegWebSocket() {

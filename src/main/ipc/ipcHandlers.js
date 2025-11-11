@@ -5,7 +5,7 @@ const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
-const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
+const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 const { browserConfig } = require('../../../configs/browserConfig');
 
 let bciIntervalId = null;           // This will hold the ID of the BCI interval

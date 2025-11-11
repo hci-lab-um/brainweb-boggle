@@ -146,6 +146,7 @@ function createHeadsetTable() {
                 company_name TEXT NOT NULL,
                 headset_name TEXT NOT NULL,
                 used_electrodes TEXT NOT NULL,
+                sampling_rate INTEGER NOT NULL,
                 image BLOB,
                 PRIMARY KEY (company_name, headset_name)
             );
@@ -179,11 +180,12 @@ function populateHeadsetsTable() {
                 logger.warn(`Could not read headset image for ${headset.NAME}: ${e.message}`);
             }
 
-            allRows.push('(?, ?, ?, ?)');
+            allRows.push('(?, ?, ?, ?, ?)');
             values.push(
                 headset.COMPANY,
                 headset.NAME,
                 JSON.stringify(headset.USED_ELECTRODES || []),
+                headset.SAMPLING_RATE,
                 imageBuffer
             );
         });
@@ -193,7 +195,7 @@ function populateHeadsetsTable() {
             return;
         }
 
-        const insertSql = `INSERT OR IGNORE INTO headsets (company_name, headset_name, used_electrodes, image) VALUES ${allRows.join(', ')}`;
+        const insertSql = `INSERT OR IGNORE INTO headsets (company_name, headset_name, used_electrodes, sampling_rate, image) VALUES ${allRows.join(', ')}`;
 
         db.run(insertSql, values, (err) => {
             if (err) {

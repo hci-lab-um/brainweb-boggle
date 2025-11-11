@@ -40,6 +40,7 @@ const Headsets = Object.freeze({
         NAME: "EPOC X",
         COMPANY: "Emotiv",
         USED_ELECTRODES: ["O1", "P7", "P8", "O2"],
+        SAMPLING_RATE: 256,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.CORTEX_API.NAME,
         },
@@ -49,6 +50,7 @@ const Headsets = Object.freeze({
         NAME: "DSI-VR300",
         COMPANY: "Wearable Sensing",
         USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
+        SAMPLING_RATE: 300,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
             CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME,
@@ -59,6 +61,7 @@ const Headsets = Object.freeze({
         NAME: "g.USBamp",
         COMPANY: "g.tec",
         USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
+        SAMPLING_RATE: 256,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME
         },

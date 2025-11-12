@@ -82,6 +82,65 @@ const KeyboardLayouts = Object.freeze({
     }
 });
 
+
+const Stimuli = Object.freeze({
+    PATTERNS_TYPES: {
+        DESCRIPTION: "The pattern that will be used for the SSVEP stimuli present in the browser.",
+        PATTERNS: {
+            LINE: {
+                NAME: "Line",
+                VALUE: "line"
+            },
+            SOLID: {
+                NAME: "Solid",
+                VALUE: "solid"
+            },
+            CHEQUERED: {
+                NAME: "Chequered",
+                VALUE: "chequered"
+            },
+            DOT: {
+                NAME: "Dot",
+                VALUE: "dot"
+            }
+        }
+    },
+    LIGHT_COLORS: {
+        DESCRIPTION: "First colour that will be used for the stimuli present in the browser.",
+        COLOURS: {
+            WHITE: {
+                RGBA: "255,255,255,1",
+                NAME: "White"
+            },
+            GREEN: {
+                RGBA: "0,176,80,1",
+                NAME: "Green"
+            },
+        },
+    },
+    DARK_COLORS: {
+        DESCRIPTION: "Second colour that will be used for the stimuli present in the browser.",
+        COLOURS: {
+            GREY: {
+                RGBA: "127,127,127,1",
+                NAME: "Grey"
+            },
+            BLACK: {
+                RGBA: "0,0,0,1",
+                NAME: "Black"
+            },
+            RED: {
+                RGBA: "192,0,0,1",
+                NAME: "Red"
+            },
+            BLUE: {
+                RGBA: "0,32,96,1",
+                NAME: "Blue"
+            },
+        }
+    }
+});
+
 const SettingCategories = Object.freeze({
     GENERAL: "General",
     STIMULI: "Stimuli",
@@ -135,21 +194,21 @@ const Settings = Object.freeze({
         NAME: "defaultStimuliPattern",
         LABEL: "Default Stimuli Pattern",
         DESCRIPTION: "The default pattern used for SSVEP stimuli.",
-        DEFAULT: "line", // CREATE enum for patterns later
+        DEFAULT: Stimuli.PATTERNS_TYPES.PATTERNS.LINE.VALUE,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_LIGHT_COLOR: {
         NAME: "defaultStimuliLightColor",
         LABEL: "Default Stimuli Light Color",
         DESCRIPTION: "The default light color used for SSVEP stimuli.",
-        DEFAULT: "255,255,255,1", // CREATE enum for colors later
+        DEFAULT: Stimuli.LIGHT_COLORS.COLOURS.WHITE.RGBA,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_DARK_COLOR: {
         NAME: "defaultStimuliDarkColor",
         LABEL: "Default Stimuli Dark Color",
         DESCRIPTION: "The default dark color used for SSVEP stimuli.",
-        DEFAULT: "127,127,127,1", // CREATE enum for colors later
+        DEFAULT: Stimuli.DARK_COLORS.COLOURS.GREY.RGBA,
         CATEGORY: SettingCategories.STIMULI,
     }
 });

@@ -150,6 +150,11 @@ async function registerIpcHandlers(context) {
                 headsetInUse: await db.getDefaultHeadset(),
                 connectionTypeInUse: await db.getDefaultConnectionType(),
                 adaptiveSwitchInUse: await db.getAdaptiveSwitchConnected(),
+                stimuliInUse: {
+                    pattern: await db.getDefaultStimuliPattern(),
+                    lightColor: await db.getDefaultStimuliLightColor(),
+                    darkColor: await db.getDefaultStimuliDarkColor(),
+                }
             }
         }
 

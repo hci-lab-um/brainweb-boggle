@@ -2,10 +2,12 @@ const path = require('path');
 const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
+const { EventEmitter } = require('events');     
 // const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
 const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 const { browserConfig } = require('../../../configs/browserConfig');
 
+const eegEvents = new EventEmitter();
 const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
 const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
 const requiredSampleCount = totalDataPointCount();
@@ -42,11 +44,13 @@ async function startEegWebSocket() {
             if (message === 'READY') {  // Wait for the 'READY' message from Python
                 console.log(`${eegDataSource.toUpperCase()} WebSocket server is ready!`);
                 resolve(pythonProcess);   // Resolve the promise with the running Python process
+            } else if (message === '[INFO] Headset connected.') {
+                eegEvents.emit('headset-connected'); // Sending event that headset is connected to main.js
             }
         });
 
         pythonProcess.stderr.on('data', (data) => {
-            console.error(`${eegDataSource.toUpperCase()} Python Error:`, data.toString());
+            console.error(`${eegDataSource.toUpperCase()} Python Error:`, data.toString());            
         });
 
         pythonProcess.on('close', (code) => {
@@ -307,5 +311,6 @@ module.exports = {
     startEegWebSocket,
     connectWebSocket,
     disconnectWebSocket,
-    processDataWithFbcca
+    processDataWithFbcca,
+    eegEvents
 };

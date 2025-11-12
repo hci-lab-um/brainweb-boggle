@@ -158,7 +158,8 @@ class EmotivEEGClient:
 
         # Connect headset
         elif data['id'] == 3:
-            print("[INFO] Headset connected.")
+            #!!!!!!!!!!!!!!!!!!!!!!!!! DO NOT UPDATE/REMOVE THIS PRINT STATEMENT !!!!!!!!!!!!!!!!!!!!!!!!!
+            print("[INFO] Headset connected.") # This line is used by main.js to detect successful headset connection
             self.create_session()
 
         # Create session

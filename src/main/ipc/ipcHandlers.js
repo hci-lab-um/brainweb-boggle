@@ -101,6 +101,7 @@ async function registerIpcHandlers(context) {
                 contextIsolation: true,
                 preload: path.join(__dirname, `../../renderer/render-${overlayName}.js`),
                 transparent: true,
+                partition: 'persist:boggle-overlays'
             },
         })
 

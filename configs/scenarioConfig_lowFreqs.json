@@ -411,41 +411,36 @@
         "name": "KEYBOARD",
         "description": "Full Keyboard Layout - No text in search field",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn"],
-        "frequencies": [7, 6.5, 6, 10.5, 8, 9.0, 8.5, 10, 7.5, 9.5, 10.5, 10.5, 10.5, 10.5],
-        "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.75, 1.25, 1.75, 0.25],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11, 11.5, 12, 12.5],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0, 0.5, 0.5, 0]
     },
     "scenario_81": {
         "name": "KEYBOARD",
         "description": "Full Keyboard Layout - Text in search field, word suggestion available, cursor at end position. The autoCompleteBtn and showHidePasswordBtn have the same frequency and phase because they are used interchangeably.",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn", "clearAllBtn", "arrowKeysBtn", "backspaceBtn", "autoCompleteBtn", "showHidePasswordBtn"],
-        "frequencies": [7, 6.5, 6, 10.5, 8, 10.5, 10.5, 10, 7.5, 9.5, 10.5, 10.5, 10.5, 10.5, 9, 8.5, 10.5, 10.5, 10.5],
-        "phases": [0, 0.5, 1, 1.5, 1.5, 0.25, 0.75, 1, 1.5, 0, 1.25, 1.75, 1.625, 0.125, 0.5, 1, 0.375, 0.625, 0.875],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0, 0.5, 0.5, 0, 1.5, 1, 0, 0.5]
     },
     "scenario_82": {
         "name": "KEYBOARD",
         "description": "Full Keyboard Layout - Text in search field, word suggestion unavailable, cursor at start position (autocomplete and backspace buttons disabled)",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn", "clearAllBtn", "arrowKeysBtn", "showHidePasswordBtn"],
-        "frequencies": [7, 6.5, 6, 10.5, 8, 10.5, 10.5, 10, 7.5, 9.5, 10.5, 10.5, 10.5, 10.5, 9, 8.5, 10.5],
-        "phases": [0, 0.5, 1, 1.5, 1.5, 0.25, 0.75, 1, 1.5, 0, 1.25, 1.75, 1.625, 0.125, 0.5, 1, 0.625],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11, 11.5, 12, 12.5, 13, 13.5, 14],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0, 0.5, 0.5, 0, 1.5, 1, 0]
     },
     "scenario_83": {
         "name": "KEYBOARD",
         "description": "Full Keyboard Layout - Text in search field, word suggestion unavailable, cursor NOT at start position",
         "buttonIds": ["closeKeyboardBtn", "numbersBtn", "qwertBtn", "yuiopBtn", "asdBtn", "fghBtn", "jklBtn", "upperCaseBtn", "zxcBtn", "vbnmBtn", "enterBtn", "symbolsBtn", "spaceBtn", "keyboardSendBtn", "clearAllBtn", "arrowKeysBtn", "backspaceBtn", "showHidePasswordBtn"],
-        "frequencies": [7, 6.5, 6, 10.5, 8, 10.5, 10.5, 10, 7.5, 9.5, 10.5, 10.5, 10.5, 10.5, 9, 8.5, 10.5, 10.5],
-        "phases": [0, 0.5, 1, 1.5, 1.5, 0.25, 0.75, 1, 1.5, 0, 1.25, 1.75, 1.625, 0.125, 0.5, 1, 0.375, 0.625],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0, 0.5, 0.5, 0, 1.5, 1, 0, 0.5]
     },
     "scenario_84": {
         "name": "KEYBOARD",
         "description": "Numeric Keyboard - everything flickering, text in input",
         "buttonIds": ["numericCloseKeyboardBtn", "numericSymbolsBtn", "oneBtn", "twoBtn", "threeBtn", "fourBtn", "fiveBtn", "sixBtn", "sevenBtn", "eightBtn", "nineBtn", "zeroBtn", "numericKeyboardSendBtn", "numericArrowKeysBtn", "numericSpaceBtn", "numericBackspaceBtn", "numericClearAllBtn"],
-        "frequencies": [7, 6.5, 6, 10.5, 8, 10.5, 10.5, 10, 7.5, 9.5, 10.5, 10.5, 10.5, 10.5, 9, 8.5, 10.5],
-        "phases": [0, 0.5, 1, 1.5, 1.5, 0.25, 0.75, 1, 1.5, 0, 1.25, 1.75, 1.625, 0.125, 0.5, 1, 0.375],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11, 11.5, 12, 12.5, 13, 13.5, 14],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0, 0.5, 0.5, 0, 1.5, 1, 0]
     },
     "scenario_90": {
         "name": "KEYBOARD_KEYS",
@@ -458,17 +453,15 @@
         "name": "KEYBOARD_KEYS",
         "description": "8 keys, 2 arrow button and cancel button",
         "buttonIds": ["firstKeyBtn", "secondKeyBtn", "thirdKeyBtn", "fourthKeyBtn", "fifthKeyBtn", "sixthKeyBtn", "seventhKeyBtn", "eighthKeyBtn", "cancelBtn", "firstArrowKeyBtn", "secondArrowKeyBtn"],
-        "frequencies": [7, 6.5, 6, 10.5, 8, 9.0, 8.5, 10, 7.5, 9.5, 10.5],
-        "phases": [0, 0.5, 1, 1.5, 1.5, 0, 0.5, 1, 1.5, 0, 0.75],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0]
     },
     "scenario_92": {
         "name": "KEYBOARD_KEYS",
         "description": "10 keys, and cancel button",
         "buttonIds": ["firstKeyBtn", "secondKeyBtn", "thirdKeyBtn", "fourthKeyBtn", "fifthKeyBtn", "sixthKeyBtn", "seventhKeyBtn", "eighthKeyBtn", "ninthKeyBtn", "tenthKeyBtn", "cancelBtn"],
-        "frequencies": [7, 6.5, 8.5, 9.5, 6, 10.5, 8, 9.0, 10.5, 10, 7.5],
-        "phases": [0, 0.5, 1, 0, 1, 1.5, 1.5, 0, 0.75, 1, 1.5],
-        "needsRestructuring": true
+        "frequencies": [7, 6.5, 6, 10.5, 8, 9, 8.5, 10, 7.5, 9.5, 11],
+        "phases": [0, 0.5, 1, 1.5, 1.5, 0.5, 1, 1, 1.5, 0, 0]
     },
     "scenario_93": {
         "name": "KEYBOARD_KEYS",

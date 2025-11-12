@@ -27,8 +27,6 @@ def load_scenario_config():
 scenario_config = load_scenario_config()
 
 def run_fbcca(eeg, scenario_id, stim_freqs=None, active_button_ids=None):
-    print('stim_freqs:', stim_freqs, file=sys.stderr, flush=True)
-    print('active_button_ids:', active_button_ids, file=sys.stderr, flush=True)
     eeg_data = eeg[:, :total_data_point_count()]
 
     # The stimuli frequencies can be provided directly or fetched from the scenario config

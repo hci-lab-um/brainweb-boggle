@@ -88,6 +88,12 @@ body {
         .material-icons--s {
             color: colors.$accent;
             font-size: 1.5rem;
+
+            &.disabled {
+                color: colors.$text-muted;
+                opacity: 0.6;
+                filter: grayscale(100%);
+            }
         }
     }
 

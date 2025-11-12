@@ -71,7 +71,10 @@ function setupStatusValueNodes() {
     valueNodes = {
         headset: statusBarElement.querySelector('[data-status-value="headset"]'),
         browser: statusBarElement.querySelector('[data-status-value="browser"]'),
-        adaptive: statusBarElement.querySelector('[data-status-value="adaptive"]')
+        adaptive: statusBarElement.querySelector('[data-status-value="adaptive"]'),
+        adaptiveIcon: statusBarElement.querySelector('[data-status-icon="adaptive"]'),
+        browserIcon: statusBarElement.querySelector('[data-status-icon="browser"]'),
+        headsetIcon: statusBarElement.querySelector('[data-status-icon="headset"]')
     };
 }
 
@@ -81,17 +84,17 @@ function renderStatusBarHtml() {
     return `
         <div class="status-bar__items">
             <div class="status-bar__item" role="status">
-                <span class="material-icons--s">published_with_changes</span>
+                <span class="material-icons--s" data-status-icon="browser">check</span>
                 <span class="status-bar__label">Browser</span>
                 <span class="status-bar__value" data-status-value="browser">Ready</span>
             </div>
             <div class="status-bar__item" role="status">
-                <span class="material-icons--s">sensors</span>
+                <span class="material-icons--s" data-status-icon="headset">sensors_off</span>
                 <span class="status-bar__label">Headset</span>
                 <span class="status-bar__value" data-status-value="headset">—</span>
             </div>            
             <div class="status-bar__item" role="status">
-                <span class="material-icons--s">toggle_on</span>
+                <span class="material-icons--s" data-status-icon="adaptive">toggle_off</span>
                 <span class="status-bar__label">Adaptive Switch</span>
                 <span class="status-bar__value" data-status-value="adaptive">Disabled</span>
             </div>
@@ -141,6 +144,35 @@ function updateDomElements() {
 
     if (valueNodes.adaptive) {
         valueNodes.adaptive.textContent = formatAdaptiveState(state.adaptiveSwitch);
+    }
+
+    // Update adaptive switch icon based on enabled/disabled state
+    if (valueNodes.adaptiveIcon) {
+        const isEnabled = !!state.adaptiveSwitch?.isEnabled;
+        valueNodes.adaptiveIcon.textContent = isEnabled ? 'toggle_on' : 'toggle_off';
+        valueNodes.adaptiveIcon.classList.toggle('disabled', !isEnabled);
+    }
+
+    // Update browser status icon based on browser state
+    if (valueNodes.browserIcon) {
+        const browserState = state.browserState;
+        if (browserState === 'loading') {
+            valueNodes.browserIcon.textContent = 'autorenew';
+            valueNodes.browserIcon.classList.add('disabled');
+        } else if (browserState === 'error') {
+            valueNodes.browserIcon.textContent = 'error';
+            valueNodes.browserIcon.classList.add('disabled');
+        } else {
+            valueNodes.browserIcon.textContent = 'check';
+            valueNodes.browserIcon.classList.remove('disabled');
+        }
+    }
+
+    // Update headset icon based on configured/connected state
+    if (valueNodes.headsetIcon) {
+        const hasHeadset = !!state.headset;
+        valueNodes.headsetIcon.textContent = hasHeadset ? 'sensors' : 'sensors_off';
+        valueNodes.headsetIcon.classList.toggle('disabled', !hasHeadset);
     }
 }
 

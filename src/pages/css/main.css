@@ -420,6 +420,11 @@ body:not(.has-status-bar) {
   color: #b7ff00;
   font-size: 1.5rem;
 }
+.status-bar__item .material-icons--s.disabled {
+  color: #b5c2cd;
+  opacity: 0.6;
+  filter: grayscale(100%);
+}
 .status-bar__label {
   text-transform: uppercase;
   letter-spacing: 0.05em;

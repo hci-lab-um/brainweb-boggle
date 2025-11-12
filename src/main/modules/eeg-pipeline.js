@@ -211,7 +211,7 @@ function runPythonFbcca(eegData, scenarioId, stimuliFrequencies, activeButtonIds
                 shell.send({
                     eegData,
                     scenario_id: scenarioId,
-                    stimuli_frequencies: stimuliFrequencies,
+                    stim_freqs: stimuliFrequencies,
                     active_button_ids: activeButtonIds
                 }, (error) => {
                     if (error) {

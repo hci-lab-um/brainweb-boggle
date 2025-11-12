@@ -26,7 +26,9 @@ def load_scenario_config():
 # Load the scenario config at module level
 scenario_config = load_scenario_config()
 
-def run_fbcca(eeg, scenario_id, stim_freqs, active_button_ids):
+def run_fbcca(eeg, scenario_id, stim_freqs=None, active_button_ids=None):
+    print('stim_freqs:', stim_freqs, file=sys.stderr, flush=True)
+    print('active_button_ids:', active_button_ids, file=sys.stderr, flush=True)
     eeg_data = eeg[:, :total_data_point_count()]
 
     # The stimuli frequencies can be provided directly or fetched from the scenario config
@@ -100,9 +102,14 @@ if __name__ == "__main__":
                     eeg_array = np.array(eeg_payload, dtype=np.float32)
 
                 scenario_id = int(message['scenario_id'])
+                
+                if 'stim_freqs' in message:
+                    stim_freqs = message.get('stim_freqs')
+                if 'active_button_ids' in message:
+                    active_button_ids = message.get('active_button_ids')
                                 
                 # Run the fbcca process
-                label = run_fbcca(eeg_array, scenario_id)
+                label = run_fbcca(eeg_array, scenario_id, stim_freqs, active_button_ids)
                 
                 # Output the result as a JSON string
                 print(json.dumps(label))

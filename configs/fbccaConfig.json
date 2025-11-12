@@ -1,14 +1,9 @@
 {
-    "fbccaConfig": {
-        "channels": 4,
-        "subBands": 5,
-        "harmonics": 5,
-        "idleStateLabel": -1,
-
-        "samplingRate": 256, 
-
-        "correlationThreshold": 0.9,
-
-        "gazeLengthInSecs": 4
-    }
+    "channels": 4,
+    "subBands": 5,
+    "harmonics": 5,
+    "idleStateLabel": -1,
+    "samplingRate": 256,
+    "correlationThreshold": 0.9,
+    "gazeLengthInSecs": 4
 }

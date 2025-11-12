@@ -4,6 +4,7 @@ const { SwitchShortcut } = require('./constants/enums');
 
 const defaultState = Object.freeze({
     headset: '',
+    headsetConnected: false,
     browserState: 'ready',
     adaptiveSwitch: {
         isEnabled: false,
@@ -115,6 +116,10 @@ function updateStatusBarState(partial = {}) {
         state.headset = partial.headset;
     }
 
+    if (typeof partial.headsetConnected === 'boolean') {
+        state.headsetConnected = partial.headsetConnected;
+    }
+
     if (typeof partial.browserState === 'string') {
         state.browserState = partial.browserState;
     }
@@ -170,9 +175,9 @@ function updateDomElements() {
 
     // Update headset icon based on configured/connected state
     if (valueNodes.headsetIcon) {
-        const hasHeadset = !!state.headset;
-        valueNodes.headsetIcon.textContent = hasHeadset ? 'sensors' : 'sensors_off';
-        valueNodes.headsetIcon.classList.toggle('disabled', !hasHeadset);
+        const isConnected = !!state.headsetConnected;
+        valueNodes.headsetIcon.textContent = isConnected ? 'sensors' : 'sensors_off';
+        valueNodes.headsetIcon.classList.toggle('disabled', !isConnected);
     }
 }
 

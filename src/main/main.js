@@ -25,11 +25,58 @@ let lastAdaptiveToggleTs = 0;               // This is a timestamp of the last a
 const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to prevent rapid toggling
 let adaptiveSwitchInUse;                    // This flag indicates if the adaptive switch feature is enabled
 let statusBarState = { ...defaultState };   // This holds the current state of the status bar
+let isHeadsetConnected = false;               // This flag indicates if the EEG headset is properly connected
+
+function waitForConsoleLine(match, timeoutMs = 30000) {
+    const toRegex = (m) => (m instanceof RegExp ? m : new RegExp(m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    const regex = toRegex(match);
+
+    return new Promise((resolve, reject) => {
+        const originalWrite = process.stdout.write.bind(process.stdout);
+        let buffer = '';
+
+        function onWrite(chunk, encoding, cb) {
+            const str = Buffer.isBuffer(chunk) ? chunk.toString(encoding || 'utf8') : String(chunk);
+            buffer += str;
+
+            let idx;
+            while ((idx = buffer.indexOf('\n')) !== -1) {
+                const line = buffer.slice(0, idx).replace(/\r$/, '');
+                buffer = buffer.slice(idx + 1);
+                if (regex.test(line)) {
+                    cleanup();
+                    return resolve(line);
+                }
+            }
+            return originalWrite(chunk, encoding, cb);
+        }
+
+        function cleanup() {
+            clearTimeout(timer);
+            process.stdout.write = originalWrite;
+        }
+
+        const timer = setTimeout(() => {
+            cleanup();
+            reject(new Error('Timeout waiting for console line'));
+        }, timeoutMs);
+
+        process.stdout.write = onWrite;
+    });
+}
 
 app.whenReady().then(async () => {
     try {
         await startEegWebSocket();
         connectWebSocket();
+
+        waitForConsoleLine(/\[INFO] Headset connected\./, 30000)
+            .then((line) => {
+                isHeadsetConnected = true;
+            })
+            .catch((err) => {
+                logger.error('Timed out waiting for headset connection:', err.message);
+            });
     } catch (err) {
         logger.error('Error starting LSL WebSocket:', err.message);
     }
@@ -47,6 +94,7 @@ app.whenReady().then(async () => {
 
         updateStatusBarState({
             headset: defaultHeadset,
+            headsetConnected: isHeadsetConnected,
             adaptiveSwitch: {
                 isEnabled: toBoolean(adaptiveSwitchInUse)
             }
@@ -135,6 +183,11 @@ function updateStatusBarState(partial = {}) {
         // Handling updates to headset
         if (typeof partial.headset === 'string') {
             statusBarState.headset = partial.headset;
+        }
+
+        // Handling updates to headsetConnected
+        if (typeof partial.headsetConnected === 'boolean') {
+            statusBarState.headsetConnected = partial.headsetConnected;
         }
 
         // Handling updates to browserState

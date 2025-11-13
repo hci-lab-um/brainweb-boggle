@@ -17,9 +17,14 @@ let pythonShellInstance = null;
 let pythonShellInitPromise = null;
 let pythonRequestQueue = Promise.resolve();
 let serverState = { ready: false, errorSinceReady: false };
+let headsetConnected = false;
 
 function totalDataPointCount(config = fbccaConfiguration) {
     return Math.ceil(config.samplingRate * config.gazeLengthInSecs);
+}
+
+function clearMessageBuffer() {
+    messageResult.data = [];
 }
 
 // Function used to run the LSL or Emotiv WebSocket Server
@@ -46,36 +51,36 @@ async function startEegWebSocket() {
             const message = data.toString().trim();
             console.log(`${eegDataSource.toUpperCase()} Server:`, message);
 
-            // if (message === 'READY') {  // Wait for the 'READY' message from Python
-            //     console.log(`${eegDataSource.toUpperCase()} WebSocket server is ready!`);
-            //     resolve(pythonProcess);   // Resolve the promise with the running Python process
-            // } else if (message === '[INFO] Headset connected.') {
-            //     eegEvents.emit('headset-connected'); // Sending event that headset is connected to main.js
-            // }
             if (message === 'READY') {  // Wait for the 'READY' message from Python
                 console.log(`${eegDataSource.toUpperCase()} WebSocket server is ready!`);
                 serverState.ready = true;
                 serverState.errorSinceReady = false; // reset error window on READY
                 resolve(pythonProcess);  // Resolve the promise with the running Python process 
-            } else if (message === '[INFO] Headset connected.') {
-                // Only emit if no error was seen since READY
+            }
+            else if (message.includes('[INFO] Headset connected.')) {
                 if (!serverState.errorSinceReady) {
-                    eegEvents.emit('headset-connected'); // Sending event that headset is connected to main.js
+                    headsetConnected = true;
+
+                    clearMessageBuffer(); // optional: start fresh on new connection
+                    eegEvents.emit('headset-connected');
                 } else {
                     console.warn('Suppressing headset-connected due to prior [ERROR] since READY.');
                 }
-            } 
+            }
+            else if (message.includes('[INFO] Headset disconnected.')) {
+                serverState.errorSinceReady = true;
+                headsetConnected = false;
+
+                clearMessageBuffer(); // clear buffer on disconnect
+                eegEvents.emit('headset-disconnected');
+            }
             else if (message.startsWith('[ERROR]')) {
                 serverState.errorSinceReady = true;
-                eegEvents.emit('headset-disconnected'); // Sending event that headset is disconnected to main.js
-            }
-        });
+                headsetConnected = false;
 
-        pythonProcess.stderr.on('data', (data) => {
-            const errMsg = data.toString();
-            console.error(`${eegDataSource.toUpperCase()} Python Error:`, errMsg);
-            serverState.errorSinceReady = true;
-            eegEvents.emit('headset-error', errMsg);
+                clearMessageBuffer(); // clear buffer on error
+                eegEvents.emit('headset-disconnected');
+            }
         });
 
         pythonProcess.on('close', (code) => {
@@ -141,6 +146,8 @@ function disconnectWebSocket() {
         ws.close();
         ws = null;
     }
+    headsetConnected = false;
+    clearMessageBuffer(); // ensure buffer cleared when socket closes
 }
 
 function trimMessageBuffer() {
@@ -256,6 +263,14 @@ function runPythonFbcca(eegData, scenarioId, stimuliFrequencies, activeButtonIds
 
 // Function to handle incoming WebSocket data
 async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequencies, activeButtonIds) {
+    if (!headsetConnected) {
+        // Avoid repeated logs with stale partial data
+        if (messageResult.data.length) {
+            clearMessageBuffer();
+        }
+        return;
+    }
+
     if (messageResult.data && messageResult.data.length >= requiredSampleCount) {
         console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${eegDataSource.toUpperCase()}`);
 

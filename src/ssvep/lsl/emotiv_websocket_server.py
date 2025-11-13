@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 import websockets
 import json
 import ssl
@@ -99,6 +100,8 @@ class EmotivEEGClient:
         self.connected_clients = set()  # Track connected WebSocket clients
         self.latest_device_data = None
         self.latest_quality_data = None
+        self.last_data_time = None
+        self.disconnected = False
 
     def on_message(self, ws, message):
         try:
@@ -124,9 +127,28 @@ class EmotivEEGClient:
 
     def on_open(self, ws):
         threading.Thread(target=self.run_sequence, daemon=True).start()
+        threading.Thread(target=self.watchdog_loop, daemon=True).start()
+
+    def on_headset_disconnected(self):
+        """Handle headset disconnection gracefully"""
+        print("[INFO] Headset disconnected.")
+        self.session_id = None
+        self.headset_id = None
 
     def send_request(self, request):
         self.ws.send(json.dumps(request))
+
+    def watchdog_loop(self):
+        """Monitor incoming data and detect silent disconnection."""
+        TIMEOUT_SECONDS = 5.0  # adjust for your expected EEG frequency
+        while True:
+            time.sleep(1)
+            if self.last_data_time is not None:
+                silence_duration = time.time() - self.last_data_time
+                if silence_duration > TIMEOUT_SECONDS and not self.disconnected:
+                    print(f"[WARN] No EEG data received for {silence_duration:.1f}s. Headset likely disconnected.")
+                    self.disconnected = True
+                    self.on_headset_disconnected()
 
     def handle_response(self, data):
         # Check for errors in the response
@@ -175,6 +197,9 @@ class EmotivEEGClient:
         try:
             eeg_data = data.get('eeg', None)
             timestamp = data.get('time', None)  # Get timestamp from main message
+
+            self.last_data_time = time.time()  # mark last received time
+            self.disconnected = False
             
             if eeg_data and len(eeg_data) > 2 and timestamp:
                 # Skip the first two elements (sequence number and unknown)

@@ -37,16 +37,12 @@ app.whenReady().then(async () => {
 
     eegEvents.on('headset-connected', () => {
         isHeadsetConnected = true;
-        updateStatusBarState({
-            headsetConnected: isHeadsetConnected
-        });
+        broadcastStatusBarState({ headsetConnected: isHeadsetConnected }); // Send to main window renderer
     });
 
     eegEvents.on('headset-disconnected', () => {
         isHeadsetConnected = false;
-        updateStatusBarState({
-            headsetConnected: isHeadsetConnected
-        });
+        broadcastStatusBarState({ headsetConnected: isHeadsetConnected }); // Send to main window renderer
     });
 
     try {

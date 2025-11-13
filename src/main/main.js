@@ -42,6 +42,13 @@ app.whenReady().then(async () => {
         });
     });
 
+    eegEvents.on('headset-disconnected', () => {
+        isHeadsetConnected = false;
+        updateStatusBarState({
+            headsetConnected: isHeadsetConnected
+        });
+    });
+
     try {
         await db.connect();
         await db.createTables();

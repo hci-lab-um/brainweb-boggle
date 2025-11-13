@@ -446,6 +446,39 @@ body:not(.has-status-bar) {
   color: #b7ff00;
   font-size: 1.4rem;
 }
+.status-bar__item--quality {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.status-bar__quality-circle {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: #5a5a5a;
+  color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff, 0 0 20px rgba(0, 0, 0, 0.7) inset;
+  user-select: none;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.status-bar__quality-circle.quality--grey {
+  background: #5a5a5a;
+}
+.status-bar__quality-circle.quality--red {
+  background: #d73737;
+}
+.status-bar__quality-circle.quality--yellow {
+  background: #e3bb00;
+}
+.status-bar__quality-circle.quality--green {
+  background: #2c9c3f;
+}
 
 .image__splash {
   max-width: 100%;

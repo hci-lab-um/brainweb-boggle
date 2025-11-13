@@ -42,7 +42,14 @@ app.whenReady().then(async () => {
 
     eegEvents.on('headset-disconnected', () => {
         isHeadsetConnected = false;
-        broadcastStatusBarState({ headsetConnected: isHeadsetConnected }); // Send to main window renderer
+        // Reset quality on disconnect
+        broadcastStatusBarState({ headsetConnected: isHeadsetConnected, signalQuality: { percent: 0, color: 'grey' } }); // Send to main window renderer
+    });
+
+    // Listen for quality updates from eeg pipeline
+    eegEvents.on('quality-update', ({ percent }) => {
+        const color = deriveQualityColor(percent, isHeadsetConnected);
+        broadcastStatusBarState({ signalQuality: { percent, color } });
     });
 
     try {
@@ -167,6 +174,16 @@ function updateStatusBarState(partial = {}) {
                 isEnabled: typeof incoming.isEnabled === 'boolean' ? incoming.isEnabled : current.isEnabled,
                 groupIndex: typeof incoming.groupIndex === 'number' ? incoming.groupIndex : current.groupIndex,
                 totalGroups: typeof incoming.totalGroups === 'number' ? incoming.totalGroups : current.totalGroups
+            };
+        }
+
+        // Handling updates to signalQuality
+        if (partial.signalQuality && typeof partial.signalQuality === 'object') {
+            const current = statusBarState.signalQuality;
+            const incoming = partial.signalQuality;
+            statusBarState.signalQuality = {
+                percent: typeof incoming.percent === 'number' ? incoming.percent : current.percent,
+                color: typeof incoming.color === 'string' ? incoming.color : current.color
             };
         }
     }
@@ -873,4 +890,12 @@ async function deleteAndInsertAllTabs() {
     } catch (err) {
         logger.error('Error updating database with open tabs:', err.message);
     }
+}
+
+function deriveQualityColor(percent, connected) {
+    if (!connected) return 'grey';
+    if (typeof percent !== 'number') return 'grey';
+    if (percent < 40) return 'red';
+    if (percent < 70) return 'yellow';
+    return 'green';
 }

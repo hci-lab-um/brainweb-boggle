@@ -10,6 +10,10 @@ const defaultState = Object.freeze({
         isEnabled: false,
         groupIndex: -1,
         totalGroups: 0
+    },
+    signalQuality: {
+        percent: 0,
+        color: 'grey'
     }
 });
 
@@ -75,7 +79,8 @@ function setupStatusValueNodes() {
         adaptive: statusBarElement.querySelector('[data-status-value="adaptive"]'),
         adaptiveIcon: statusBarElement.querySelector('[data-status-icon="adaptive"]'),
         browserIcon: statusBarElement.querySelector('[data-status-icon="browser"]'),
-        headsetIcon: statusBarElement.querySelector('[data-status-icon="headset"]')
+        headsetIcon: statusBarElement.querySelector('[data-status-icon="headset"]'),
+        qualityCircle: statusBarElement.querySelector('[data-status-quality-circle]')
     };
 }
 
@@ -88,17 +93,22 @@ function renderStatusBarHtml() {
                 <span class="material-icons--s" data-status-icon="browser">check</span>
                 <span class="status-bar__label">Browser</span>
                 <span class="status-bar__value" data-status-value="browser">Ready</span>
-            </div>
-            <div class="status-bar__item" role="status">
-                <span class="material-icons--s" data-status-icon="headset">sensors_off</span>
-                <span class="status-bar__label">Headset</span>
-                <span class="status-bar__value" data-status-value="headset">—</span>
-            </div>            
+            </div>  
             <div class="status-bar__item" role="status">
                 <span class="material-icons--s" data-status-icon="adaptive">toggle_off</span>
                 <span class="status-bar__label">Adaptive Switch</span>
                 <span class="status-bar__value" data-status-value="adaptive">Disabled</span>
             </div>
+            <div class="status-bar__item" role="status">
+                <span class="material-icons--s" data-status-icon="headset">sensors_off</span>
+                <span class="status-bar__label">Headset</span>
+                <span class="status-bar__value" data-status-value="headset">—</span>
+            </div>     
+            <div class="status-bar__item status-bar__item--quality" role="status">
+                <span class="material-icons--s">vital_signs</span>
+                <span class="status-bar__label">Signal</span>
+                <span class="status-bar__quality-circle quality--grey" data-status-quality-circle>--</span>
+            </div>    
         </div>
         <div class="status-bar__shortcut">
             <span class="material-icons--s">keyboard</span>
@@ -131,6 +141,15 @@ function updateStatusBarState(partial = {}) {
             isEnabled: typeof incoming.isEnabled === 'boolean' ? incoming.isEnabled : current.isEnabled,
             groupIndex: typeof incoming.groupIndex === 'number' ? incoming.groupIndex : current.groupIndex,
             totalGroups: typeof incoming.totalGroups === 'number' ? incoming.totalGroups : current.totalGroups
+        };
+    }
+
+    if (partial.signalQuality && typeof partial.signalQuality === 'object') {
+        const current = state.signalQuality;
+        const incoming = partial.signalQuality;
+        state.signalQuality = {
+            percent: typeof incoming.percent === 'number' ? incoming.percent : current.percent,
+            color: typeof incoming.color === 'string' ? incoming.color : current.color
         };
     }
 }
@@ -178,6 +197,20 @@ function updateDomElements() {
         const isConnected = !!state.headsetConnected;
         valueNodes.headsetIcon.textContent = isConnected ? 'sensors' : 'sensors_off';
         valueNodes.headsetIcon.classList.toggle('disabled', !isConnected);
+    }
+
+    // Update signal quality circle
+    if (valueNodes.qualityCircle) {
+        const { percent, color } = state.signalQuality || {};
+        let display = '--';
+        if (state.headsetConnected && typeof percent === 'number' && percent > 0) {
+            display = `${percent}`;
+        }
+        valueNodes.qualityCircle.textContent = display;
+        // Remove existing quality color classes
+        valueNodes.qualityCircle.classList.remove('quality--grey', 'quality--red', 'quality--yellow', 'quality--green');
+        const appliedColor = state.headsetConnected ? color : 'grey';
+        valueNodes.qualityCircle.classList.add(`quality--${appliedColor}`);
     }
 }
 

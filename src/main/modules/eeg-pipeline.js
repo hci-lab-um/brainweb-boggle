@@ -111,11 +111,32 @@ function connectWebSocket() {
 
                 // Handle different data formats based on the EEG data source
                 if (eegDataSource === 'emotiv') {
-                    // Emotiv data format: {time: timestamp, values: [ch1, ch2, ...]}
+                    // Emotiv data format enhanced: {time, values, qualityData: {timestamp, data: [...]}}
                     if (jsonData.time && jsonData.values) {
-                        // console.log(`[DEBUG] Adding Emotiv data: time=${jsonData.time}, channels=${jsonData.values.length}`);
                         messageResult.data.push(jsonData);
                         trimMessageBuffer();
+
+                        // Handle quality data if present
+                        if (jsonData.qualityData && jsonData.qualityData.data && Array.isArray(jsonData.qualityData.data)) {
+                            const eqArray = jsonData.qualityData.data;
+                            // Expecting an array of 17 entries (3 labels and 14 channels): [batteryPercent, overall, sampleRateQuality, <EEG Sensor Quality>]
+                            const ssvepIndices = [8, 9, 10, 11];
+                            let samples = [];
+                            ssvepIndices.forEach(idx => {
+                                if (idx < eqArray.length && typeof eqArray[idx] === 'number') {
+                                    samples.push(eqArray[idx]);
+                                }
+                            });
+                            if (samples.length > 0) {
+                                // Emotiv quality scale assumed 0-4 inclusive
+                                const maxQuality = 4;
+                                const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+                                let percent = Math.round((avg / maxQuality) * 100);
+                                if (percent < 0) percent = 0;
+                                if (percent > 100) percent = 100;
+                                eegEvents.emit('quality-update', { percent });
+                            }
+                        }
                     } else {
                         console.log('[DEBUG] Emotiv data missing time or values:', jsonData);
                     }

@@ -28,9 +28,9 @@ body {
             min-height: calc(100vh - var(--status-bar-height));
         }
     }
-    
+
     &#browser {
-    background-color: colors.$bg-dark;
+        background-color: colors.$bg-dark;
     }
 
     &:not(.has-status-bar) {
@@ -119,6 +119,46 @@ body {
         .material-icons--s {
             color: colors.$accent;
             font-size: 1.4rem;
+        }
+    }
+
+    // --- Signal Quality Indicator ---
+    &__item--quality {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__quality-circle {
+        width: 1.4rem;
+        height: 1.4rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        background: colors.$quality-grey;
+        color: colors.$white;
+        box-shadow: 0 0 0 1px colors.$white, 0 0 20px colors.$bg-black-transparent-70 inset;
+        user-select: none;
+        transition: background-color 180ms ease, color 180ms ease;
+
+        &.quality--grey {
+            background: colors.$quality-grey;
+        }
+
+        &.quality--red {
+            background: colors.$quality-red;
+        }
+
+        &.quality--yellow {
+            background: colors.$quality-yellow;
+        }
+
+        &.quality--green {
+            background: colors.$quality-green;
         }
     }
 }

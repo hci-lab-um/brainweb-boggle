@@ -80,7 +80,9 @@ function setupStatusValueNodes() {
         adaptiveIcon: statusBarElement.querySelector('[data-status-icon="adaptive"]'),
         browserIcon: statusBarElement.querySelector('[data-status-icon="browser"]'),
         headsetIcon: statusBarElement.querySelector('[data-status-icon="headset"]'),
-        qualityCircle: statusBarElement.querySelector('[data-status-quality-circle]')
+        qualityCircle: statusBarElement.querySelector('[data-status-quality-circle]'),
+        signalIcon: statusBarElement.querySelector('[data-status-icon="signal"]'),
+        shortcutContainer: statusBarElement.querySelector('.status-bar__shortcut')
     };
 }
 
@@ -105,8 +107,8 @@ function renderStatusBarHtml() {
                 <span class="status-bar__value" data-status-value="headset">—</span>
             </div>     
             <div class="status-bar__item status-bar__item--quality" role="status">
-                <span class="material-icons--s">vital_signs</span>
-                <span class="status-bar__label">Signal</span>
+                <span class="material-icons--s" data-status-icon="signal">vital_signs</span>
+                <span class="status-bar__label">Signal Health</span>
                 <span class="status-bar__quality-circle quality--grey" data-status-quality-circle>--</span>
             </div>    
         </div>
@@ -177,6 +179,12 @@ function updateDomElements() {
         valueNodes.adaptiveIcon.classList.toggle('disabled', !isEnabled);
     }
 
+    // Show/hide shortcut container based on adaptive switch enabled state
+    if (valueNodes.shortcutContainer) {
+        const isEnabled = !!state.adaptiveSwitch?.isEnabled;
+        valueNodes.shortcutContainer.style.display = isEnabled ? '' : 'none';
+    }
+
     // Update browser status icon based on browser state
     if (valueNodes.browserIcon) {
         const browserState = state.browserState;
@@ -197,6 +205,13 @@ function updateDomElements() {
         const isConnected = !!state.headsetConnected;
         valueNodes.headsetIcon.textContent = isConnected ? 'sensors' : 'sensors_off';
         valueNodes.headsetIcon.classList.toggle('disabled', !isConnected);
+    }
+
+    // Update signal icon when no data vs has data
+    if (valueNodes.signalIcon) {
+        const percent = state.signalQuality?.percent;
+        const hasData = !!state.headsetConnected && typeof percent === 'number' && percent > 0;
+        valueNodes.signalIcon.classList.toggle('disabled', !hasData);
     }
 
     // Update signal quality circle

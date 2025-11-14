@@ -18,6 +18,7 @@ let pythonShellInitPromise = null;
 let pythonRequestQueue = Promise.resolve();
 let serverState = { ready: false, errorSinceReady: false };
 let headsetConnected = false;
+let pythonProcessRef = null; // track spawned websocket server process
 
 function totalDataPointCount(config = fbccaConfiguration) {
     return Math.ceil(config.samplingRate * config.gazeLengthInSecs);
@@ -46,6 +47,7 @@ async function startEegWebSocket() {
         }
 
         const pythonProcess = spawn('python', ['-u', pythonScriptPath]); // -u was used to disable output buffering (allow logs to pass in stdout)
+        pythonProcessRef = pythonProcess; // store for later kill
 
         pythonProcess.stdout.on('data', (data) => {
             const message = data.toString().trim();
@@ -164,11 +166,30 @@ function connectWebSocket() {
 
 function disconnectWebSocket() {
     if (ws) {
-        ws.close();
+        try { ws.close(); } catch (_) { }
         ws = null;
     }
     headsetConnected = false;
     clearMessageBuffer(); // ensure buffer cleared when socket closes
+}
+
+function stopEegInfrastructure() {
+    try {
+        disconnectWebSocket();
+    } catch (e) {
+        console.error('WS close error:', e);
+    }
+
+    if (pythonProcessRef && !pythonProcessRef.killed) {
+        try {
+            pythonProcessRef.kill('SIGTERM');
+        } catch (e) {
+            console.error('Python process kill error:', e);
+        }
+    }
+
+    pythonProcessRef = null;
+    resetPythonShell({ terminate: true });
 }
 
 function trimMessageBuffer() {
@@ -372,6 +393,7 @@ module.exports = {
     startEegWebSocket,
     connectWebSocket,
     disconnectWebSocket,
+    stopEegInfrastructure,
     processDataWithFbcca,
     eegEvents
 };

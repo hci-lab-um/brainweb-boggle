@@ -1,4 +1,4 @@
-const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut } = require('electron')
+const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut, ipcRenderer } = require('electron')
 const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
 const path = require('path')
 const fs = require('fs');
@@ -7,7 +7,7 @@ const db = require('./modules/database');
 const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFunctions');
 const { defaultState } = require('../utils/statusBar');
 const logger = require('./modules/logger');
-const { startEegWebSocket, connectWebSocket, disconnectWebSocket, eegEvents } = require('./modules/eeg-pipeline');
+const { startEegWebSocket, connectWebSocket, disconnectWebSocket, stopEegInfrastructure, eegEvents } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
@@ -114,9 +114,13 @@ app.whenReady().then(async () => {
     });
 })
 
-app.on('will-quit', () => {
-    // Cleaning up all global shortcuts
-    globalShortcut.unregisterAll();
+app.on('will-quit', async () => {
+   try {
+        globalShortcut.unregisterAll(); // Unregister all shortcuts
+        stopEegInfrastructure();        // Gracefully stop EEG infrastructure   
+    } catch (err) {
+        logger.error('Error during will-quit cleanup:', err.message);
+    }
 });
 
 app.on('window-all-closed', async () => {
@@ -128,6 +132,8 @@ app.on('window-all-closed', async () => {
 
         // Disconnect the LSL WebSocket
         disconnectWebSocket();
+        
+        await db.close();
 
         // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
         if (process.platform !== 'darwin') {

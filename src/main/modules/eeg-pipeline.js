@@ -69,6 +69,30 @@ async function startEegWebSocket() {
                     console.warn('Suppressing headset-connected due to prior [ERROR] since READY.');
                 }
             }
+            // If we successfully created a session or confirmed subscription, clear error gate and mark connected
+            else if (message.includes('[INFO] Session created:') || message.includes('Subscription confirmed')) {
+                if (serverState.errorSinceReady) {
+                    console.log('Clearing error state after successful session/subscription.');
+                }
+                serverState.errorSinceReady = false;
+                if (!headsetConnected) {
+                    headsetConnected = true;
+                    clearMessageBuffer();
+                    eegEvents.emit('headset-connected');
+                }
+            }
+            // Also clear on reusing an existing session
+            else if (message.includes('[INFO] Using existing session:')) {
+                if (serverState.errorSinceReady) {
+                    console.log('Clearing error state after reusing existing session.');
+                }
+                serverState.errorSinceReady = false;
+                if (!headsetConnected) {
+                    headsetConnected = true;
+                    clearMessageBuffer();
+                    eegEvents.emit('headset-connected');
+                }
+            }
             else if (message.includes('[INFO] Headset disconnected.')) {
                 serverState.errorSinceReady = true;
                 headsetConnected = false;

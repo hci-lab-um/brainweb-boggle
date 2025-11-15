@@ -70,12 +70,12 @@ async function registerIpcHandlers(context) {
 
     ipcMain.on('bciInterval-restart', (event, scenarioId, stimuliFrequencies = [], activeButtonIds = []) => {
         // PARAMETERS: stimuliFrequencies & activeButtonIds are not required when using the scenarioConfig file. They are required ONLY when using an adaptive switch.
-        
+
         // Clear the previous interval if it exists
         if (bciIntervalId) {
             clearInterval(bciIntervalId);
         }
-        
+
         // Set new interval to process data every 4 seconds
         bciIntervalId = setInterval(() => {
             // Process the latest data with the fbcca algorithm. 
@@ -158,15 +158,12 @@ async function registerIpcHandlers(context) {
             }
         }
 
-        overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
-            try {
-                overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
-            } catch (err) {
-                logger.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
-            }
-        }).catch(err => {
-            logger.error(`Error loading ${overlayName} overlay:`, err.message);
-        });
+        try {
+            await overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`));
+            overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
+        } catch (err) {
+            logger.error(`Error loading ${overlayName} overlay or sending data:`, err.message);
+        }
     });
 
     /**

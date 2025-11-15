@@ -20,8 +20,11 @@
 # 3) on_open()
 #    - Spawns run_sequence() in a thread.
 #
-# 4) run_sequence()  [Authorise]
-#    - Sends authorise (id=1).
+# 4) run_sequence()  [Access/Authorise]
+#    - On first run sends requestAccess (id=0). If access is already
+#      granted (or requestAccess fails because the app is already
+#      registered), proceeds to authorise (id=1) on this and all
+#      subsequent retries.
 #
 # 5) handle_response(id=1)  [Authorised]
 #    - Stores cortexToken, then queryHeadsets (id=2).
@@ -217,6 +220,7 @@ class EmotivEEGClient:
         self.resub_timer = None
         self.resubscribe_attempts = 0
         self.max_resubscribe_attempts = 3
+        self.access_granted = False
 
         # Start watchdog once for lifetime
         threading.Thread(target=self.watchdog_loop, daemon=True).start()
@@ -364,8 +368,15 @@ class EmotivEEGClient:
                 err = data.get('error') or {}
                 code = err.get('code') if isinstance(err, dict) else None
                 
+                # If requestAccess errors (often means already registered), try to authorise
+                if data.get('id') == 0:
+                    print("[INFO] requestAccess failed. Assuming app may already be registered. Trying authorise...")
+                    self.access_granted = True
+                    self.authorise()
+                    return
+
                 if data.get('id') == 1:
-                    # Authorization failed, retry authorization
+                    # Authorisation failed, retry authorisation
                     self.schedule_authorise_retry()
                 
                 elif data.get('id') in (2, 3, 4, 5):
@@ -389,6 +400,18 @@ class EmotivEEGClient:
                 pass
             return
         
+        # Handle requestAccess
+        if data['id'] == 0:
+            granted = bool((data.get('result') or {}).get('accessGranted'))
+            if granted:
+                self.access_granted = True
+                print("[INFO] Access granted (app registered). Proceeding to authorise...")
+                self.authorise()
+            else:
+                print("[WARN] Access not granted yet. Will retry...")
+                self.schedule_authorise_retry()
+            return
+
         # Authorisation
         if data['id'] == 1:
             if 'result' in data and 'cortexToken' in data['result']:
@@ -588,18 +611,36 @@ class EmotivEEGClient:
             print(f"[ERROR] Quality data handling failed: {e}")
 
     def run_sequence(self):
-        # Step 1: Request Access
+        # Start by ensuring access is granted once; then only authorise on retries
+        if not self.access_granted:
+            self.request_access()
+        else:
+            self.authorise()
+
+    def request_access(self):
         request_access = {
+            "id": 0,  
+            "jsonrpc": "2.0",
+            "method": "requestAccess",
+            "params": {
+                "clientId": CLIENT_ID,
+                "clientSecret": CLIENT_SECRET
+            }
+        }
+        self.send_request(request_access)
+
+    def authorise(self):
+        request = {
             "jsonrpc": "2.0",
             "method": "authorize",
             "params": {
                 "clientId": CLIENT_ID,
                 "clientSecret": CLIENT_SECRET,
-                "debit": 1  # Required when session limit is reached
+                "debit": 1
             },
             "id": 1
         }
-        self.send_request(request_access)
+        self.send_request(request)
 
     def query_headsets(self):
         request = {

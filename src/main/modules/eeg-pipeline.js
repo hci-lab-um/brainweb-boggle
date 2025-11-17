@@ -3,12 +3,10 @@ const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
 const { EventEmitter } = require('events');
-// const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
 const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 const { browserConfig } = require('../../../configs/browserConfig');
 
 const eegEvents = new EventEmitter();
-const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
 const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
 const requiredSampleCount = totalDataPointCount();
 let messageResult = { data: [] };
@@ -420,39 +418,23 @@ async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequen
         // Now `channels` is a 2D array where each row is a channel with values over time
         console.log(`[DEBUG] Organised data by channel count ${eegData.length}, samples per channel ${eegData[0] ? eegData[0].length : 0}`);
 
-        // // Run fbcca algorithm based on the selected language
-        // if (fbccaLanguage === 'javascript') {
-        //     // Run fbcca in JavaScript
-        //     const selectedButtonId = run_fbcca(eegData, currentScenarioID);
+        // Run fbcca in Python
+        return runPythonFbcca(eegData, currentScenarioID, stimuliFrequencies, activeButtonIds).then((selectedButtonId) => {
+            if (parseInt(selectedButtonId) !== -1) {
+                console.log('PYTHON - User selected button', selectedButtonId);
 
-        //     if (selectedButtonId != -1) {
-        //         console.log("JAVASCRIPT - User selected button", selectedButtonId);
+                let topMostView = viewsList[viewsList.length - 1];
+                topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
+            } else {
+                console.log('PYTHON - User is in Idle State!');
+            }
 
-        //         // Obtaining the topmost view from the viewsList to send the button click for the button that has been classified by fbcca JAVASCRIPT
-        //         let topMostView = viewsList[viewsList.length - 1];
-        //         topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
-        //     } else {
-        //         console.log("JAVASCRIPT - User is in Idle State!");
-        //     }
-
-        // } else {
-            // Run fbcca in Python
-            return runPythonFbcca(eegData, currentScenarioID, stimuliFrequencies, activeButtonIds).then((selectedButtonId) => {
-                if (parseInt(selectedButtonId) !== -1) {
-                    console.log('PYTHON - User selected button', selectedButtonId);
-
-                    let topMostView = viewsList[viewsList.length - 1];
-                    topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
-                } else {
-                    console.log('PYTHON - User is in Idle State!');
-                }
-
-                return selectedButtonId;
-            }).catch((error) => {
-                console.error('Error when executing Python:', error);
-                return -1;
-            });
-        // }
+            return selectedButtonId;
+        }).catch((error) => {
+            console.error('Error when executing Python:', error);
+            return -1;
+        });
+        
     } else if (messageResult.data && messageResult.data.length > 0) {
         console.log(`[DEBUG] Not enough EEG data for processing. messageResult.data length: ${messageResult.data.length}`);
     }

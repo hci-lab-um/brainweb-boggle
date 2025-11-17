@@ -6,7 +6,6 @@ const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
 const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
-const { browserConfig } = require('../../../configs/browserConfig');
 
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay

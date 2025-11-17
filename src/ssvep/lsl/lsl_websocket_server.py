@@ -319,6 +319,17 @@ import json
 import gc  # Garbage collector interface
 from pylsl import StreamInlet, resolve_stream
 from scipy.signal import butter, lfilter, iirnotch
+
+# === JSON-RPC event emitter (mirrors emotiv_websocket_server.py) ===
+def emit_event(event_type: str, **params):
+    """Emit a JSON-RPC style event line to stdout for Node consumer."""
+    try:
+        payload = {"jsonrpc": "2.0", "method": "event", "params": {"type": event_type}}
+        if params:
+            payload["params"].update(params)
+        print(json.dumps(payload), flush=True)
+    except Exception:
+        pass
 # from fbcca_config import fbcca_config
 
 # Function to initialize the LSL stream inlet
@@ -372,6 +383,9 @@ async def lsl_to_websocket(websocket):
     start_time = time.time()
     gc_timer = time.time()  # For periodic GC
 
+    # Track first data arrival to emit headset-connected only once
+    first_data_sent = False
+
     try:
         while True:
             now = time.time()
@@ -385,6 +399,10 @@ async def lsl_to_websocket(websocket):
             if count < 20000:
                 sample = fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch)
                 if sample:
+                    # Emit headset-connected once when data begins flowing
+                    if not first_data_sent:
+                        first_data_sent = True
+                        emit_event("headset-connected")
                     await websocket.send(json.dumps(sample))
                     count += 1
 
@@ -397,16 +415,22 @@ async def lsl_to_websocket(websocket):
 
     except websockets.exceptions.ConnectionClosed:
         print("WebSocket closed")
+        emit_event("headset-disconnected")
     except Exception as e:
         print(f"Error: {e}")
+        emit_event("error", message=str(e))
     finally:
         del inlet  # Help GC by removing references
         gc.collect()
+        if first_data_sent:
+            # If we had data and are exiting, ensure disconnect is signaled
+            emit_event("headset-disconnected")
 
 # Start the WebSocket server
 async def main():
     async with websockets.serve(lsl_to_websocket, "localhost", 8765):
         print("READY")
+        emit_event("server-ready")
         await asyncio.Future()
 
 asyncio.run(main())

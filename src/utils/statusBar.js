@@ -209,8 +209,8 @@ function updateDomElements() {
 
     // Update signal icon when no data vs has data
     if (valueNodes.signalIcon) {
-        const percent = state.signalQuality?.percent;
-        const hasData = !!state.headsetConnected && typeof percent === 'number' && percent > 0;
+        // Enable the signal icon as soon as the headset is connected, regardless of quality percent 
+        const hasData = !!state.headsetConnected;
         valueNodes.signalIcon.classList.toggle('disabled', !hasData);
     }
 

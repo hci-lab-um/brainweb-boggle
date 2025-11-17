@@ -2,9 +2,15 @@
 # Resilient Emotiv/Cortex connection + headset reconnection flow
 # =========================================================================================
 # Overview
-# - This client maintains a persistent connection to Emotiv Cortex, continuously searches
-#   for a headset, creates/reuses a session, subscribes to EEG/dev/eq streams, and keeps
-#   listening/recovering until EEG data flows again after any disconnect.
+# - Maintains a persistent connection to Emotiv Cortex, continuously searches for a headset,
+#   creates/reuses a session, subscribes to EEG/dev/eq streams, and keeps recovering until
+#   EEG data flows again after any disconnect.
+# - Emits JSON-RPC style events to stdout for the Node launcher:
+#     {"jsonrpc":"2.0","method":"event","params":{"type":"<event>", ...}}
+#   Events: server-ready, headset-connected, session-created, session-reused,
+#           subscription-confirmed, headset-disconnected, error.
+# - App-side "connected" state is considered true only when EEG samples actually arrive
+#   over the local ws://localhost:8765 stream (first data packet), not merely on control events.
 #
 # Boot / reconnect loop
 # 1) start()
@@ -21,39 +27,36 @@
 #    - Spawns run_sequence() in a thread.
 #
 # 4) run_sequence()  [Access/Authorise]
-#    - On first run sends requestAccess (id=0). If access is already
-#      granted (or requestAccess fails because the app is already
-#      registered), proceeds to authorise (id=1) on this and all
-#      subsequent retries.
+#    - On first run sends requestAccess (id=0). If access is already granted (or request fails
+#      because the app is already registered), proceeds to authorise (id=1) on this and all retries.
 #
 # 5) handle_response(id=1)  [Authorised]
 #    - Stores cortexToken, then queryHeadsets (id=2).
 #
 # 6) handle_response(id=2)  [Headset discovery]
 #    - If found: sets headset_id and controlDevice:connect (id=3).
-#    - If none: logs "[WARN] No headset found." and schedule_headset_search() to re-query after RECONNECT_INTERVAL.
+#    - If none: logs "[WARN] No headset found." and schedule_headset_search() to re-query.
 #
 # 7) handle_response(id=3)  [Headset connected]
-#    - Logs "[INFO] Headset connected." (main.js depends on this exact line).
+#    - Logs "[INFO] Headset connected." (kept for compatibility) and emits event "headset-connected".
 #    - Attempts createSession (id=4).
 #
 # 8) handle_response(id=4)  [Session handling]
-#    - Success: stores session_id and subscribe(['eeg','dev','eq']) (id=5).
+#    - Success: stores session_id, emits "session-created", then subscribe(['eeg','dev','eq']) (id=5).
 #    - Error code -32005 (session exists): querySessions (id=6) and reuse it.
 #    - Error code -32004 (headset not available): schedule_headset_search() and keep polling.
 #
 # 9) handle_response(id=6)  [Reuse session]
-#    - Picks a session belonging to the current headset (prefers active/open), sets session_id, then subscribe (id=5).
-#    - If none can be reused: falls back to createSession (id=4).
+#    - Picks a session for the current headset (prefers active/open), sets session_id, emits "session-reused",
+#      then subscribe (id=5). If none reusable: falls back to createSession (id=4).
 #
 # 10) handle_response(id=5)  [Subscribe ACK]
-#    - On success: sets subscribed=True, logs "Subscription confirmed", then start_post_subscribe_guard().
-#    - Error code -32007 (session does not exist): hard_reset("subscribe failed: session does not exist (-32007)").
-#    - Other errors: schedule_headset_search().
+#    - On success: sets subscribed=True, logs and emits "subscription-confirmed", then start_post_subscribe_guard().
+#    - Error code -32007 (session does not exist): hard_reset(). Others: schedule_headset_search().
 #
 # Data flow and success path
 # A) on_message() routes:
-#    - 'eeg' -> handle_eeg_data()
+#    - 'eeg' -> handle_eeg_data()  (updates last_data_time and forwards to browser clients)
 #    - 'dev' -> handle_device_data()
 #    - 'eq'  -> handle_quality_data()
 #
@@ -62,28 +65,17 @@
 #    - Extracts EEG channel values (SSVEP-only or all electrodes), applies optional filtering,
 #      and pushes to browser WebSocket clients via data_callback().
 #
-# Guards and recovery (keeps listening until data flows again)
+# Guards and recovery
 # G1) start_post_subscribe_guard()
-#     - 5s after a confirmed subscribe, if no EEG has arrived:
-#       - Retries subscribe up to max_resubscribe_attempts.
-#       - After exhausting attempts: hard_reset("no EEG after multiple resubscribe attempts")
-#         which closes the Cortex WS and lets start() rebuild everything cleanly.
+#     - 5s after a confirmed subscribe, if no EEG has arrived: retries subscribe up to a limit,
+#       then full reset via hard_reset().
 #
-# G2) watchdog_loop()  (runs once for lifetime in a daemon thread)
-#     - Every second, checks if EEG has been silent for > TIMEOUT_SECONDS.
-#     - If so: logs a warning, marks disconnected, calls on_headset_disconnected(),
-#       and schedule_headset_search() to keep polling for the headset until it’s back.
+# G2) watchdog_loop()  (daemon thread)
+#     - Checks every second if EEG has been silent for > TIMEOUT_SECONDS; emits headset-disconnected,
+#       clears ids, and keeps polling for a headset.
 #
-# G3) on_headset_disconnected()
-#     - Clears headset/session ids and triggers schedule_headset_search() so we keep listening.
-#
-# G4) on_error() / on_close()
-#     - Triggers schedule_authorise_retry(), which re-runs run_sequence() after RECONNECT_INTERVAL.
-#
-# G5) hard_reset(reason)
-#     - Cancels timers (retry/resubscribe), clears all state (session/headset/subscribed flags),
-#       and closes the Cortex WS. start() loop notices closure and reconnects from scratch
-#       (authorise -> queryHeadsets -> connect -> create/reuse session -> subscribe).
+# G3) on_error() / on_close()
+#     - Schedules authorise retry after RECONNECT_INTERVAL.
 #
 # Error code handling (Cortex)
 # - -32004 "headset not available": keep polling with schedule_headset_search().
@@ -92,25 +84,25 @@
 #
 # Browser/WebSocket server (ws://localhost:8765)
 # - websockets.serve(emotiv_to_websocket, "localhost", 8765) broadcasts EEG/dev/eq to all connected clients.
-# - emotiv_to_websocket() registers a thread-safe send_to_browser() callback that schedules async sends
-#   into the main asyncio loop for each connected client.
+# - emotiv_to_websocket() sets a thread-safe callback that schedules async sends in the main asyncio loop.
 #
-# Typical log sequence on success
+# Typical sequence on success
+# - {"event":"server-ready"}
 # - [INFO] Authenticated. Token received.
 # - [INFO] Headset found: <id>
-# - [INFO] Headset connected.
-# - [INFO] Session created: <sid>   OR   [INFO] Using existing session: <sid>
+# - [INFO] Headset connected.  +  {"event":"headset-connected"}
+# - [INFO] Session created: <sid>  +  {"event":"session-created"}
 # - [INFO] Sent subscribe request for streams: [...]
-# - [INFO] Subscription confirmed: {...}
-# - (EEG data starts arriving; watchdog stays quiet; guard cancels itself once EEG comes in)
+# - [INFO] Subscription confirmed: {...}  +  {"event":"subscription-confirmed"}
+# - (EEG data starts arriving; app marks connected on first data packet)
 #
 # Typical recovery after a disconnect or silent stream
 # - [WARN] No EEG data received for Xs. Headset likely disconnected.
-# - [INFO] Headset disconnected.
+# - [INFO] Headset disconnected.  +  {"event":"headset-disconnected"}
 # - [WARN] No headset found.        (repeats until headset returns)
 # - [INFO] Headset found: <id>
-# - [INFO] Headset connected.
-# - (Reuse/create session) -> subscribe -> guard -> EEG resumes or full reset kicks in if needed.
+# - [INFO] Headset connected.  +  {"event":"headset-connected"}
+# - (Reuse/create session) -> subscribe -> guard -> EEG resumes or full reset kicks in if needed)
 # =========================================================================================
 
 import asyncio
@@ -202,6 +194,18 @@ b_band, a_band = butter_bandpass(LOWCUT, HIGHCUT, FS, FILTER_ORDER)
 b_notch, a_notch = notch_filter(NOTCH_FREQ, FS, NOTCH_Q)
 
 
+# === JSON-RPC event emitter to stdout (for Node consumer) ===
+def emit_event(event_type: str, **params):
+    try:
+        payload = {"jsonrpc": "2.0", "method": "event", "params": {"type": event_type}}
+        if params:
+            payload["params"].update(params)
+        print(json.dumps(payload), flush=True)
+    except Exception:
+        # Avoid crashing on logging issues
+        pass
+
+
 class EmotivEEGClient:
     def __init__(self, data_callback=None):
         self.ws = None
@@ -279,6 +283,10 @@ class EmotivEEGClient:
 
     def on_error(self, ws, error):
         print("[ERROR] ", error)
+        try:
+            emit_event("error", message=str(error))
+        except Exception:
+            pass
         # Schedule re-auth/reconnect attempts
         self.schedule_authorise_retry()
 
@@ -294,6 +302,10 @@ class EmotivEEGClient:
     def on_headset_disconnected(self):
         """Handle headset disconnection gracefully"""
         print("[INFO] Headset disconnected.")
+        try:
+            emit_event("headset-disconnected")
+        except Exception:
+            pass
         self.session_id = None
         self.headset_id = None
         self.schedule_headset_search()
@@ -441,6 +453,10 @@ class EmotivEEGClient:
         elif data['id'] == 3:
             #!!!!!!!!!!!!!!!!!!!!!!!!! DO NOT UPDATE/REMOVE THIS PRINT STATEMENT !!!!!!!!!!!!!!!!!!!!!!!!!
             print("[INFO] Headset connected.") # This line is used by main.js to detect successful headset connection
+            try:
+                emit_event("headset-connected")
+            except Exception:
+                pass
             self.create_session()
 
         # Create session
@@ -448,6 +464,10 @@ class EmotivEEGClient:
             if 'result' in data and 'id' in data['result']:
                 self.session_id = data['result']['id']
                 print(f"[INFO] Session created: {self.session_id}")
+                try:
+                    emit_event("session-created", sessionId=self.session_id)
+                except Exception:
+                    pass
                 self.subscribe(['eeg', 'dev', 'eq'])  # Subscribe to all three streams
             else:
                 print("[ERROR] Failed to create session - no session ID received")
@@ -476,6 +496,10 @@ class EmotivEEGClient:
             if chosen and chosen.get('id'):
                 self.session_id = chosen['id']
                 print(f"[INFO] Using existing session: {self.session_id}")
+                try:
+                    emit_event("session-reused", sessionId=self.session_id)
+                except Exception:
+                    pass
                 self.subscribe(['eeg', 'dev', 'eq'])
             else:
                 print("[WARN] No existing session found to reuse; attempting to create a new session")
@@ -487,6 +511,19 @@ class EmotivEEGClient:
             if 'result' in data:
                 self.subscribed = True
                 print(f"[INFO] Subscription confirmed: {data['result']}")
+                try:
+                    # Include minimal streams info if available
+                    streams = None
+                    try:
+                        streams = (data.get('result') or {}).get('success') or (data.get('result') or {}).get('streams')
+                    except Exception:
+                        streams = None
+                    if isinstance(streams, list):
+                        emit_event("subscription-confirmed", streams=streams)
+                    else:
+                        emit_event("subscription-confirmed")
+                except Exception:
+                    pass
                 # Start a short guard timer to verify data begins flowing
                 self.start_post_subscribe_guard()
             else:
@@ -807,6 +844,10 @@ def main():
     async def start():
         server = await websockets.serve(emotiv_to_websocket, "localhost", 8765)
         print("READY")
+        try:
+            emit_event("server-ready")
+        except Exception:
+            pass
         await server.wait_closed()
 
     asyncio.run(start())

@@ -26,6 +26,7 @@ const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to pr
 let adaptiveSwitchInUse;                    // This flag indicates if the adaptive switch feature is enabled
 let statusBarState = { ...defaultState };   // This holds the current state of the status bar
 let isHeadsetConnected = false;             // This flag indicates if the EEG headset is properly connected
+let ipcHandlersReady = false;               // This flag indicates if IPC handlers are ready
 
 app.whenReady().then(async () => {
     try {
@@ -115,7 +116,7 @@ app.whenReady().then(async () => {
 })
 
 app.on('will-quit', async () => {
-   try {
+    try {
         globalShortcut.unregisterAll(); // Unregister all shortcuts
         stopEegInfrastructure();        // Gracefully stop EEG infrastructure   
     } catch (err) {
@@ -132,7 +133,7 @@ app.on('window-all-closed', async () => {
 
         // Disconnect the LSL WebSocket
         disconnectWebSocket();
-        
+
         await db.close();
 
         // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
@@ -289,6 +290,7 @@ function createMainWindow() {
                                     broadcastStatusBarState
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
+                                ipcHandlersReady = true;   // Set flag to indicate that IPC handlers are ready
 
                                 // Performing an initial resize to set the correct bounds for the webpage due to status bar presence
                                 setTimeout(() => {
@@ -532,7 +534,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
                 if (activeTab && thisTabView === activeTab.webContentsView) {
                     let stopManager = true;
-                    updateNavigationButtons(thisTabView, stopManager);
+                    safeUpdateNavigationButtons(thisTabView, stopManager);
                 }
             } catch (err) {
                 logger.error('Error during tabview navigation event:', err.message);
@@ -798,6 +800,18 @@ function handleLoadError(errorCode, attemptedURL, responseBody = null) {
     } catch (err) {
         logger.error('Error handling load error:', err.message);
     }
+}
+
+const waitForIpcReady = () =>
+    new Promise(resolve => {
+        if (ipcHandlersReady) return resolve();
+        const check = () => ipcHandlersReady ? resolve() : setTimeout(check, 100);
+        check();
+    });
+
+async function safeUpdateNavigationButtons(thisTabView, stopManager = false) {
+    await waitForIpcReady();
+    updateNavigationButtons(thisTabView, stopManager);
 }
 
 function updateNavigationButtons(thisTabView, stopManager = false) {

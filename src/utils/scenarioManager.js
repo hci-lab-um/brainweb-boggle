@@ -90,7 +90,12 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         let groupCount = 0;
 
         buttons = document.querySelectorAll('button');
-        ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);
+        try {
+            ipcRenderer.send('scenarioIdDict-update', scenarioId, viewName);
+        }
+        catch (error) {
+            logger.error('Error sending scenarioIdDict-update IPC message:', error);
+        }
 
         if (stop) await stopManager();
         let numberOfActiveButtons = 0;
@@ -148,7 +153,12 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         updateAdaptiveSwitchStatus(currentAdaptiveGroupIndex, groupCount);
 
         // Restart the BCI interval with the new scenario ID to be able to process the data according to the new scenario
-        ipcRenderer.send('bciInterval-restart', scenarioId);
+        try {
+            ipcRenderer.send('bciInterval-restart', scenarioId);
+        }
+        catch (error) {
+            logger.error('Error sending bciInterval-restart IPC message:', error);
+        }
     } catch (error) {
         logger.error('Error in updateScenarioId:', error);
     }

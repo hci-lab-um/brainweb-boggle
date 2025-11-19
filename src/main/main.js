@@ -32,6 +32,8 @@ app.whenReady().then(async () => {
     try {
         await startEegWebSocket();
         connectWebSocket();
+
+        // app.commandLine.appendSwitch('sandbox');
     } catch (err) {
         logger.error('Error starting LSL WebSocket:', err.message);
     }

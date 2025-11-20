@@ -441,6 +441,11 @@ function populateSettingsTable() {
                 value: Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT,
                 category: Settings.DEFAULT_STIMULI_DARK_COLOR.CATEGORY,
             },
+            {
+                name: Settings.DEFAULT_GAZE_LENGTH.NAME,
+                value: Settings.DEFAULT_GAZE_LENGTH.DEFAULT,
+                category: Settings.DEFAULT_GAZE_LENGTH.CATEGORY,
+            }
         ];
 
         db.serialize(() => {
@@ -732,6 +737,65 @@ async function getHeadsetConnectionTypes(headsetName, companyName) {
     }
 }
 
+async function getHeadsetSamplingRate(headsetName, companyName) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `
+            SELECT sampling_rate
+            FROM headsets
+            WHERE headset_name = ? AND company_name = ? `;
+
+            db.get(query, [headsetName, companyName], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving sampling rate:', err.message);
+                    reject(err);
+                } else {
+                    resolve(row ? row.sampling_rate : null);
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting sampling rate for headset:', err.message);
+    }
+}
+
+async function getHeadsetChannelNumber(headsetName, companyName) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `
+            SELECT used_electrodes
+            FROM headsets
+            WHERE headset_name = ? AND company_name = ? `;
+            
+            db.get(query, [headsetName, companyName], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving channel count:', err.message);
+                    reject(err);
+                } else {
+                    if (row && row.used_electrodes) {
+                        const electrodes = safeParseJson(row.used_electrodes, []);
+                        resolve(electrodes.length);
+                    } else {
+                        resolve(0);
+                    }
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting channel count for headset:', err.message);
+    }
+}
+
 async function getHeadsets() {
     try {
         return await new Promise((resolve, reject) => {
@@ -888,6 +952,10 @@ function getDefaultStimuliDarkColor() {
     return getSetting(Settings.DEFAULT_STIMULI_DARK_COLOR.NAME);
 }
 
+function getDefaultGazeLength() {
+    return getSetting(Settings.DEFAULT_GAZE_LENGTH.NAME);
+}
+
 // =================================
 // ============ SETTERS ============
 // =================================
@@ -958,6 +1026,8 @@ module.exports = {
     getBookmarks,
     getTabs,
     getHeadsetConnectionTypes,
+    getHeadsetSamplingRate,
+    getHeadsetChannelNumber,
     getHeadsets,
     getConnectionTypeData,
     getKeyboardLayouts,
@@ -970,6 +1040,7 @@ module.exports = {
     getDefaultStimuliPattern,
     getDefaultStimuliLightColor,
     getDefaultStimuliDarkColor,
+    getDefaultGazeLength,
 
     deleteBookmarkByUrl,
 

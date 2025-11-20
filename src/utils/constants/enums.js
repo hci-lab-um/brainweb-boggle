@@ -210,6 +210,13 @@ const Settings = Object.freeze({
         DESCRIPTION: "The default dark color used for SSVEP stimuli.",
         DEFAULT: Stimuli.DARK_COLORS.COLOURS.GREY.RGBA,
         CATEGORY: SettingCategories.STIMULI,
+    },
+    DEFAULT_GAZE_LENGTH: {
+        NAME: "gazeLengthInSecs",
+        LABEL: "Gaze Length (seconds)",
+        DESCRIPTION: "Number of seconds of EEG data collected per window before the classifier runs.",
+        DEFAULT: 4,
+        CATEGORY: SettingCategories.STIMULI,
     }
 });
 

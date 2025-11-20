@@ -8,6 +8,7 @@ const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFun
 const { defaultState } = require('../utils/statusBar');
 const logger = require('./modules/logger');
 const { startEegWebSocket, connectWebSocket, disconnectWebSocket, stopEegInfrastructure, eegEvents } = require('./modules/eeg-pipeline');
+const fbccaConfig = require('../../configs/fbccaConfig.json');
 
 let splashWindow;
 let mainWindow;
@@ -62,6 +63,8 @@ app.whenReady().then(async () => {
         // await db.deleteKeyboardLayoutsTable();   // For development purposes only
         // await db.deleteSettingsTable();          // For development purposes only
         await initialiseVariables();
+
+        await updateConfigFromDatabase();
 
         adaptiveSwitchInUse = await db.getAdaptiveSwitchConnected();
         const defaultHeadset = await db.getDefaultHeadset();
@@ -146,6 +149,45 @@ app.on('window-all-closed', async () => {
         logger.error('Error during app closure:', err.message);
     }
 });
+
+async function updateConfigFromDatabase() {
+    // Getting the current headset from the database
+    let channels;
+    let samplingRate;
+
+    db.getDefaultHeadset().then(async (headset) => {
+        try {
+            // Splitting the headset name and the company by " - "
+            const headsetParts = headset.split(' - ');
+            const headsetName = headsetParts[0].trim();
+            const headsetCompany = headsetParts[1] ? headsetParts[1].trim() : '';
+
+            // Getting the channels and sampling rate for the fbccaConfig
+            channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
+            samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
+
+            const gazeLengthInSecs = await db.getDefaultGazeLength();
+
+            const configFilePath = path.join(__dirname, '../../configs/fbccaConfig.json');
+            const configPath = path.resolve(configFilePath);
+            const configRaw = fs.readFileSync(configPath, "utf8");
+            const config = JSON.parse(configRaw);
+
+            // Update config fields
+            config.channels = Number(channels);
+            config.samplingRate = Number(samplingRate);
+            config.gazeLengthInSecs = Number(gazeLengthInSecs);
+
+            // Write updated config
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+
+            console.log("FBCCA Config updated successfully:", config);
+        }
+        catch (err) {
+            logger.error('Error fetching headset details from database:', err.message);
+        }
+    });
+}
 
 async function initialiseVariables() {
     try {

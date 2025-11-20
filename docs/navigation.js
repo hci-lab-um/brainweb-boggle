@@ -82,7 +82,7 @@ function copyCitation() {
   navigator.clipboard.writeText(citationText).then(() => {
     alert("Citation copied!");
   }).catch(err => {
-    console.error("Error copying citation: ", err);
+    console.error("Error copying citation: ", err.message);
   });
 }
 

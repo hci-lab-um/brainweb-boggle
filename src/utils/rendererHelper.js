@@ -71,7 +71,7 @@ async function initialise(overlayData, isReload = false, name) {
         // Updating the scenarioId for the overlay
         await updateScenarioId(scenarioId, buttons, overlayName);
     } catch (error) {
-        logger.error('Error in items-loaded handler:', error);
+        logger.error('Error in items-loaded handler:', error.message);
     }
 }
 
@@ -283,7 +283,7 @@ function initialiseItemsOverlay() {
 
                     return itemButton;
                 } catch (error) {
-                    logger.error('Error creating itemButton:', error);
+                    logger.error('Error creating itemButton:', error.message);
                 }
             };
 
@@ -348,7 +348,7 @@ function initialiseItemsOverlay() {
             attachEventListeners();
         }
     } catch (error) {
-        logger.error('Error initialising items overlay:', error);
+        logger.error('Error initialising items overlay:', error.message);
     }
 }
 
@@ -704,7 +704,7 @@ function attachEventListeners() {
             }, CssConstants.SELECTION_ANIMATION_DURATION);
 
         } catch (error) {
-            logger.error('Error in button click handler:', error);
+            logger.error('Error in button click handler:', error.message);
         }
     });
 }

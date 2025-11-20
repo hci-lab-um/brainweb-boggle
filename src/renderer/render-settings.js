@@ -33,7 +33,7 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
         attachEventListeners();
     } catch (error) {
-        logger.error('Error in settings-loaded handler:', error);
+        logger.error('Error in settings-loaded handler:', error.message);
     }
 });
 
@@ -41,7 +41,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -53,7 +53,7 @@ ipcRenderer.on('homeUrl-update', (event, newUrl) => {
             homeUrlBtn.textContent = homeUrl ? homeUrl : 'Not configured';
         }
     } catch (error) {
-        logger.error('Error in homeUrl-update handler:', error);
+        logger.error('Error in homeUrl-update handler:', error.message);
     }
 });
 
@@ -65,7 +65,7 @@ ipcRenderer.on('keyboardLayout-update', (event, newLayout) => {
             keyboardLayoutBtn.textContent = keyboardLayoutInUse ? keyboardLayoutInUse : 'Not configured';
         }
     } catch (error) {
-        logger.error('Error in keyboardLayout-update handler:', error);
+        logger.error('Error in keyboardLayout-update handler:', error.message);
     }
 });
 
@@ -254,7 +254,7 @@ function populateGeneralSettings() {
             }
             ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
         } catch (error) {
-            logger.error('Error creating keyboard overlay:', error);
+            logger.error('Error creating keyboard overlay:', error.message);
         }
     });
 
@@ -270,7 +270,7 @@ function populateGeneralSettings() {
             try {
                 await showKeyboardLayoutSelectionPopup();
             } catch (error) {
-                logger.error('Error creating keyboard layout selection modal:', error);
+                logger.error('Error creating keyboard layout selection modal:', error.message);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
@@ -297,7 +297,7 @@ function populateGeneralSettings() {
                 // Update the adaptive switch status in the db
                 ipcRenderer.send('adaptiveSwitch-update', adaptiveSwitchInUse);
             } catch (error) {
-                logger.error('Error toggling adaptive switch status:', error);
+                logger.error('Error toggling adaptive switch status:', error.message);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
@@ -390,7 +390,7 @@ function populateHeadsetSettings() {
             try {
                 await showHeadsetSelectionPopup();
             } catch (error) {
-                logger.error('Error creating headset selection modal:', error);
+                logger.error('Error creating headset selection modal:', error.message);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
@@ -407,7 +407,7 @@ function populateHeadsetSettings() {
             try {
                 await showConnectionTypeSelectionPopup();
             } catch (error) {
-                logger.error('Error creating connection type selection modal:', error);
+                logger.error('Error creating connection type selection modal:', error.message);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
@@ -620,7 +620,7 @@ async function showConnectionTypeSelectionPopup() {
 
         await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
     } catch (error) {
-        logger.error('Error creating connection type selection modal:', error);
+        logger.error('Error creating connection type selection modal:', error.message);
     }
 }
 

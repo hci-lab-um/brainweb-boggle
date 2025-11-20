@@ -33,7 +33,7 @@ ipcRenderer.on('seek-loaded', async (event, overlayData) => {
         webpageBounds = webpage.getBoundingClientRect();
         await initSeekOverlay(); // Begin initialisation
     } catch (error) {
-        logger.error('Error in select-loaded handler:', error);
+        logger.error('Error in select-loaded handler:', error.message);
     }
 });
 
@@ -41,7 +41,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -50,7 +50,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.SEEK);
         ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
-        logger.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error.message);
     }
 });
 
@@ -541,7 +541,7 @@ function attachEventListeners() {
                             else await updateScenarioId(11, buttons, ViewNames.SEEK);
                         }
                     } catch (error) {
-                        logger.error('Error toggling read mode:', error);
+                        logger.error('Error toggling read mode:', error.message);
                     }
                     break;
                 case "firstScrollableElementBtn":

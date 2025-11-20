@@ -212,7 +212,7 @@ function getCenterCoordinates(elementToClick, webpageBounds) {
             y: clickY
         }
     } catch (error) {
-        console.error('Error calculating the coordinates of the element', error);
+        console.error('Error calculating the coordinates of the element', error.message);
     }
 }
 

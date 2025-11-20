@@ -62,7 +62,7 @@ function initStatusBar(initialState = {}) {
         updateStatusBarState(initialState);
         updateDomElements();
     } catch (error) {
-        logger.error('Error initialising status bar:', error);
+        logger.error('Error initialising status bar:', error.message);
     }
 }
 

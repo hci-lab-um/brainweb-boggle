@@ -14,7 +14,7 @@ ipcRenderer.on('more-loaded', async (event, overlayData) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
         attachEventListeners();
     } catch (error) {
-        logger.error('Error in more-loaded handler:', error);
+        logger.error('Error in more-loaded handler:', error.message);
     }
 });
 
@@ -22,7 +22,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -31,7 +31,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.MORE);
         ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
-        logger.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error.message);
     }
 });
 

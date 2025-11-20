@@ -85,7 +85,7 @@ async function startEegWebSocket() {
                 }
                 return false;
             } catch (err) {
-                console.error('Error handling JSON event:', err);
+                console.error('Error handling JSON event:', err.message);
                 return false;
             }
         };
@@ -209,7 +209,7 @@ function connectWebSocket() {
                     }
                 }
             } catch (error) {
-                console.error("Failed to parse JSON:", error);
+                console.error("Failed to parse JSON:", error.message);
             }
         });
     });
@@ -269,7 +269,7 @@ function resetPythonShell({ terminate = false } = {}) {
         try {
             pythonShellInstance.terminate();
         } catch (error) {
-            console.error('Failed to terminate Python shell:', error);
+            console.error('Failed to terminate Python shell:', error.message);
         }
     }
 
@@ -431,7 +431,7 @@ async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequen
 
             return selectedButtonId;
         }).catch((error) => {
-            console.error('Error when executing Python:', error);
+            console.error('Error when executing Python:', error.message);
             return -1;
         });
         

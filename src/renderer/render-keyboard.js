@@ -85,7 +85,7 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         });
 
     } catch (error) {
-        logger.error('Error in keyboard-loaded handler:', error);
+        logger.error('Error in keyboard-loaded handler:', error.message);
     }
 });
 
@@ -94,7 +94,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD);
         ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
-        logger.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error.message);
     }
 });
 
@@ -102,7 +102,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -111,7 +111,7 @@ ipcRenderer.on('textarea-populate', (event, text) => {
         if (!needsNumpad) updateTextareaAtCursor(text);
         else updateNumericTextareaAtCursor(text);
     } catch (error) {
-        logger.error('Error in textarea-populate handler:', error);
+        logger.error('Error in textarea-populate handler:', error.message);
     }
 });
 
@@ -143,7 +143,7 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
         await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
         inputField.focus();
     } catch (error) {
-        logger.error('Error in textarea-moveCursor handler:', error);
+        logger.error('Error in textarea-moveCursor handler:', error.message);
     }
 });
 
@@ -151,7 +151,7 @@ ipcRenderer.on('textarea-clearAll', () => {
     try {
         clearAllTextarea();
     } catch (error) {
-        logger.error('Error in textarea-clearAll handler:', error);
+        logger.error('Error in textarea-clearAll handler:', error.message);
     }
 });
 
@@ -181,7 +181,7 @@ ipcRenderer.on('keyboard-upperCaseToggle', (event, toUpper) => {
             }
         }
     } catch (error) {
-        logger.error('Error in keyboard-toggleCase handler:', error);
+        logger.error('Error in keyboard-toggleCase handler:', error.message);
     }
 });
 

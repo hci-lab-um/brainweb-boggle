@@ -17,7 +17,7 @@ ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
         attachEventListeners();
         ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
-        logger.error('Error in mainWindow-loaded handler:', error);
+        logger.error('Error in mainWindow-loaded handler:', error.message);
     }
 });
 
@@ -25,7 +25,7 @@ ipcRenderer.on('statusBar-applyStateChange', (event, changes) => {
     try {
         applyStatusBarStateChange(changes);
     } catch (error) {
-        logger.error('Error handling statusBar-applyStateChange:', error);
+        logger.error('Error handling statusBar-applyStateChange:', error.message);
     }
 });
 
@@ -33,7 +33,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -42,7 +42,7 @@ ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
         ipcRenderer.send('scenarioId-update-complete', scenarioId);
     } catch (error) {
-        logger.error('Error in scenarioId-update handler:', error);
+        logger.error('Error in scenarioId-update handler:', error.message);
     }
 });
 
@@ -51,7 +51,7 @@ ipcRenderer.on('omniboxText-update', (event, title, isErrorPage = false) => {
         console.log('title in omniboxText-update', title)
         updateOmniboxText(title, isErrorPage);
     } catch (error) {
-        logger.error('Error in omniboxText-update handler:', error);
+        logger.error('Error in omniboxText-update handler:', error.message);
     }
 });
 
@@ -119,7 +119,7 @@ function attachEventListeners() {
                                 ipcRenderer.send('readMode-stop');
                             }
                         } catch (error) {
-                            logger.error('Error toggling read mode:', error);
+                            logger.error('Error toggling read mode:', error.message);
                         }
                         break;
                     case "searchBtn":
@@ -131,14 +131,14 @@ function attachEventListeners() {
                             }
                             ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
                         } catch (error) {
-                            logger.error('Error creating keyboard overlay:', error);
+                            logger.error('Error creating keyboard overlay:', error.message);
                         }
                         break;
                     case "moreBtn":
                         try {
                             ipcRenderer.send('overlay-create', ViewNames.MORE, 20);
                         } catch (error) {
-                            logger.error('Error creating keyboard overlay:', error);
+                            logger.error('Error creating keyboard overlay:', error.message);
                         }
                         break;
                     case "backBtn":

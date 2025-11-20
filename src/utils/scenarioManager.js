@@ -80,7 +80,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
         // Restart the BCI interval to ensure correct processing with the new active buttons
         ipcRenderer.send('bciInterval-restart', currentScenarioId, activeFrequencies, activeButtonIds);
     } catch (error) {
-        logger.error('Error toggling adaptive switch group:', error);
+        logger.error('Error toggling adaptive switch group:', error.message);
     }
 });
 
@@ -151,7 +151,7 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
         // Restart the BCI interval with the new scenario ID to be able to process the data according to the new scenario
         ipcRenderer.send('bciInterval-restart', scenarioId);
     } catch (error) {
-        logger.error('Error in updateScenarioId:', error);
+        logger.error('Error in updateScenarioId:', error.message);
     }
 }
 
@@ -161,7 +161,7 @@ async function stopManager() {
             await manager.stop();
         }
     } catch (error) {
-        logger.error('Error in stopManager:', error);
+        logger.error('Error in stopManager:', error.message);
     }
 }
 

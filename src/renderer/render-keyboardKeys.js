@@ -32,7 +32,7 @@ ipcRenderer.on('keyboardKeys-loaded', async (event, overlayData) => {
         buttons = document.querySelectorAll('button');
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
     } catch (error) {
-        logger.error('Error in keyboard-loaded handler:', error);
+        logger.error('Error in keyboard-loaded handler:', error.message);
     }
 });
 
@@ -40,7 +40,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -50,7 +50,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
 //     try {
 //         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
 //     } catch (error) {
-//         logger.error('Error in scenarioId-update handler:', error);
+//         logger.error('Error in scenarioId-update handler:', error.message);
 //     }
 // });
 
@@ -178,7 +178,7 @@ function initKeyboardKeys(buttonId, isUpperCase) {
                     }
                     return key;
                 } catch (error) {
-                    logger.error('Error creating key:', error);
+                    logger.error('Error creating key:', error.message);
                 }
             };
 
@@ -322,7 +322,7 @@ async function showGroupItems(items) {
 
         await updateScenarioId(scenarioId, buttons, ViewNames.KEYBOARD_KEYS);
     } catch (error) {
-        logger.error('Error in showGroupItems:', error);
+        logger.error('Error in showGroupItems:', error.message);
     }
 }
 

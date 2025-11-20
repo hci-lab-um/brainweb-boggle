@@ -20,7 +20,7 @@ ipcRenderer.on('about-loaded', async (event, overlayData) => {
         await updateScenarioId(scenarioId, buttons, ViewNames.ABOUT);
         attachEventListeners();
     } catch (error) {
-        logger.error('Error in about-loaded handler:', error);
+        logger.error('Error in about-loaded handler:', error.message);
     }
 });
 
@@ -28,7 +28,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -38,7 +38,7 @@ async function setAppVersion() {
         const version = await ipcRenderer.invoke('app-getVersion');
         versionElement.textContent = version || 'Unknown';
     } catch (error) {
-        logger.error('Error setting app version:', error);
+        logger.error('Error setting app version:', error.message);
     }
 }
 
@@ -105,6 +105,6 @@ async function handleExternalLink(button) {
             logger.error(`Failed to open external link in new tab: ${url}`);
         }
     } catch (error) {
-        logger.error('Error handling external link:', error);
+        logger.error('Error handling external link:', error.message);
     }
 }

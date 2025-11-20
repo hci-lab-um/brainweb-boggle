@@ -50,7 +50,7 @@ ipcRenderer.on('interactiveElements-get', async (event) => {
 
         // setInterval(checkAllInteractiveElementPositions, 4000);
     } catch (error) {
-        console.error('Error in interactiveElements-get handler:', error);
+        console.error('Error in interactiveElements-get handler:', error.message);
     }
 });
 
@@ -79,7 +79,7 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
                             elementInDom = iframeDoc.querySelector(`[data-boggle-id="${element.boggleId}"]`);
                         }
                     } catch (err) {
-                        console.warn('Cannot access iframe due to cross-origin restriction:', err);
+                        console.warn('Cannot access iframe due to cross-origin restriction:', err.message);
                     }
                 }
             } else {
@@ -104,7 +104,7 @@ ipcRenderer.on('interactiveElements-addHighlight', (event, elements) => {
             elementInDom.style.boxShadow = 'rgba(0, 0, 0, 0.8) 0px 0px 0px 2px inset';
         });
     } catch (error) {
-        console.error('Error in interactiveElements-addHighlight handler:', error);
+        console.error('Error in interactiveElements-addHighlight handler:', error.message);
     }
 });
 
@@ -139,7 +139,7 @@ ipcRenderer.on('interactiveElements-removeHighlight', (event) => {
             }
         }
     } catch (error) {
-        console.error('Error in interactiveElements-removeHighlight handler:', error);
+        console.error('Error in interactiveElements-removeHighlight handler:', error.message);
     }
 });
 
@@ -169,7 +169,7 @@ ipcRenderer.on('elementsInDom-removeBoggleId', (event) => {
             }
         }
     } catch (error) {
-        console.error('Error in elementsInDom-removeBoggleId handler:', error);
+        console.error('Error in elementsInDom-removeBoggleId handler:', error.message);
     }
 });
 
@@ -242,7 +242,7 @@ ipcRenderer.on('scrollableElements-get', async (event) => {
         ipcRenderer.send('scrollableElements-response', serializedElements);
     }
     catch (error) {
-        console.error('Error in scrollableElements-get handler:', error);
+        console.error('Error in scrollableElements-get handler:', error.message);
     }
 });
 
@@ -255,7 +255,7 @@ ipcRenderer.on('navigate-back', (event) => {
         console.log('Navigating back');
         window.history.back();
     } catch (error) {
-        console.error('Error navigating back:', error);
+        console.error('Error navigating back:', error.message);
     }
 });
 
@@ -264,7 +264,7 @@ ipcRenderer.on('navigate-forward', (event) => {
         console.log('Navigating forward');
         window.history.forward();
     } catch (error) {
-        console.error('Error navigating forward:', error);
+        console.error('Error navigating forward:', error.message);
     }
 });
 
@@ -302,7 +302,7 @@ ipcRenderer.on('scrollableElement-scroll', (event, { scrollableBoggleId, top, be
         console.log(`Scrolling element ${domElementToScroll} with boggleId ${scrollableBoggleId}`);
         domElementToScroll.scrollBy({ top, behavior });
     } catch (error) {
-        console.error('Error in scrollableElement-scroll handler:', error);
+        console.error('Error in scrollableElement-scroll handler:', error.message);
     }
 });
 
@@ -559,7 +559,7 @@ function isElementFullyOccluded(element) {
         }
         return true; // All points are occluded
     } catch (error) {
-        console.error('Error in isElementFullyOccluded:', error);
+        console.error('Error in isElementFullyOccluded:', error.message);
         return false;
     }
 }

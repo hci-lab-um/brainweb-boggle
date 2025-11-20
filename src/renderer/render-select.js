@@ -32,7 +32,7 @@ ipcRenderer.on('select-loaded', async (event, overlayData) => {
         webpageBounds = webpage.getBoundingClientRect();
         await initSelectOverlay(); // Begin initialisation
     } catch (error) {
-        logger.error('Error in select-loaded handler:', error);
+        logger.error('Error in select-loaded handler:', error.message);
     }
 });
 
@@ -40,7 +40,7 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
     try {
         document.getElementById(buttonId).click();
     } catch (error) {
-        logger.error('Error in selectedButton-click handler:', error);
+        logger.error('Error in selectedButton-click handler:', error.message);
     }
 });
 
@@ -93,7 +93,7 @@ function addLabelsAndHighlightToElements(elements, startIdx) {
             webpage.appendChild(label);
         });
     } catch (error) {
-        logger.error('Error in addLabelsAndHighlightToElements:', error);
+        logger.error('Error in addLabelsAndHighlightToElements:', error.message);
     }
 }
 
@@ -105,7 +105,7 @@ function removeLabelsAndHighlightFromElements(elements) {
         const labels = webpage.querySelectorAll('.element-number');
         if (labels) labels.forEach(async label => await label.remove());
     } catch (error) {
-        logger.error('Error in interactiveElements-removeHighlight handler:', error);
+        logger.error('Error in interactiveElements-removeHighlight handler:', error.message);
     }
 }
 
@@ -346,7 +346,7 @@ async function initSpecialInteractiveElements(elementType) {
             await updateScenarioId(43, buttons, ViewNames.SELECT);
         }
     } catch (error) {
-        logger.error('Error in initSpecialInteractiveElements:', error);
+        logger.error('Error in initSpecialInteractiveElements:', error.message);
     }
 }
 
@@ -480,13 +480,13 @@ function attachEventListeners() {
                         // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, -1, null, null, elementToClick);
                     } catch (error) {
-                        logger.error('Error creating keyboard overlay:', error);
+                        logger.error('Error creating keyboard overlay:', error.message);
                     }
                 } else if (loadDropdownOverlay) {
                     try {
                         ipcRenderer.send('overlay-create', ViewNames.DROPDOWN, -1, null, null, elementToClick);
                     } catch (error) {
-                        logger.error('Error creating dropdown overlay:', error);
+                        logger.error('Error creating dropdown overlay:', error.message);
                     }
                 } else {
                     try {
@@ -499,7 +499,7 @@ function attachEventListeners() {
                             ipcRenderer.send('elementsInDom-removeBoggleId');
                         }
                     } catch (error) {
-                        logger.error('Error calculating the coordinates of the element', error);
+                        logger.error('Error calculating the coordinates of the element', error.message);
                     }
                 }
                 return;

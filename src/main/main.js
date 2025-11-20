@@ -33,7 +33,7 @@ app.whenReady().then(async () => {
         await startEegWebSocket();
         connectWebSocket();
 
-        // app.commandLine.appendSwitch('sandbox');
+        // app.commandLine.appendSwitch('no-sandbox');
     } catch (err) {
         logger.error('Error starting LSL WebSocket:', err.message);
     }
@@ -84,7 +84,7 @@ app.whenReady().then(async () => {
             createMainWindow();
         }, 4000);
     } catch (err) {
-        logger.error('Error during app initialisation:', err);
+        logger.error('Error during app initialisation:', err.message);
     }
 
     // This is 'Space' key by default, can be changed to any key combination from enums.js
@@ -190,7 +190,7 @@ async function initialiseVariables() {
         bookmarksList = await db.getBookmarks();
         tabsFromDatabase = await db.getTabs();
     } catch (err) {
-        logger.error("Error initialising variables: ", err);
+        logger.error("Error initialising variables: ", err.message);
     }
 }
 
@@ -391,7 +391,7 @@ function createMainWindow() {
         });
     }
     catch (err) {
-        logger.error('Error creating main window:', err)
+        logger.error('Error creating main window:', err.message)
     }
 }
 
@@ -683,7 +683,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                                             logger.error('Error processing response body:', err.message);
                                         }
                                     }).catch(error => {
-                                        logger.error("Error reading response body:", error);
+                                        logger.error("Error reading response body:", error.message);
                                         handleLoadError(details.statusCode, details.url);
                                     });
                             }
@@ -897,7 +897,7 @@ function resizeMainWindow() {
                 logger.error('Error updating webpage bounds:', err.message);
             }
         }).catch(err => {
-            log.error(err);
+            log.error(err.message);
         });
     } catch (err) {
         logger.error('Error resizing main window:', err.message);

@@ -8,7 +8,6 @@ const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFun
 const { defaultState } = require('../utils/statusBar');
 const logger = require('./modules/logger');
 const { startEegWebSocket, connectWebSocket, disconnectWebSocket, stopEegInfrastructure, eegEvents } = require('./modules/eeg-pipeline');
-const fbccaConfig = require('../../configs/fbccaConfig.json');
 
 let splashWindow;
 let mainWindow;
@@ -152,9 +151,6 @@ app.on('window-all-closed', async () => {
 
 async function updateConfigFromDatabase() {
     // Getting the current headset from the database
-    let channels;
-    let samplingRate;
-
     db.getDefaultHeadset().then(async (headset) => {
         try {
             // Splitting the headset name and the company by " - "
@@ -163,8 +159,8 @@ async function updateConfigFromDatabase() {
             const headsetCompany = headsetParts[1] ? headsetParts[1].trim() : '';
 
             // Getting the channels and sampling rate for the fbccaConfig
-            channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
-            samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
+            const channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
+            const samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
 
             const gazeLengthInSecs = await db.getDefaultGazeLength();
 

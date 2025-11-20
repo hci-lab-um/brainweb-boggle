@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.signal import cheb1ord, cheby1, filtfilt, resample, decimate
-from fbcca_config import fbcca_config
+from fbcca_config_service import fbcca_config
 
 # Cache filter coefficients per sub-band so we only design each filter once
 _FILTER_COEFF_CACHE = {}
@@ -28,7 +28,7 @@ def filterbank(eeg, idx_fb=1, target_fs=256):
         raise ValueError('The number of sub-bands must be 0 < idx_fb <= 10.')
 
     num_chans, _ = eeg.shape
-    fs_original = fbcca_config.samplingRate
+    fs_original = fbcca_config['samplingRate']
     fs = fs_original / 2
 
     if idx_fb not in _FILTER_COEFF_CACHE:

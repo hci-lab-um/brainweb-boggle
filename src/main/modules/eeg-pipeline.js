@@ -2,18 +2,30 @@ const path = require('path');
 const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
-// const { run_fbcca } = require('../../ssvep/fbcca-js/run_fbcca');
-const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
+const { EventEmitter } = require('events');
+const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 const { browserConfig } = require('../../../configs/browserConfig');
 
-const fbccaLanguage = browserConfig.fbccaLanguage; // 'javascript' or 'python'
+const eegEvents = new EventEmitter();
 const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
-const requiredSampleCount = fbccaConfiguration.totalDataPointCount();
+const requiredSampleCount = totalDataPointCount();
 let messageResult = { data: [] };
 let ws = null;
 let pythonShellInstance = null;
 let pythonShellInitPromise = null;
 let pythonRequestQueue = Promise.resolve();
+let serverState = { ready: false, errorSinceReady: false };
+let headsetConnected = false;
+let pythonProcessRef = null; // track spawned websocket server process
+let lastQualityPercent = null; // track latest Emotiv signal quality percent
+
+function totalDataPointCount(config = fbccaConfiguration) {
+    return Math.ceil(config.samplingRate * config.gazeLengthInSecs);
+}
+
+function clearMessageBuffer() {
+    messageResult.data = [];
+}
 
 // Function used to run the LSL or Emotiv WebSocket Server
 async function startEegWebSocket() {
@@ -21,6 +33,10 @@ async function startEegWebSocket() {
         let pythonScriptPath;
 
         console.log(`Starting ${eegDataSource.toUpperCase()} EEG WebSocket server...`);
+
+        // reset state at start
+        serverState.ready = false;
+        serverState.errorSinceReady = false;
 
         // Choose the appropriate Python script based on configuration
         if (eegDataSource === 'emotiv') {
@@ -30,19 +46,88 @@ async function startEegWebSocket() {
         }
 
         const pythonProcess = spawn('python', ['-u', pythonScriptPath]); // -u was used to disable output buffering (allow logs to pass in stdout)
+        pythonProcessRef = pythonProcess; // store for later kill
+
+        // Buffer stdout to handle partial lines
+        let stdoutBuffer = '';
+
+        const handleJsonEvent = (evtObj) => {
+            try {
+                if (!evtObj || evtObj.jsonrpc !== '2.0' || evtObj.method !== 'event') return false;
+                const params = evtObj.params || {};
+                const type = params.type;
+                if (!type) return false;
+
+                if (type === 'server-ready') {
+                    if (!serverState.ready) {
+                        serverState.ready = true;
+                        serverState.errorSinceReady = false;
+                        resolve(pythonProcess);
+                    }
+                    return true;
+                }
+
+                // Do NOT set headsetConnected true from these events! Wait for actual data flow.
+                if (type === 'headset-connected' || type === 'session-created' || type === 'subscription-confirmed' || type === 'session-reused') {
+                    // Clear any previous errors
+                    serverState.errorSinceReady = false;
+                    return true;
+                }
+
+                if (type === 'headset-disconnected' || type === 'error') {
+                    serverState.errorSinceReady = true;
+                    if (headsetConnected) {
+                        headsetConnected = false;
+                        clearMessageBuffer();
+                        eegEvents.emit('headset-disconnected');
+                    }
+                    return true;
+                }
+                return false;
+            } catch (err) {
+                console.error('Error handling JSON event:', err);
+                return false;
+            }
+        };
 
         pythonProcess.stdout.on('data', (data) => {
-            const message = data.toString().trim();
-            console.log(`${eegDataSource.toUpperCase()} Server:`, message);
+            stdoutBuffer += data.toString('utf-8');
+            const lines = stdoutBuffer.split(/\r?\n/);
+            stdoutBuffer = lines.pop() || '';
 
-            if (message === 'READY') {  // Wait for the 'READY' message from Python
-                console.log(`${eegDataSource.toUpperCase()} WebSocket server is ready!`);
-                resolve(pythonProcess);   // Resolve the promise with the running Python process
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line) continue;
+
+                let handledByJson = false;
+                if (line.startsWith('{') && line.endsWith('}')) {
+                    try {
+                        const parsed = JSON.parse(line);
+                        // Passive logging of JSON content
+                        if (parsed && parsed.jsonrpc === '2.0' && parsed.method === 'event') {
+                            const evtType = parsed.params && parsed.params.type ? parsed.params.type : 'unknown';
+                            console.log(`[EVENT] ${evtType}`);
+                        } else {
+                            console.log(`[JSON] ${line}`);
+                        }
+                        handledByJson = handleJsonEvent(parsed);
+                    } catch (err) {
+                        console.log(`[MALFORMED JSON] ${line}`);
+                        handledByJson = false;
+                    }
+                } else {
+                    // Passive logging of non-JSON stdout lines
+                    console.log(`[PYTHON] ${line}`);
+                }
+                if (handledByJson) continue; // logic has been handled by handleJsonEvent
+
+                // Minimal fallback for READY only
+                if (line === 'READY' && !serverState.ready) {
+                    serverState.ready = true;
+                    serverState.errorSinceReady = false;
+                    resolve(pythonProcess);
+                }
             }
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-            console.error(`${eegDataSource.toUpperCase()} Python Error:`, data.toString());
         });
 
         pythonProcess.on('close', (code) => {
@@ -73,18 +158,55 @@ function connectWebSocket() {
 
                 // Handle different data formats based on the EEG data source
                 if (eegDataSource === 'emotiv') {
-                    // Emotiv data format: {time: timestamp, values: [ch1, ch2, ...]}
-                    if (jsonData.time && jsonData.values) {
-                        // console.log(`[DEBUG] Adding Emotiv data: time=${jsonData.time}, channels=${jsonData.values.length}`);
+                    // Emotiv data format enhanced: {time, values, qualityData: {timestamp, data: [...]}}
+                    // Marking headset as connected only upon receiving actual data
+                    if (jsonData.time && Array.isArray(jsonData.values)) {
+                        if (!headsetConnected) {
+                            serverState.errorSinceReady = false;
+                            headsetConnected = true;
+                            clearMessageBuffer();
+                            eegEvents.emit('headset-connected');
+                        }
                         messageResult.data.push(jsonData);
                         trimMessageBuffer();
+
+                        // Handle quality data if present
+                        if (jsonData.qualityData && jsonData.qualityData.data && Array.isArray(jsonData.qualityData.data)) {
+                            const eqArray = jsonData.qualityData.data;
+                            // Expecting an array of 17 entries (3 labels and 14 channels): [batteryPercent, overall, sampleRateQuality, <EEG Sensor Quality>]
+                            const ssvepIndices = [8, 9, 10, 11];
+                            let samples = [];
+                            ssvepIndices.forEach(idx => {
+                                if (idx < eqArray.length && typeof eqArray[idx] === 'number') {
+                                    samples.push(eqArray[idx]);
+                                }
+                            });
+                            if (samples.length > 0) {
+                                // Emotiv quality scale assumed 0-4 inclusive
+                                const maxQuality = 4;
+                                const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+                                let percent = Math.round((avg / maxQuality) * 100);
+                                if (percent < 0) percent = 0;
+                                if (percent > 100) percent = 100;
+                                lastQualityPercent = percent;
+                                eegEvents.emit('quality-update', { percent });
+                            }
+                        }
                     } else {
                         console.log('[DEBUG] Emotiv data missing time or values:', jsonData);
                     }
                 } else {
                     // LSL data format: {time: timestamp, values: [ch1, ch2, ...]}
-                    messageResult.data.push(jsonData);
-                    trimMessageBuffer();
+                    if (jsonData && (jsonData.time !== undefined) && Array.isArray(jsonData.values)) {
+                        if (!headsetConnected) {
+                            serverState.errorSinceReady = false;
+                            headsetConnected = true;
+                            clearMessageBuffer();
+                            eegEvents.emit('headset-connected');
+                        }
+                        messageResult.data.push(jsonData);
+                        trimMessageBuffer();
+                    }
                 }
             } catch (error) {
                 console.error("Failed to parse JSON:", error);
@@ -105,9 +227,30 @@ function connectWebSocket() {
 
 function disconnectWebSocket() {
     if (ws) {
-        ws.close();
+        try { ws.close(); } catch (_) { }
         ws = null;
     }
+    headsetConnected = false;
+    clearMessageBuffer(); // ensure buffer cleared when socket closes
+}
+
+function stopEegInfrastructure() {
+    try {
+        disconnectWebSocket();
+    } catch (e) {
+        console.error('WS close error:', e);
+    }
+
+    if (pythonProcessRef && !pythonProcessRef.killed) {
+        try {
+            pythonProcessRef.kill('SIGTERM');
+        } catch (e) {
+            console.error('Python process kill error:', e);
+        }
+    }
+
+    pythonProcessRef = null;
+    resetPythonShell({ terminate: true });
 }
 
 function trimMessageBuffer() {
@@ -175,7 +318,7 @@ function queuePythonTask(task) {
     return nextTask;
 }
 
-function runPythonFbcca(eegData, scenarioId) {
+function runPythonFbcca(eegData, scenarioId, stimuliFrequencies, activeButtonIds) {
     return queuePythonTask(async () => {
         const shell = await ensurePythonShell();
 
@@ -204,7 +347,12 @@ function runPythonFbcca(eegData, scenarioId) {
             try {
                 shell.once('message', handleMessage);
                 shell.once('close', handleClose);
-                shell.send({ eegData, scenario_id: scenarioId }, (error) => {
+                shell.send({
+                    eegData,
+                    scenario_id: scenarioId,
+                    stim_freqs: stimuliFrequencies,
+                    active_button_ids: activeButtonIds
+                }, (error) => {
                     if (error) {
                         handleError(error);
                     }
@@ -217,8 +365,22 @@ function runPythonFbcca(eegData, scenarioId) {
 }
 
 // Function to handle incoming WebSocket data
-async function processDataWithFbcca(currentScenarioID, viewsList) {
+async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequencies, activeButtonIds) {
+    if (!headsetConnected) {
+        // Avoid repeated logs with stale partial data
+        if (messageResult.data.length) {
+            clearMessageBuffer();
+        }
+        return;
+    }
+
     if (messageResult.data && messageResult.data.length >= requiredSampleCount) {
+        // Bypass classification if Emotiv signal quality is too low
+        // if (eegDataSource === 'emotiv' && typeof lastQualityPercent === 'number' && lastQualityPercent < 25) {
+        //     console.log(`[INFO] Skipping classification due to low signal quality (${lastQualityPercent}%).`);
+        //     return -1;
+        // }
+
         console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${eegDataSource.toUpperCase()}`);
 
         const dataPoints = messageResult.data.slice(-requiredSampleCount);
@@ -256,39 +418,23 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
         // Now `channels` is a 2D array where each row is a channel with values over time
         console.log(`[DEBUG] Organised data by channel count ${eegData.length}, samples per channel ${eegData[0] ? eegData[0].length : 0}`);
 
-        // Run fbcca algorithm based on the selected language
-        if (fbccaLanguage === 'javascript') {
-            // Run fbcca in JavaScript
-            const selectedButtonId = run_fbcca(eegData, currentScenarioID);
+        // Run fbcca in Python
+        return runPythonFbcca(eegData, currentScenarioID, stimuliFrequencies, activeButtonIds).then((selectedButtonId) => {
+            if (parseInt(selectedButtonId) !== -1) {
+                console.log('PYTHON - User selected button', selectedButtonId);
 
-            if (selectedButtonId != -1) {
-                console.log("JAVASCRIPT - User selected button", selectedButtonId);
-
-                // Obtaining the topmost view from the viewsList to send the button click for the button that has been classified by fbcca JAVASCRIPT
                 let topMostView = viewsList[viewsList.length - 1];
                 topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
             } else {
-                console.log("JAVASCRIPT - User is in Idle State!");
+                console.log('PYTHON - User is in Idle State!');
             }
 
-        } else {
-            // Run fbcca in Python
-            return runPythonFbcca(eegData, currentScenarioID).then((selectedButtonId) => {
-                if (parseInt(selectedButtonId) !== -1) {
-                    console.log('PYTHON - User selected button', selectedButtonId);
-
-                    let topMostView = viewsList[viewsList.length - 1];
-                    topMostView.webContentsView.webContents.send('selectedButton-click', selectedButtonId);
-                } else {
-                    console.log('PYTHON - User is in Idle State!');
-                }
-
-                return selectedButtonId;
-            }).catch((error) => {
-                console.error('Error when executing Python:', error);
-                return -1;
-            });
-        }
+            return selectedButtonId;
+        }).catch((error) => {
+            console.error('Error when executing Python:', error);
+            return -1;
+        });
+        
     } else if (messageResult.data && messageResult.data.length > 0) {
         console.log(`[DEBUG] Not enough EEG data for processing. messageResult.data length: ${messageResult.data.length}`);
     }
@@ -296,8 +442,9 @@ async function processDataWithFbcca(currentScenarioID, viewsList) {
 
 module.exports = {
     startEegWebSocket,
-    startLslWebSocket: startEegWebSocket, // Maintain backward compatibility
     connectWebSocket,
     disconnectWebSocket,
-    processDataWithFbcca
+    stopEegInfrastructure,
+    processDataWithFbcca,
+    eegEvents
 };

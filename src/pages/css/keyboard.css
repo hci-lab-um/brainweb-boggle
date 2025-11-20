@@ -164,6 +164,9 @@
   justify-content: center;
 }
 
+.navbar {
+  height: 12.5% !important;
+}
 .navbar--opaque {
   background-color: #1f1f1f;
   gap: 2%;
@@ -227,11 +230,11 @@
 }
 
 .overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background-color: #1f1f1f;
   z-index: 999;
 }
@@ -243,7 +246,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100%;
 }
 
 .popup {
@@ -357,6 +360,31 @@ body {
   flex-direction: row;
   gap: 4vw;
 }
+.keyboard__gridContainer {
+  flex: 1;
+  display: grid;
+  gap: 3vw;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas: "autocompleteArea lettersArea numbersArea" "controlsArea symbolsArea submitArea";
+}
+.keyboard__gridContainer #minimisedAutocompleteBtn {
+  grid-area: autocompleteArea;
+}
+.keyboard__gridContainer #minimisedLettersBtn {
+  grid-area: lettersArea;
+}
+.keyboard__gridContainer #minimisedNumbersBtn {
+  grid-area: numbersArea;
+}
+.keyboard__gridContainer #minimisedControlsBtn {
+  grid-area: controlsArea;
+}
+.keyboard__gridContainer #minimisedSymbolsBtn {
+  grid-area: symbolsArea;
+}
+.keyboard__gridContainer #minimisedKeyboardSendBtn {
+  grid-area: submitArea;
+}
 .keyboard__column {
   display: flex;
   flex-direction: column;
@@ -384,6 +412,12 @@ body {
 }
 .keyboard__row--largeGap {
   gap: 4vh;
+}
+.keyboard__row--minimisedFirst {
+  flex: 0.4;
+}
+.keyboard__row--minimisedLast {
+  flex: 0.3;
 }
 .keyboard__textarea {
   position: relative;
@@ -419,6 +453,17 @@ body {
 .keyboard__key--center {
   height: 100%;
 }
+.keyboard__key--unsetHeight {
+  height: unset;
+}
+.keyboard__key--capsIndicator {
+  padding: 0.75rem 0;
+  position: absolute;
+  top: 65%;
+  font-size: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.25);
+  width: 100%;
+}
 .keyboard__key--activatable::after {
   content: "";
   position: absolute;
@@ -429,8 +474,17 @@ body {
   background: #ffffff;
   border-radius: 50%;
 }
+.keyboard--minimised .keyboard__key--activatable::after {
+  top: 20px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+}
 .keyboard__key--active::after {
   background: #08FF00;
+}
+.keyboard--minimised {
+  gap: 5vh;
 }
 
 .textarea {
@@ -511,6 +565,22 @@ body {
   max-width: calc(33.333% - 40px);
 }
 .keyboard__keysContainer--threeColumns > * {
+  box-sizing: border-box;
+  height: 60%;
+}
+.keyboard__keysContainer--twoColumns {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: 100%;
+  justify-content: space-around;
+  align-items: center;
+}
+.keyboard__keysContainer--twoColumns > * {
+  flex: 1 1 calc(50% - 10px);
+  max-width: calc(50% - 65px);
+}
+.keyboard__keysContainer--twoColumns > * {
   box-sizing: border-box;
   height: 60%;
 }

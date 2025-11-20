@@ -16,6 +16,10 @@ const CssConstants = Object.freeze({
     SELECTION_ANIMATION_DURATION: 500, // This is in milliseconds. It is used in the addButtonSelectionAnimation function.
 });
 
+const SwitchShortcut = Object.freeze({
+    TOGGLE_BUTTON_GROUPINGS: 'Alt+Shift+S'
+});
+
 const ConnectionTypes = Object.freeze({
     LSL: {
         NAME: "LSL",
@@ -36,6 +40,7 @@ const Headsets = Object.freeze({
         NAME: "EPOC X",
         COMPANY: "Emotiv",
         USED_ELECTRODES: ["O1", "P7", "P8", "O2"],
+        SAMPLING_RATE: 256,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.CORTEX_API.NAME,
         },
@@ -45,6 +50,7 @@ const Headsets = Object.freeze({
         NAME: "DSI-VR300",
         COMPANY: "Wearable Sensing",
         USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
+        SAMPLING_RATE: 300,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
             CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME,
@@ -55,6 +61,7 @@ const Headsets = Object.freeze({
         NAME: "g.USBamp",
         COMPANY: "g.tec",
         USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
+        SAMPLING_RATE: 256,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME
         },
@@ -75,6 +82,65 @@ const KeyboardLayouts = Object.freeze({
     }
 });
 
+
+const Stimuli = Object.freeze({
+    PATTERNS_TYPES: {
+        DESCRIPTION: "The pattern that will be used for the SSVEP stimuli present in the browser.",
+        PATTERNS: {
+            LINE: {
+                NAME: "Line",
+                VALUE: "line"
+            },
+            SOLID: {
+                NAME: "Solid",
+                VALUE: "solid"
+            },
+            CHEQUERED: {
+                NAME: "Chequered",
+                VALUE: "chequered"
+            },
+            DOT: {
+                NAME: "Dot",
+                VALUE: "dot"
+            }
+        }
+    },
+    LIGHT_COLORS: {
+        DESCRIPTION: "First colour that will be used for the stimuli present in the browser.",
+        COLOURS: {
+            WHITE: {
+                RGBA: "255,255,255,1",
+                NAME: "White"
+            },
+            GREEN: {
+                RGBA: "0,176,80,1",
+                NAME: "Green"
+            },
+        },
+    },
+    DARK_COLORS: {
+        DESCRIPTION: "Second colour that will be used for the stimuli present in the browser.",
+        COLOURS: {
+            GREY: {
+                RGBA: "127,127,127,1",
+                NAME: "Grey"
+            },
+            BLACK: {
+                RGBA: "0,0,0,1",
+                NAME: "Black"
+            },
+            RED: {
+                RGBA: "192,0,0,1",
+                NAME: "Red"
+            },
+            BLUE: {
+                RGBA: "0,32,96,1",
+                NAME: "Blue"
+            },
+        }
+    }
+});
+
 const SettingCategories = Object.freeze({
     GENERAL: "General",
     STIMULI: "Stimuli",
@@ -92,8 +158,22 @@ const Settings = Object.freeze({
     DEFAULT_KEYBOARD_LAYOUT: {
         NAME: "keyboardLayout",
         LABEL: "Keyboard Layout",
-        DESCRIPTION: "The keyboard layout to be used throughout the browser.",
+        DESCRIPTION: "Choose between different keyboard layouts to be used throughout the browser.",
         DEFAULT: KeyboardLayouts.MINIMISED.NAME,
+        CATEGORY: SettingCategories.GENERAL,
+    },
+    ADAPTIVE_SWITCH_CONNECTED: {
+        NAME: "adaptiveSwitchConnected",
+        LABEL: "Adaptive Switch",
+        DESCRIPTION: "Adjust whether an adaptive switch is currently connected to your computer.",
+        DEFAULT: true,
+        CATEGORY: SettingCategories.GENERAL,
+    },
+    BEST_USER_FREQUENCIES: {
+        NAME: "bestUserFrequencies",
+        LABEL: "Best User Frequencies",
+        DESCRIPTION: "The best frequencies for the user’s brain activity.",
+        DEFAULT: [6.5, 7.5, 8.5, 7, 8],
         CATEGORY: SettingCategories.GENERAL,
     },
     DEFAULT_HEADSET: {
@@ -114,21 +194,28 @@ const Settings = Object.freeze({
         NAME: "defaultStimuliPattern",
         LABEL: "Default Stimuli Pattern",
         DESCRIPTION: "The default pattern used for SSVEP stimuli.",
-        DEFAULT: "line",
+        DEFAULT: Stimuli.PATTERNS_TYPES.PATTERNS.LINE.VALUE,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_LIGHT_COLOR: {
         NAME: "defaultStimuliLightColor",
         LABEL: "Default Stimuli Light Color",
         DESCRIPTION: "The default light color used for SSVEP stimuli.",
-        DEFAULT: "255,255,255,1",
+        DEFAULT: Stimuli.LIGHT_COLORS.COLOURS.WHITE.RGBA,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_DARK_COLOR: {
         NAME: "defaultStimuliDarkColor",
         LABEL: "Default Stimuli Dark Color",
         DESCRIPTION: "The default dark color used for SSVEP stimuli.",
-        DEFAULT: "127,127,127,1",
+        DEFAULT: Stimuli.DARK_COLORS.COLOURS.GREY.RGBA,
+        CATEGORY: SettingCategories.STIMULI,
+    },
+    DEFAULT_GAZE_LENGTH: {
+        NAME: "gazeLengthInSecs",
+        LABEL: "Gaze Length (seconds)",
+        DESCRIPTION: "Number of seconds of EEG data collected per window before the classifier runs.",
+        DEFAULT: 4,
         CATEGORY: SettingCategories.STIMULI,
     }
 });
@@ -136,6 +223,7 @@ const Settings = Object.freeze({
 module.exports = {
     ViewNames,
     CssConstants,
+    SwitchShortcut,
     ConnectionTypes,
     Headsets,
     KeyboardLayouts,

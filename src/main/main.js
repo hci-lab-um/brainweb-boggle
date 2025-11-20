@@ -1,40 +1,79 @@
-const { app, BaseWindow, WebContentsView, ipcMain } = require('electron')
-const { ViewNames } = require('../utils/constants/enums')
+const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut, ipcRenderer } = require('electron')
+const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
 const path = require('path')
 const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
 const db = require('./modules/database');
-const { captureSnapshot, slideInView } = require('../utils/utilityFunctions');
+const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFunctions');
+const { defaultState } = require('../utils/statusBar');
 const logger = require('./modules/logger');
-const { startEegWebSocket, connectWebSocket, disconnectWebSocket } = require('./modules/eeg-pipeline');
+const { startEegWebSocket, connectWebSocket, disconnectWebSocket, stopEegInfrastructure, eegEvents } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
 let mainWindowContent;
 let tabView;
-let viewsList = [];             // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
-let scenarioIdDict = {};        // This is a dictionary that contains the scenarioId for each view
+let viewsList = [];                         // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
+let scenarioIdDict = {};                    // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
 let defaultUrl = "https://www.google.com"
-let bookmarksList = [];         // This will hold the bookmarks fetched from the database
-let tabsList = [];              // This will hold the list of tabs created in the main window
-let tabsFromDatabase = [];      // This will hold the tabs fetched from the database
-let isMainWindowLoaded = false; // This is a flag to track if main window is fully loaded
+let bookmarksList = [];                     // This will hold the bookmarks fetched from the database
+let tabsList = [];                          // This will hold the list of tabs created in the main window
+let tabsFromDatabase = [];                  // This will hold the tabs fetched from the database
+let isMainWindowLoaded = false;             // This is a flag to track if main window is fully loaded
+let lastAdaptiveToggleTs = 0;               // This is a timestamp of the last adaptive toggle event
+const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to prevent rapid toggling
+let adaptiveSwitchInUse;                    // This flag indicates if the adaptive switch feature is enabled
+let statusBarState = { ...defaultState };   // This holds the current state of the status bar
+let isHeadsetConnected = false;             // This flag indicates if the EEG headset is properly connected
+let ipcHandlersReady = false;               // This flag indicates if IPC handlers are ready
 
 app.whenReady().then(async () => {
     try {
         await startEegWebSocket();
         connectWebSocket();
+
+        // app.commandLine.appendSwitch('sandbox');
     } catch (err) {
         logger.error('Error starting LSL WebSocket:', err.message);
     }
 
+    eegEvents.on('headset-connected', () => {
+        isHeadsetConnected = true;
+        broadcastStatusBarState({ headsetConnected: isHeadsetConnected }); // Send to main window renderer
+    });
+
+    eegEvents.on('headset-disconnected', () => {
+        isHeadsetConnected = false;
+        // Reset quality on disconnect
+        broadcastStatusBarState({ headsetConnected: isHeadsetConnected, signalQuality: { percent: 0, color: 'grey' } }); // Send to main window renderer
+    });
+
+    // Listen for quality updates from eeg pipeline
+    eegEvents.on('quality-update', ({ percent }) => {
+        const color = deriveQualityColor(percent, isHeadsetConnected);
+        broadcastStatusBarState({ signalQuality: { percent, color } });
+    });
+
     try {
         await db.connect();
         await db.createTables();
-        // await db.deleteKeyboardLayoutsTable(); // For development purposes only
-        // await db.deleteSettingsTable(); // For development purposes only
+        // await db.deleteHeadsetsTable();          // For development purposes only
+        // await db.deleteKeyboardLayoutsTable();   // For development purposes only
+        // await db.deleteSettingsTable();          // For development purposes only
         await initialiseVariables();
+
+        await updateConfigFromDatabase();
+
+        adaptiveSwitchInUse = await db.getAdaptiveSwitchConnected();
+        const defaultHeadset = await db.getDefaultHeadset();
+
+        updateStatusBarState({
+            headset: defaultHeadset,
+            adaptiveSwitch: {
+                isEnabled: toBoolean(adaptiveSwitchInUse)
+            }
+        });
     } catch (err) {
         logger.error('Error initialising database:', err.message);
     }
@@ -47,7 +86,47 @@ app.whenReady().then(async () => {
     } catch (err) {
         logger.error('Error during app initialisation:', err);
     }
+
+    // This is 'Space' key by default, can be changed to any key combination from enums.js
+    globalShortcut.register(SwitchShortcut.TOGGLE_BUTTON_GROUPINGS, () => {
+        try {
+            // Checking if adaptive switch is enabled
+            if (toBoolean(adaptiveSwitchInUse)) {
+
+                // Implementing a cooldown to prevent rapid toggling
+                const now = Date.now();
+                if (now - lastAdaptiveToggleTs < ADAPTIVE_TOGGLE_COOLDOWN_MS) return;
+                lastAdaptiveToggleTs = now;
+
+                // Sending the space event to the topmost overlay if present, otherwise to main window content
+                const targetView = viewsList.length > 0
+                    ? viewsList[viewsList.length - 1]
+                    : mainWindowContent;
+
+                const topViewName = targetView.name;
+                const currentScenarioId = (scenarioIdDict[topViewName] || []).slice(-1)[0] ?? -1;
+
+                if (targetView) {
+                    targetView.webContentsView.webContents.send('adaptiveSwitch-toggle', currentScenarioId, targetView.name);
+                }
+            }
+            else {
+                console.log('ADAPTIVE SWITCH IS NOT ENABLED');
+            }
+        } catch (err) {
+            logger.error('Error broadcasting adaptiveSwitch-toggle:', err.message);
+        }
+    });
 })
+
+app.on('will-quit', async () => {
+    try {
+        globalShortcut.unregisterAll(); // Unregister all shortcuts
+        stopEegInfrastructure();        // Gracefully stop EEG infrastructure   
+    } catch (err) {
+        logger.error('Error during will-quit cleanup:', err.message);
+    }
+});
 
 app.on('window-all-closed', async () => {
     try {
@@ -59,6 +138,8 @@ app.on('window-all-closed', async () => {
         // Disconnect the LSL WebSocket
         disconnectWebSocket();
 
+        await db.close();
+
         // App closes when all windows are closed, however this is not default behaviour on macOS (applications and their menu bar to stay active)
         if (process.platform !== 'darwin') {
             app.quit()
@@ -68,12 +149,104 @@ app.on('window-all-closed', async () => {
     }
 });
 
+async function updateConfigFromDatabase() {
+    // Getting the current headset from the database
+    db.getDefaultHeadset().then(async (headset) => {
+        try {
+            // Splitting the headset name and the company by " - "
+            const headsetParts = headset.split(' - ');
+            const headsetName = headsetParts[0].trim();
+            const headsetCompany = headsetParts[1] ? headsetParts[1].trim() : '';
+
+            // Getting the channels and sampling rate for the fbccaConfig
+            const channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
+            const samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
+
+            const gazeLengthInSecs = await db.getDefaultGazeLength();
+
+            const configFilePath = path.join(__dirname, '../../configs/fbccaConfig.json');
+            const configPath = path.resolve(configFilePath);
+            const configRaw = fs.readFileSync(configPath, "utf8");
+            const config = JSON.parse(configRaw);
+
+            // Update config fields
+            config.channels = Number(channels);
+            config.samplingRate = Number(samplingRate);
+            config.gazeLengthInSecs = Number(gazeLengthInSecs);
+
+            // Write updated config
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+
+            console.log("FBCCA Config updated successfully:", config);
+        }
+        catch (err) {
+            logger.error('Error fetching headset details from database:', err.message);
+        }
+    });
+}
+
 async function initialiseVariables() {
     try {
         bookmarksList = await db.getBookmarks();
         tabsFromDatabase = await db.getTabs();
     } catch (err) {
         logger.error("Error initialising variables: ", err);
+    }
+}
+
+function updateStatusBarState(partial = {}) {
+    // Merging the partial updates into the current status bar state
+    if (partial && typeof partial === 'object') {
+        // Handling updates to headset
+        if (typeof partial.headset === 'string') {
+            statusBarState.headset = partial.headset;
+        }
+
+        // Handling updates to headsetConnected
+        if (typeof partial.headsetConnected === 'boolean') {
+            statusBarState.headsetConnected = partial.headsetConnected;
+        }
+
+        // Handling updates to browserState
+        if (typeof partial.browserState === 'string') {
+            statusBarState.browserState = partial.browserState;
+        }
+
+        // Handling updates to adaptiveSwitch
+        if (partial.adaptiveSwitch && typeof partial.adaptiveSwitch === 'object') {
+            const incoming = partial.adaptiveSwitch;
+            const current = statusBarState.adaptiveSwitch;
+
+            statusBarState.adaptiveSwitch = {
+                isEnabled: typeof incoming.isEnabled === 'boolean' ? incoming.isEnabled : current.isEnabled,
+                groupIndex: typeof incoming.groupIndex === 'number' ? incoming.groupIndex : current.groupIndex,
+                totalGroups: typeof incoming.totalGroups === 'number' ? incoming.totalGroups : current.totalGroups
+            };
+        }
+
+        // Handling updates to signalQuality
+        if (partial.signalQuality && typeof partial.signalQuality === 'object') {
+            const current = statusBarState.signalQuality;
+            const incoming = partial.signalQuality;
+            statusBarState.signalQuality = {
+                percent: typeof incoming.percent === 'number' ? incoming.percent : current.percent,
+                color: typeof incoming.color === 'string' ? incoming.color : current.color
+            };
+        }
+    }
+
+    return { ...statusBarState };
+}
+
+function broadcastStatusBarState(partial = {}) {
+    const changes = updateStatusBarState(partial);
+
+    if (mainWindowContent?.webContents && !mainWindowContent.webContents.isDestroyed()) {
+        try {
+            mainWindowContent.webContents.send('statusBar-applyStateChange', changes);
+        } catch (err) {
+            logger.error('Error updating status bar state:', err.message);
+        }
     }
 }
 
@@ -137,9 +310,9 @@ function createMainWindow() {
                             // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
                             scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
 
-                            ipcMain.on('mainWindow-loaded-complete', (event) => {
+                            ipcMain.on('mainWindow-loaded-complete', async (event) => {
                                 // Register IPC handlers after the main window is created to be able to send messages to the renderer process
-                                registerIpcHandlers({
+                                await registerIpcHandlers({
                                     mainWindow,
                                     mainWindowContent,
                                     webpageBounds,
@@ -148,12 +321,25 @@ function createMainWindow() {
                                     bookmarksList,
                                     tabsList,
                                     db,
+                                    // Setter lets IPC handlers update the live value of the adaptiveSwitchInUse variable in main.js
+                                    setAdaptiveSwitchInUse: (val) => { adaptiveSwitchInUse = val; },
                                     updateWebpageBounds,
                                     createTabView,
                                     deleteAndInsertAllTabs,
-                                    updateNavigationButtons
+                                    updateNavigationButtons,
+                                    broadcastStatusBarState
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
+                                ipcHandlersReady = true;   // Set flag to indicate that IPC handlers are ready
+
+                                // Performing an initial resize to set the correct bounds for the webpage due to status bar presence
+                                setTimeout(() => {
+                                    try {
+                                        resizeMainWindow();
+                                    } catch (resizeErr) {
+                                        logger.error('Error performing initial resize:', resizeErr.message);
+                                    }
+                                }, 0);
                             })
                         });
                     } catch (err) {
@@ -197,7 +383,7 @@ function createMainWindow() {
                 if (splashWindow) {
                     splashWindow.close();
                 }
-                // mainWindowContent.webContents.openDevTools();
+                mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
                 logger.error('Error showing main window:', err.message);
@@ -330,6 +516,14 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
         // ------------------------------------------
         // Setting the event handlers for the tabView
         // ------------------------------------------        
+        thisTabView.webContents.on('did-start-loading', () => {
+            try {
+                broadcastStatusBarState({ browserState: 'loading' });
+            } catch (err) {
+                logger.error('Error updating status bar for loading state:', err.message);
+            }
+        });
+
         thisTabView.webContents.on('did-stop-loading', () => {
             try {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
@@ -360,6 +554,12 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                         mainWindowContent.webContents.send('omniboxText-update', title, activeTab.isErrorPage);
                     }
                 }
+
+                if (activeTab?.isErrorPage) {
+                    broadcastStatusBarState({ browserState: 'error' });
+                } else {
+                    broadcastStatusBarState({ browserState: 'ready' });
+                }
             } catch (err) {
                 logger.error('Error during tabview stop loading:', err.message);
             }
@@ -374,7 +574,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 let activeTab = tabsList.find(tab => tab.isActive === true);
                 if (activeTab && thisTabView === activeTab.webContentsView) {
                     let stopManager = true;
-                    updateNavigationButtons(thisTabView, stopManager);
+                    safeUpdateNavigationButtons(thisTabView, stopManager);
                 }
             } catch (err) {
                 logger.error('Error during tabview navigation event:', err.message);
@@ -522,6 +722,8 @@ function handleLoadError(errorCode, attemptedURL, responseBody = null) {
         activeTab.originalURL = attemptedURL;
         activeTab.isErrorPage = true;
 
+        broadcastStatusBarState({ browserState: 'error' });
+
         if (!responseBody) {
             const errorHtmlPath = path.join(__dirname, '../pages/html/error.html');
             const errorCssPath = path.join(__dirname, '../pages/css/error.css');
@@ -640,6 +842,18 @@ function handleLoadError(errorCode, attemptedURL, responseBody = null) {
     }
 }
 
+const waitForIpcReady = () =>
+    new Promise(resolve => {
+        if (ipcHandlersReady) return resolve();
+        const check = () => ipcHandlersReady ? resolve() : setTimeout(check, 100);
+        check();
+    });
+
+async function safeUpdateNavigationButtons(thisTabView, stopManager = false) {
+    await waitForIpcReady();
+    updateNavigationButtons(thisTabView, stopManager);
+}
+
 function updateNavigationButtons(thisTabView, stopManager = false) {
     let activeTab = tabsList.find(tab => tab.isActive === true);
 
@@ -736,4 +950,12 @@ async function deleteAndInsertAllTabs() {
     } catch (err) {
         logger.error('Error updating database with open tabs:', err.message);
     }
+}
+
+function deriveQualityColor(percent, connected) {
+    if (!connected) return 'grey';
+    if (typeof percent !== 'number') return 'grey';
+    if (percent < 40) return 'red';
+    if (percent < 70) return 'yellow';
+    return 'green';
 }

@@ -164,6 +164,9 @@
   justify-content: center;
 }
 
+.navbar {
+  height: 12.5% !important;
+}
 .navbar--opaque {
   background-color: #1f1f1f;
   gap: 2%;
@@ -227,11 +230,11 @@
 }
 
 .overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background-color: #1f1f1f;
   z-index: 999;
 }
@@ -243,7 +246,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100%;
 }
 
 .popup {
@@ -370,7 +373,6 @@ body {
   height: 100%;
   justify-content: space-around;
   align-items: center;
-  flex: 7;
 }
 .tabs__container > * {
   flex: 1 1 calc(50% - 10px);

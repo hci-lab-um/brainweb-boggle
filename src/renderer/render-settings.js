@@ -1,9 +1,9 @@
 const { ipcRenderer } = require('electron')
-const { ViewNames, CssConstants, Settings } = require('../utils/constants/enums');
+const { ViewNames, CssConstants, Settings, Stimuli } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
 const logger = require('../main/modules/logger');
-const { createPopup } = require('../utils/utilityFunctions');
+const { createPopup, toBoolean } = require('../utils/utilityFunctions');
 
 let buttons = [];
 let settingsContentContainer = null;
@@ -12,6 +12,8 @@ let keyboardLayoutInUse = '';
 let headsetInUse = '';
 let connectionTypeInUse = '';
 let closeSettingsButton = null;
+let adaptiveSwitchInUse;
+let stimuliInUse = '';
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
@@ -24,6 +26,8 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         keyboardLayoutInUse = overlayData.settingsObject.keyboardLayout || '';
         headsetInUse = overlayData.settingsObject.headsetInUse || '';
         connectionTypeInUse = overlayData.settingsObject.connectionTypeInUse || '';
+        adaptiveSwitchInUse = toBoolean(overlayData.settingsObject.adaptiveSwitchInUse);
+        stimuliInUse = overlayData.settingsObject.stimuliInUse || '';
 
         setCloseButtonMode('close');
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
@@ -77,7 +81,7 @@ async function showHeadsetSettings() {
     updateVisibility('headsetSettings');
     populateHeadsetSettings();
     setCloseButtonMode('back');
-    
+
     await selectScenarioIdForHeadset();
 }
 
@@ -200,8 +204,38 @@ function populateGeneralSettings() {
     keyboardLayoutBtn.rel = 'noreferrer noopener';
     keyboardLayoutCard.appendChild(keyboardLayoutBtn);
 
+    // -------------------------------
+    // Adaptive Switch Setting
+    // -------------------------------
+    const adaptiveSwitchCard = document.createElement('div');
+    adaptiveSwitchCard.classList.add('settingCard');
+
+    const adaptiveSwitchTextContainer = document.createElement('div');
+
+    const adaptiveSwitchTitle = document.createElement('h3');
+    adaptiveSwitchTitle.textContent = Settings.ADAPTIVE_SWITCH_CONNECTED.LABEL;
+    adaptiveSwitchTextContainer.appendChild(adaptiveSwitchTitle);
+
+    const adaptiveSwitchDesc = document.createElement('p');
+    adaptiveSwitchDesc.textContent = Settings.ADAPTIVE_SWITCH_CONNECTED.DESCRIPTION;
+    adaptiveSwitchTextContainer.appendChild(adaptiveSwitchDesc);
+
+    adaptiveSwitchCard.appendChild(adaptiveSwitchTextContainer);
+
+    const adaptiveSwitchBtn = document.createElement('button');
+    adaptiveSwitchBtn.innerHTML = `<span>${adaptiveSwitchInUse ? 'Enabled' : 'Disabled'}</span>`;
+    adaptiveSwitchBtn.id = 'adaptiveSwitchBtn';
+    adaptiveSwitchBtn.classList.add('button', 'button--activatable');
+    if (adaptiveSwitchInUse) adaptiveSwitchBtn.classList.add('button--active');
+    adaptiveSwitchBtn.rel = 'noreferrer noopener';
+    adaptiveSwitchCard.appendChild(adaptiveSwitchBtn);
+
+    // --------------------------------
+    // Attaching all cards to container
+    // --------------------------------     
     cardsContainer.appendChild(homeUrlCard);
     cardsContainer.appendChild(keyboardLayoutCard);
+    cardsContainer.appendChild(adaptiveSwitchCard);
 
     // -------------------------------
     // Event Listeners for Buttons
@@ -237,6 +271,33 @@ function populateGeneralSettings() {
                 await showKeyboardLayoutSelectionPopup();
             } catch (error) {
                 logger.error('Error creating keyboard layout selection modal:', error);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    adaptiveSwitchBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        adaptiveSwitchBtn.disabled = true;
+        setTimeout(() => { adaptiveSwitchBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(adaptiveSwitchBtn);
+
+        setTimeout(async () => {
+            try {
+                // Toggle the adaptive switch status
+                adaptiveSwitchInUse = !adaptiveSwitchInUse;
+                // Update the UI
+                if (adaptiveSwitchInUse) {
+                    adaptiveSwitchBtn.classList.add('button--active');
+                    adaptiveSwitchBtn.innerHTML = `<span>Enabled</span>`;
+                } else {
+                    adaptiveSwitchBtn.classList.remove('button--active');
+                    adaptiveSwitchBtn.innerHTML = `<span>Disabled</span>`;
+                }
+
+                // Update the adaptive switch status in the db
+                ipcRenderer.send('adaptiveSwitch-update', adaptiveSwitchInUse);
+            } catch (error) {
+                logger.error('Error toggling adaptive switch status:', error);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
@@ -355,6 +416,36 @@ function populateHeadsetSettings() {
 function populateStimuliSettings() {
     const container = document.getElementById('stimuliSettings');
     container.innerHTML = ''; // Clear existing content    
+
+    const cardsContainer = document.createElement('div');
+    cardsContainer.classList.add('cardsContainer');
+    container.appendChild(cardsContainer);
+
+    // -------------------------------
+    // Default Stimuli Setting
+    // ------------------------------- 
+    const stimuliCard = document.createElement('div');
+    stimuliCard.classList.add('settingCard');
+
+    const stimuliTextContainer = document.createElement('div');
+
+    const stimuliCardH3 = document.createElement('h3');
+    stimuliCardH3.innerHTML = `${Settings.DEFAULT_STIMULI_PATTERN.LABEL}`;
+    stimuliTextContainer.appendChild(stimuliCardH3);
+
+    const stimuliDesc = document.createElement('p');
+    stimuliDesc.textContent = Settings.DEFAULT_STIMULI_PATTERN.DESCRIPTION;
+    stimuliTextContainer.appendChild(stimuliDesc);
+    stimuliCard.appendChild(stimuliTextContainer);
+
+    const stimuliBtn = document.createElement('button');
+    stimuliBtn.innerHTML = `<span>${stimuliInUse.pattern || 'Unknown'}</span>`;
+    stimuliBtn.id = 'stimuliPatternBtn';
+    stimuliBtn.classList.add('button');
+    stimuliBtn.rel = 'noreferrer noopener';
+    stimuliCard.appendChild(stimuliBtn);
+
+    cardsContainer.appendChild(stimuliCard);
 }
 
 function setCloseButtonMode(mode) {

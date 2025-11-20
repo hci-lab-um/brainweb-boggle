@@ -16,6 +16,7 @@ let webpageBounds = null;   // This is set when the keyboard is loaded
 let suggestion = '';
 let autoCompleteButton;
 let needsNumpad;
+let currentKeyboardLayout;
 let elementTypeAttribute = null;
 let maskOverlay = null; // Reference to the mask overlay
 
@@ -32,7 +33,8 @@ const INPUT_MASKS = {
 
 ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
     try {
-        ({ elementProperties, webpageBounds } = overlayData)
+        ({ elementProperties, webpageBounds, settingsObject } = overlayData)
+        currentKeyboardLayout = settingsObject.keyboardLayout;
 
         const NUMPAD_REQUIRED_ELEMENTS = ['number', 'tel', 'date', 'datetime-local', 'month', 'time', 'week', 'range'];
 
@@ -45,23 +47,23 @@ ipcRenderer.on('keyboard-loaded', async (event, overlayData) => {
         const numericKeyboard = document.querySelector('.keyboard--numeric');
 
         if (needsNumpad) {
-            setupNumericKeyboard(alphaFullKeyboard, numericKeyboard);
+            setupNumericKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
             handleRangeType(elementTypeAttribute);
             maskOverlay = setupInputMaskOverlay(elementTypeAttribute, INPUT_MASKS, inputField, elementProperties);
         } else {
-            if (overlayData.settingsObject.keyboardLayout === KeyboardLayouts.FULL.NAME) {
+            if (currentKeyboardLayout === KeyboardLayouts.FULL.NAME) {
                 setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
-            } else {
+                autoCompleteButton = document.getElementById('autoCompleteBtn');
+            } else if (currentKeyboardLayout === KeyboardLayouts.MINIMISED.NAME) {
                 setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard);
+                autoCompleteButton = document.getElementById('minimisedAutoCompleteBtn');
             }
 
-            inputField = document.querySelector('#textarea');
             setupPasswordAndAutoComplete(elementTypeAttribute);
             maskOverlay = null;
         }
 
         buttons = document.querySelectorAll('button');
-        autoCompleteButton = document.getElementById('autoCompleteBtn');
 
         // Ensure inputField.value is always in the correct format for date-like types
         if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
@@ -145,6 +147,44 @@ ipcRenderer.on('textarea-moveCursor', async (event, iconName) => {
     }
 });
 
+ipcRenderer.on('textarea-clearAll', () => {
+    try {
+        clearAllTextarea();
+    } catch (error) {
+        logger.error('Error in textarea-clearAll handler:', error);
+    }
+});
+
+ipcRenderer.on('keyboard-upperCaseToggle', (event, toUpper) => {
+    try {
+        isUpperCase = toUpper;
+
+        getScenarioNumber().then(async scenarioNumber => {
+            await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+        });
+
+        // Add another span in the minimisedLettersBtn stating Caps lock is on if toUpper is true
+        minimisedLettersBtn = document.getElementById('minimisedLettersBtn');
+        if (minimisedLettersBtn) {
+            const capsIndicator = minimisedLettersBtn.querySelector('.keyboard__key--capsIndicator');
+            if (toUpper) {
+                if (!capsIndicator) {
+                    const span = document.createElement('span');
+                    span.classList.add('keyboard__key--capsIndicator');
+                    span.textContent = 'CAPS lock is on';
+                    minimisedLettersBtn.appendChild(span);
+                }
+            } else {
+                if (capsIndicator) {
+                    minimisedLettersBtn.removeChild(capsIndicator);
+                }
+            }
+        }
+    } catch (error) {
+        logger.error('Error in keyboard-toggleCase handler:', error);
+    }
+});
+
 // Function to apply mask to input
 function applyInputMask(value, mask, type = '') {
     let maskedValue = '';
@@ -219,13 +259,6 @@ function applyInputMask(value, mask, type = '') {
         }
     }
     return maskedValue;
-}
-
-function setupNumericKeyboard(alphaKeyboard, numericKeyboard) {
-    alphaKeyboard.style.display = 'none';
-    numericKeyboard.style.display = '';
-    inputField = document.querySelector('#numericTextarea');
-    inputField.type = 'textarea';
 }
 
 function handleRangeType(elementTypeAttribute) {
@@ -309,16 +342,29 @@ function getInitialRawValue(elementTypeAttribute, initialValue) {
     }
 }
 
+function setupNumericKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
+    alphaFullKeyboard.style.display = 'none';
+    alphaMinimisedKeyboard.style.display = 'none';
+    numericKeyboard.style.display = '';
+
+    inputField = document.querySelector('#numericTextarea');
+    inputField.type = 'textarea';
+}
+
 function setupAlphaFullKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
     alphaFullKeyboard.style.display = '';
     alphaMinimisedKeyboard.style.display = 'none';
     numericKeyboard.style.display = 'none';
+
+    inputField = document.querySelector('#textarea');
 }
 
 function setupAlphaMinimisedKeyboard(alphaFullKeyboard, alphaMinimisedKeyboard, numericKeyboard) {
     alphaFullKeyboard.style.display = 'none';
     alphaMinimisedKeyboard.style.display = '';
     numericKeyboard.style.display = 'none';
+
+    inputField = document.querySelector('#minimisedTextarea');
 }
 
 function setupPasswordAndAutoComplete(elementTypeAttribute) {
@@ -361,6 +407,25 @@ function toggleLetterCase(toUpper) {
             });
         }
     });
+}
+
+function clearAllTextarea() {
+    if (!inputField) return;
+
+    inputField.value = '';
+    if (!needsNumpad) updateAutoCompleteButton();
+
+    // Update mask overlay if present
+    if (maskOverlay) {
+        const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
+        maskOverlay.textContent = maskTemplate;
+    }
+
+    getScenarioNumber().then(async scenarioNumber => {
+        await updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
+    });
+
+    inputField.focus();
 }
 
 function updateTextareaAtCursor(insertText = null) {
@@ -479,25 +544,36 @@ async function getScenarioNumber() {
         const cursorAtStart = inputField.selectionStart === 0;
         const cursorAtEnd = inputField.selectionStart === inputField.value.length;
 
-        if (!textAreaPopulated) {
-            return 80; // Scenario: No text in search field
-        }
+        if (currentKeyboardLayout === KeyboardLayouts.FULL.NAME) {
+            if (!textAreaPopulated) {
+                return 80; // Scenario: No text in search field
+            }
 
-        if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
-            return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
-        }
+            if (textAreaPopulated && suggestionAvailable && cursorAtEnd) {
+                return 81; // Scenario: Text in search field, word suggestion available, cursor at end position
+            }
 
-        if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
-            // It doesn't matter if suggestion is available or not because the cursor is at the start position
-            return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
-        }
+            if (textAreaPopulated && !suggestionAvailable && cursorAtStart) {
+                // It doesn't matter if suggestion is available or not because the cursor is at the start position
+                return 82; // Scenario: Text in search field, word suggestion unavailable, cursor at start position
+            }
 
-        if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
-            return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
+            if (textAreaPopulated && !suggestionAvailable && !cursorAtStart) {
+                return 83; // Scenario: Text in search field, word suggestion unavailable, cursor NOT at start position
+            }
+
+        } else if (currentKeyboardLayout === KeyboardLayouts.MINIMISED.NAME) {
+            console.log('Minimised keyboard scenario check', { textAreaPopulated });
+            if (!textAreaPopulated || (textAreaPopulated && !suggestionAvailable)) {
+                return 71; // Scenario: Minimised Keyboard - No text in search field or there is text but no suggestion available
+            }
+
+            if (textAreaPopulated && suggestionAvailable) {
+                return 70; // Scenario: Text in search field, word suggestion available
+            }
         }
 
         logger.error("No matching scenario");
-
     }
 }
 
@@ -617,8 +693,9 @@ function attachEventListeners() {
                 if (buttonId !== 'upperCaseBtn') await stopManager();
 
                 switch (buttonId) {
-                    case "closeKeyboardBtn":
-                    case "numericCloseKeyboardBtn":
+                    case 'closeKeyboardBtn':
+                    case 'minimisedCloseKeyboardBtn':
+                    case 'numericCloseKeyboardBtn':
                         await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.KEYBOARD);
                         break;
                     case 'numbersBtn':
@@ -663,22 +740,10 @@ function attachEventListeners() {
                         break;
                     case 'clearAllBtn':
                     case 'numericClearAllBtn':
-                        inputField.value = '';
-                        if (!needsNumpad) updateAutoCompleteButton();
-
-                        // Update mask overlay if present
-                        if (maskOverlay) {
-                            const maskTemplate = INPUT_MASKS[elementTypeAttribute] || '';
-                            maskOverlay.textContent = maskTemplate;
-                        }
-
-                        getScenarioNumber().then(scenarioNumber => {
-                            updateScenarioId(scenarioNumber, buttons, ViewNames.KEYBOARD);
-                        });
-
-                        inputField.focus();
+                        clearAllTextarea();
                         break;
                     case 'keyboardSendBtn':
+                    case 'minimisedKeyboardSendBtn':
                     case 'numericKeyboardSendBtn':
                         let input = inputField.value.trim();
                         if (!input) break;
@@ -717,6 +782,7 @@ function attachEventListeners() {
                     case 'backspaceBtn':
                         updateTextareaAtCursor();
                         break;
+                    case 'minimisedAutoCompleteBtn':
                     case 'autoCompleteBtn':
                         if (suggestion && inputField.selectionStart === inputField.value.length) {
                             updateTextareaAtCursor(suggestion);
@@ -740,6 +806,20 @@ function attachEventListeners() {
                         });
 
                         inputField.focus();
+                        break;
+
+                    // The following are the keys inside the MINIMISED keyboard
+                    case 'minimisedNumbersBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 97, 'minimisedNumbersBtn', isUpperCase);
+                        break;
+                    case 'minimisedLettersBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedLettersBtn', isUpperCase);
+                        break;
+                    case 'minimisedControlsBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'minimisedControlsBtn', isUpperCase);
+                        break;
+                    case 'minimisedSymbolsBtn':
+                        ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 94, 'minimisedSymbolsBtn', isUpperCase);
                         break;
 
                     // The following are the keys inside the NUMERIC keyboard

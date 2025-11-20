@@ -30,6 +30,7 @@ body {
 
     &__container {
         min-width: 0;
+        flex: 7;
         @include components.pagination-grid(2); // 2 columns
 
         & > * {

@@ -146,6 +146,7 @@ function createHeadsetTable() {
                 company_name TEXT NOT NULL,
                 headset_name TEXT NOT NULL,
                 used_electrodes TEXT NOT NULL,
+                sampling_rate INTEGER NOT NULL,
                 image BLOB,
                 PRIMARY KEY (company_name, headset_name)
             );
@@ -179,11 +180,12 @@ function populateHeadsetsTable() {
                 logger.warn(`Could not read headset image for ${headset.NAME}: ${e.message}`);
             }
 
-            allRows.push('(?, ?, ?, ?)');
+            allRows.push('(?, ?, ?, ?, ?)');
             values.push(
                 headset.COMPANY,
                 headset.NAME,
                 JSON.stringify(headset.USED_ELECTRODES || []),
+                headset.SAMPLING_RATE,
                 imageBuffer
             );
         });
@@ -193,7 +195,7 @@ function populateHeadsetsTable() {
             return;
         }
 
-        const insertSql = `INSERT OR IGNORE INTO headsets (company_name, headset_name, used_electrodes, image) VALUES ${allRows.join(', ')}`;
+        const insertSql = `INSERT OR IGNORE INTO headsets (company_name, headset_name, used_electrodes, sampling_rate, image) VALUES ${allRows.join(', ')}`;
 
         db.run(insertSql, values, (err) => {
             if (err) {
@@ -405,6 +407,16 @@ function populateSettingsTable() {
                 category: Settings.DEFAULT_KEYBOARD_LAYOUT.CATEGORY,
             },
             {
+                name: Settings.ADAPTIVE_SWITCH_CONNECTED.NAME,
+                value: Settings.ADAPTIVE_SWITCH_CONNECTED.DEFAULT,
+                category: Settings.ADAPTIVE_SWITCH_CONNECTED.CATEGORY,
+            },
+            {
+                name: Settings.BEST_USER_FREQUENCIES.NAME,
+                value: Settings.BEST_USER_FREQUENCIES.DEFAULT,
+                category: Settings.BEST_USER_FREQUENCIES.CATEGORY,
+            },
+            {
                 name: Settings.DEFAULT_HEADSET.NAME,
                 value: Settings.DEFAULT_HEADSET.DEFAULT,
                 category: Settings.DEFAULT_HEADSET.CATEGORY,
@@ -429,6 +441,11 @@ function populateSettingsTable() {
                 value: Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT,
                 category: Settings.DEFAULT_STIMULI_DARK_COLOR.CATEGORY,
             },
+            {
+                name: Settings.DEFAULT_GAZE_LENGTH.NAME,
+                value: Settings.DEFAULT_GAZE_LENGTH.DEFAULT,
+                category: Settings.DEFAULT_GAZE_LENGTH.CATEGORY,
+            }
         ];
 
         db.serialize(() => {
@@ -720,6 +737,65 @@ async function getHeadsetConnectionTypes(headsetName, companyName) {
     }
 }
 
+async function getHeadsetSamplingRate(headsetName, companyName) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `
+            SELECT sampling_rate
+            FROM headsets
+            WHERE headset_name = ? AND company_name = ? `;
+
+            db.get(query, [headsetName, companyName], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving sampling rate:', err.message);
+                    reject(err);
+                } else {
+                    resolve(row ? row.sampling_rate : null);
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting sampling rate for headset:', err.message);
+    }
+}
+
+async function getHeadsetChannelNumber(headsetName, companyName) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+
+            const query = `
+            SELECT used_electrodes
+            FROM headsets
+            WHERE headset_name = ? AND company_name = ? `;
+            
+            db.get(query, [headsetName, companyName], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving channel count:', err.message);
+                    reject(err);
+                } else {
+                    if (row && row.used_electrodes) {
+                        const electrodes = safeParseJson(row.used_electrodes, []);
+                        resolve(electrodes.length);
+                    } else {
+                        resolve(0);
+                    }
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting channel count for headset:', err.message);
+    }
+}
+
 async function getHeadsets() {
     try {
         return await new Promise((resolve, reject) => {
@@ -848,6 +924,14 @@ function getDefaultKeyboardLayout() {
     return getSetting(Settings.DEFAULT_KEYBOARD_LAYOUT.NAME);
 }
 
+function getBestUserFrequencies() {
+    return getSetting(Settings.BEST_USER_FREQUENCIES.NAME);
+}
+
+function getAdaptiveSwitchConnected() {
+    return getSetting(Settings.ADAPTIVE_SWITCH_CONNECTED.NAME);
+}
+
 function getDefaultHeadset() {
     return getSetting(Settings.DEFAULT_HEADSET.NAME);
 }
@@ -866,6 +950,10 @@ function getDefaultStimuliLightColor() {
 
 function getDefaultStimuliDarkColor() {
     return getSetting(Settings.DEFAULT_STIMULI_DARK_COLOR.NAME);
+}
+
+function getDefaultGazeLength() {
+    return getSetting(Settings.DEFAULT_GAZE_LENGTH.NAME);
 }
 
 // =================================
@@ -903,6 +991,10 @@ function updateDefaultKeyboardLayout(newKeyboardLayout) {
     return updateSetting(Settings.DEFAULT_KEYBOARD_LAYOUT.NAME, newKeyboardLayout);
 }
 
+function updateAdaptiveSwitchStatus(newStatus) {
+    return updateSetting(Settings.ADAPTIVE_SWITCH_CONNECTED.NAME, newStatus);
+}
+
 function updateDefaultHeadset(newHeadset) {
     return updateSetting(Settings.DEFAULT_HEADSET.NAME, newHeadset);
 }
@@ -934,9 +1026,13 @@ module.exports = {
     getBookmarks,
     getTabs,
     getHeadsetConnectionTypes,
+    getHeadsetSamplingRate,
+    getHeadsetChannelNumber,
     getHeadsets,
     getConnectionTypeData,
     getKeyboardLayouts,
+    getAdaptiveSwitchConnected,
+    getBestUserFrequencies,
     getDefaultURL,
     getDefaultKeyboardLayout,
     getDefaultHeadset,
@@ -944,6 +1040,7 @@ module.exports = {
     getDefaultStimuliPattern,
     getDefaultStimuliLightColor,
     getDefaultStimuliDarkColor,
+    getDefaultGazeLength,
 
     deleteBookmarkByUrl,
 
@@ -955,6 +1052,7 @@ module.exports = {
 
     updateDefaultURL,
     updateDefaultKeyboardLayout,
+    updateAdaptiveSwitchStatus,
     updateDefaultHeadset,
     updateDefaultConnectionType,
     updateDefaultStimuliPattern,

@@ -2,11 +2,10 @@ const { app, WebContentsView, BaseWindow, ipcMain, screen, View } = require('ele
 const path = require('path');
 const { ViewNames } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
-const { captureSnapshot } = require('../../utils/utilityFunctions');
+const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca } = require('../modules/eeg-pipeline');
-const { fbccaConfiguration } = require('../../ssvep/fbcca-js/fbcca_config');
-const { browserConfig } = require('../../../configs/browserConfig');
+const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
@@ -24,10 +23,12 @@ async function registerIpcHandlers(context) {
         bookmarksList,
         tabsList,
         db,
+        setAdaptiveSwitchInUse,
         updateWebpageBounds,
         createTabView,
         deleteAndInsertAllTabs,
-        updateNavigationButtons
+        updateNavigationButtons,
+        broadcastStatusBarState
     } = context;
 
     // Helper function to serialise tabsList
@@ -58,7 +59,17 @@ async function registerIpcHandlers(context) {
         }));
     }
 
-    ipcMain.on('bciInterval-restart', (event, scenarioId) => {
+    ipcMain.on('statusBar-updatesFromRenderer', (event, partial) => {
+        try {
+            broadcastStatusBarState(partial);
+        } catch (err) {
+            logger.error('Error updating status bar state from renderer:', err.message);
+        }
+    });
+
+    ipcMain.on('bciInterval-restart', (event, scenarioId, stimuliFrequencies = [], activeButtonIds = []) => {
+        // PARAMETERS: stimuliFrequencies & activeButtonIds are not required when using the scenarioConfig file. They are required ONLY when using an adaptive switch.
+
         // Clear the previous interval if it exists
         if (bciIntervalId) {
             clearInterval(bciIntervalId);
@@ -68,8 +79,16 @@ async function registerIpcHandlers(context) {
         bciIntervalId = setInterval(() => {
             // Process the latest data with the fbcca algorithm. 
             // viewsList will be used to determine which view to process the data for
-            processDataWithFbcca(scenarioId, viewsList);
+            processDataWithFbcca(scenarioId, viewsList, stimuliFrequencies, activeButtonIds);
         }, fbccaConfiguration.gazeLengthInSecs * 1000);
+    });
+
+    ipcMain.on('bciInterval-stop', (event) => {
+        // Clear the interval if it exists
+        if (bciIntervalId) {
+            clearInterval(bciIntervalId);
+            bciIntervalId = null;
+        }
     });
 
     ipcMain.on('overlay-create', async (event, overlayName, scenarioId, buttonId = null, isUpperCase = false, elementProperties) => {
@@ -90,7 +109,14 @@ async function registerIpcHandlers(context) {
         });
 
         mainWindow.contentView.addChildView(overlayContent)
-        overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: mainWindowContentBounds.height })
+
+        // Checking for laptop display to set appropriate overlay height
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const isLaptopDisplay = primaryDisplay ? primaryDisplay.internal : false; // laptop panels report as internal displays
+        const overlayHeightRatio = isLaptopDisplay ? 0.93 : 0.95;
+        const overlayHeight = Math.round(mainWindowContentBounds.height * overlayHeightRatio);
+
+        overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: overlayHeight })
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
@@ -122,18 +148,21 @@ async function registerIpcHandlers(context) {
                 keyboardLayout: await db.getDefaultKeyboardLayout(),
                 headsetInUse: await db.getDefaultHeadset(),
                 connectionTypeInUse: await db.getDefaultConnectionType(),
+                adaptiveSwitchInUse: await db.getAdaptiveSwitchConnected(),
+                stimuliInUse: {
+                    pattern: await db.getDefaultStimuliPattern(),
+                    lightColor: await db.getDefaultStimuliLightColor(),
+                    darkColor: await db.getDefaultStimuliDarkColor(),
+                }
             }
         }
 
-        overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`)).then(async () => {
-            try {
-                overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
-            } catch (err) {
-                logger.error(`Error sending scenarioId to the render-${overlayName}:`, err.message);
-            }
-        }).catch(err => {
-            logger.error(`Error loading ${overlayName} overlay:`, err.message);
-        });
+        try {
+            await overlayContent.webContents.loadURL(path.join(__dirname, `../../pages/html/${overlayName}.html`));
+            overlayContent.webContents.send(`${overlayName}-loaded`, overlayData);
+        } catch (err) {
+            logger.error(`Error loading ${overlayName} overlay or sending data:`, err.message);
+        }
     });
 
     /**
@@ -286,6 +315,19 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('textarea-clearAll', (event) => {
+        try {
+            // Clearing the keyboard entry from the scenarioIdDict
+            delete scenarioIdDict[ViewNames.KEYBOARD];
+
+            // Finding the overlay with name keyboard
+            let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
+            keyboardOverlay.webContentsView.webContents.send('textarea-clearAll');
+        } catch (err) {
+            logger.error('Error clearing all the textarea:', err.message);
+        }
+    });
+
     ipcMain.on('url-load', (event, url) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
@@ -333,10 +375,48 @@ async function registerIpcHandlers(context) {
         }
     });
 
+    ipcMain.on('adaptiveSwitch-update', async (event, isEnabled) => {
+        try {
+            // Updates the adaptive switch status in the database
+            await db.updateAdaptiveSwitchStatus(isEnabled);
+
+            // Updates the variable in main.js immediately
+            if (typeof setAdaptiveSwitchInUse === 'function') {
+                setAdaptiveSwitchInUse(isEnabled);
+            }
+
+            broadcastStatusBarState({
+                adaptiveSwitch: {
+                    isEnabled: toBoolean(isEnabled)
+                }
+            });
+
+            // Updates the adaptive switch button inner text in settings overlay if it is open
+            let settingsOverlay = viewsList.find(view => view.name === ViewNames.SETTINGS);
+            if (settingsOverlay) {
+                settingsOverlay.webContentsView.webContents.send('adaptiveSwitch-update', isEnabled);
+            }
+        } catch (err) {
+            logger.error('Error updating adaptive switch status:', err.message);
+        }
+    });
+
+    ipcMain.on('keyboard-upperCaseToggle', (event, isUpperCase) => {
+        try {
+            let keyboardOverlay = viewsList.find(view => view.name === ViewNames.KEYBOARD);
+            if (keyboardOverlay) {
+                keyboardOverlay.webContentsView.webContents.send('keyboard-upperCaseToggle', isUpperCase);
+            }
+        } catch (err) {
+            logger.error('Error updating keyboard upper case preference:', err.message);
+        }
+    });
+
     ipcMain.on('defaultHeadset-update', async (event, newHeadset) => {
         try {
             // Updates the default headset in the database
             db.updateDefaultHeadset(newHeadset);
+            broadcastStatusBarState({ headset: newHeadset });
         } catch (err) {
             logger.error('Error updating default headset:', err.message);
         }
@@ -381,6 +461,24 @@ async function registerIpcHandlers(context) {
         } catch (err) {
             logger.error('Error retrieving available headsets:', err.message);
             return [];
+        }
+    });
+
+    ipcMain.handle('bestUserFrequencies-get', async () => {
+        try {
+            return await db.getBestUserFrequencies();
+        } catch (err) {
+            logger.error('Error retrieving best user frequencies:', err.message);
+            return [];
+        }
+    });
+
+    ipcMain.handle('adaptiveSwitchConnected-get', async () => {
+        try {
+            return await db.getAdaptiveSwitchConnected();
+        } catch (err) {
+            logger.error('Error retrieving adaptive switch connected status:', err.message);
+            return false;
         }
     });
 
@@ -640,7 +738,7 @@ async function registerIpcHandlers(context) {
     ipcMain.on('bookmarks-deleteAll', async (event) => {
         try {
             await db.deleteAllBookmarks();
-            bookmarksList = [];
+            bookmarksList.length = 0;
         } catch (err) {
             logger.error('Error deleting all bookmarks:', err.message);
         }

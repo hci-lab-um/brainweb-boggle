@@ -310,9 +310,9 @@ function createMainWindow() {
                             // Hard-coding the initial scenario to prevent the scenarioIdDict from being undefined
                             scenarioIdDict = { [ViewNames.MAIN_WINDOW]: [0] };
 
-                            ipcMain.on('mainWindow-loaded-complete', (event) => {
+                            ipcMain.on('mainWindow-loaded-complete', async (event) => {
                                 // Register IPC handlers after the main window is created to be able to send messages to the renderer process
-                                registerIpcHandlers({
+                                await registerIpcHandlers({
                                     mainWindow,
                                     mainWindowContent,
                                     webpageBounds,

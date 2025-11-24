@@ -328,12 +328,12 @@ async function registerIpcHandlers(context) {
         }
     });
 
-    ipcMain.on('url-load', (event, url) => {
+    ipcMain.handle('url-load', async (event, url) => {
         try {
             let activeTab = tabsList.find(tab => tab.isActive);
             if (activeTab) {
                 activeTab.lastNavigationTitle = '';
-                activeTab.webContentsView.webContents.loadURL(url);
+                await activeTab.webContentsView.webContents.loadURL(url);
                 let title = activeTab.webContentsView.webContents.getTitle()
                 if (!title) title = url; // Fallback to URL if title is not available
                 mainWindowContent.webContents.send('omniboxText-update', title)

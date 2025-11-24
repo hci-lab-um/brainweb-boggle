@@ -756,7 +756,7 @@ function attachEventListeners() {
 
                         if (elementProperties.id === 'omnibox') {
                             let processedInput = await processUrlInput(input)
-                            ipcRenderer.send('url-load', processedInput);
+                            await ipcRenderer.invoke('url-load', processedInput);
                         } else if (elementProperties.id === 'homeUrl') {
                             let processedInput = await processUrlInput(input);
                             ipcRenderer.send('homeUrl-update', processedInput);

@@ -753,6 +753,9 @@ function attachEventListeners() {
                         if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
                             sendValue = input.replace(/ /g, '→');
                         }
+                        
+                        // The overlay is closed before sending the input to ensure the overlay does not interfere with mouse/keyboard actions (such as clicking and typing)
+                        ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
 
                         if (elementProperties.id === 'omnibox') {
                             let processedInput = await processUrlInput(input)
@@ -771,7 +774,6 @@ function attachEventListeners() {
                             ipcRenderer.send('keyboard-type-nutjs', sendValue, needsNumpad, elementTypeAttribute);
                         }
 
-                        ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                         break;
                     case 'arrowKeysBtn':
                         ipcRenderer.send('overlay-create', ViewNames.KEYBOARD_KEYS, 93, 'arrowKeysBtn');

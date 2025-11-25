@@ -547,7 +547,7 @@ async function showItemActionPopup(item) {
                 ipcRenderer.send('overlay-close', ViewNames.MORE);
 
                 if (overlayName === ViewNames.BOOKMARKS) {
-                    ipcRenderer.send('url-load', item.url);
+                    await ipcRenderer.invoke('url-load', item.url);
                 } else {
                     ipcRenderer.send('tab-visit', item.tabId);
                 }

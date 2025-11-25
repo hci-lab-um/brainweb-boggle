@@ -120,41 +120,75 @@ async function registerIpcHandlers(context) {
         overlayContent.webContents.focus();
         overlayContent.webContents.openDevTools();
 
-        // Extracts the serialisable properties from tabsList
-        const serialisableTabsList = await getSerialisableTabsList(tabsList);
         const activeTab = tabsList.find(tab => tab.isActive);
+        let overlayData = {};
 
-        if (elementProperties && elementProperties.id === 'omnibox') {
-            if (activeTab.isErrorPage) {
-                elementProperties.value = activeTab.originalURL; // If the tab is an error page, we use the original URL
-            } else {
-                elementProperties.value = await activeTab.webContentsView.webContents.getURL();
-            }
-        }
+        switch (overlayName) {
+            case ViewNames.ABOUT:
+            case ViewNames.MORE:
+                overlayData.scenarioId = scenarioId;
+                break;
 
-        let overlayData = {
-            overlayName: overlayName,
-            scenarioId: scenarioId,
-            buttonId: buttonId,
-            isUpperCase: isUpperCase,
-            webpageBounds: webpageBounds,
-            elementProperties: elementProperties,
-            zoomFactor: await activeTab.webContentsView.webContents.getZoomFactor(),
-            bookmarksList: bookmarksList,
-            tabsList: serialisableTabsList,
-            optionsList: elementProperties ? elementProperties.options : null,
-            settingsObject: {
-                homeUrl: await db.getDefaultURL(),
-                keyboardLayout: await db.getDefaultKeyboardLayout(),
-                headsetInUse: await db.getDefaultHeadset(),
-                connectionTypeInUse: await db.getDefaultConnectionType(),
-                adaptiveSwitchInUse: await db.getAdaptiveSwitchConnected(),
-                stimuliInUse: {
-                    pattern: await db.getDefaultStimuliPattern(),
-                    lightColor: await db.getDefaultStimuliLightColor(),
-                    darkColor: await db.getDefaultStimuliDarkColor(),
+            case ViewNames.KEYBOARD:
+                if (elementProperties && elementProperties.id === 'omnibox') {
+                    if (activeTab.isErrorPage) {
+                        elementProperties.value = activeTab.originalURL; // If the tab is an error page, we use the original URL
+                    } else {
+                        elementProperties.value = await activeTab.webContentsView.webContents.getURL();
+                    }
                 }
-            }
+
+                overlayData.elementProperties = elementProperties;
+                overlayData.webpageBounds = webpageBounds;
+                overlayData.settingsObject = {
+                    keyboardLayout: await db.getDefaultKeyboardLayout(),
+                };
+                break;
+
+            case ViewNames.KEYBOARD_KEYS:
+                overlayData.scenarioId = scenarioId;
+                overlayData.buttonId = buttonId;
+                overlayData.isUpperCase = isUpperCase;
+                overlayData.settingsObject = {
+                    keyboardLayout: await db.getDefaultKeyboardLayout(),
+                };
+                break;
+
+            case ViewNames.SEEK:
+            case ViewNames.SELECT:
+                overlayData.webpageBounds = webpageBounds;
+                overlayData.zoomFactor = await activeTab.webContentsView.webContents.getZoomFactor();
+                break;
+
+            case ViewNames.TABS:
+                // Extracts the serialisable properties from tabsList
+                const serialisableTabsList = await getSerialisableTabsList(tabsList);
+                overlayData.tabsList = serialisableTabsList;
+                break;
+
+            case ViewNames.BOOKMARKS:
+                overlayData.bookmarksList = bookmarksList;
+                break;
+
+            case ViewNames.DROPDOWN:
+                overlayData.elementProperties = elementProperties;
+                overlayData.optionsList = elementProperties ? elementProperties.options : null;
+                break;
+
+            case ViewNames.SETTINGS:
+                overlayData.scenarioId = scenarioId;
+                overlayData.settingsObject = {
+                    homeUrl: await db.getDefaultURL(),
+                    keyboardLayout: await db.getDefaultKeyboardLayout(),
+                    headsetInUse: await db.getDefaultHeadset(),
+                    connectionTypeInUse: await db.getDefaultConnectionType(),
+                    adaptiveSwitchInUse: await db.getAdaptiveSwitchConnected(),
+                    stimuliInUse: {
+                        pattern: await db.getDefaultStimuliPattern(),
+                        lightColor: await db.getDefaultStimuliLightColor(),
+                        darkColor: await db.getDefaultStimuliDarkColor(),
+                    }
+                }
         }
 
         try {

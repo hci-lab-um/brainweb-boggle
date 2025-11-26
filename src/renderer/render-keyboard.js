@@ -753,21 +753,28 @@ function attachEventListeners() {
                         if (needsNumpad && ['date', 'month', 'time', 'datetime-local', 'week'].includes(elementTypeAttribute)) {
                             sendValue = input.replace(/ /g, '→');
                         }
-                        
-                        // The overlay is closed before sending the input to ensure the overlay does not interfere with mouse/keyboard actions (such as clicking and typing)
-                        ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
 
                         if (elementProperties.id === 'omnibox') {
                             let processedInput = await processUrlInput(input)
                             await ipcRenderer.invoke('url-load', processedInput);
+
+                            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                         } else if (elementProperties.id === 'homeUrl') {
                             let processedInput = await processUrlInput(input);
                             ipcRenderer.send('homeUrl-update', processedInput);
+
+                            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                         } else if (elementProperties.id === 'findInPage') {
                             ipcRenderer.send('text-findInPage', input);
+
+                            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                         } else if (elementTypeAttribute === 'range') {
                             ipcRenderer.send('rangeElement-setValue', input, elementProperties.boggleId);
+
+                            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                         } else {
+
+                            ipcRenderer.send('overlay-close', ViewNames.KEYBOARD);
                             const coordinates = getCenterCoordinates(elementProperties, webpageBounds);
 
                             ipcRenderer.send('mouse-click-nutjs', coordinates);

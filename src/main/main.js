@@ -434,7 +434,8 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
             webPreferences: {
                 nodeIntegration: false,
                 contextIsolation: true,
-                preload: path.join(__dirname, '../preload/render-tabview.js')
+                preload: path.join(__dirname, '../preload/render-tabview.js'),
+                partition: 'persist:boggle-remote',  // single shared remote session
             }
         });
 

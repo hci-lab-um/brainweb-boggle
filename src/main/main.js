@@ -7,7 +7,7 @@ const db = require('./modules/database');
 const { captureSnapshot, slideInView, toBoolean } = require('../utils/utilityFunctions');
 const { defaultState } = require('../utils/statusBar');
 const logger = require('./modules/logger');
-const { startEegWebSocket, connectWebSocket, disconnectWebSocket, stopEegInfrastructure, eegEvents } = require('./modules/eeg-pipeline');
+const { spawnPythonWebSocketServer, connectWebSocketClient, disconnectWebSocketClient, stopEegInfrastructure, eegEvents } = require('./modules/eeg-pipeline');
 
 let splashWindow;
 let mainWindow;
@@ -30,8 +30,8 @@ let ipcHandlersReady = false;               // This flag indicates if IPC handle
 
 app.whenReady().then(async () => {
     try {
-        await startEegWebSocket();
-        connectWebSocket();
+        await spawnPythonWebSocketServer();
+        connectWebSocketClient();
 
         // app.commandLine.appendSwitch('no-sandbox');
     } catch (err) {
@@ -136,7 +136,7 @@ app.on('window-all-closed', async () => {
         }
 
         // Disconnect the LSL WebSocket
-        disconnectWebSocket();
+        disconnectWebSocketClient();
 
         await db.close();
 

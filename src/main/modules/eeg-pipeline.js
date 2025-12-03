@@ -28,7 +28,7 @@ function clearMessageBuffer() {
 }
 
 // Function used to run the LSL or Emotiv WebSocket Server
-async function startEegWebSocket() {
+async function spawnPythonWebSocketServer() {
     return new Promise((resolve, reject) => {
         let pythonScriptPath;
 
@@ -136,7 +136,7 @@ async function startEegWebSocket() {
     });
 }
 
-function connectWebSocket() {
+function connectWebSocketClient() {
     ws = new WebSocket('ws://localhost:8765');
 
     ws.on('open', () => {
@@ -220,12 +220,12 @@ function connectWebSocket() {
         // Retry on ECONNREFUSED error
         if (error.message.includes('ECONNREFUSED')) {
             console.log(`Retrying ${eegDataSource.toUpperCase()} WebSocket connection in 1 second...`);
-            setTimeout(connectWebSocket, 1000);  // Retry after 1 second
+            setTimeout(connectWebSocketClient, 1000);  // Retry after 1 second
         }
     });
 }
 
-function disconnectWebSocket() {
+function disconnectWebSocketClient() {
     if (ws) {
         try { ws.close(); } catch (_) { }
         ws = null;
@@ -236,7 +236,7 @@ function disconnectWebSocket() {
 
 function stopEegInfrastructure() {
     try {
-        disconnectWebSocket();
+        disconnectWebSocketClient();
     } catch (e) {
         console.error('WS close error:', e);
     }
@@ -441,9 +441,9 @@ async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequen
 }
 
 module.exports = {
-    startEegWebSocket,
-    connectWebSocket,
-    disconnectWebSocket,
+    spawnPythonWebSocketServer,
+    connectWebSocketClient,
+    disconnectWebSocketClient,
     stopEegInfrastructure,
     processDataWithFbcca,
     eegEvents

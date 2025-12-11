@@ -210,6 +210,7 @@
     gap: 20px;
     align-items: center;
 
+    &--gazeLengthSelection,
     &--headsetSelection,
     &--connectionTypeSelection,
     &--keyboardLayoutSelection {
@@ -218,8 +219,16 @@
         gap: 50px;
     }
 
-    @media (max-width: 1366px) {
+    &--colorSelection,
+    &--patternSelection {
+        flex-direction: column;
+        text-align: center;
+        gap: 25px;
+    }
 
+    @media (max-width: 1366px) {
+        &--patternSelection,
+        &--colorSelection,
         &--connectionTypeSelection,
         &--keyboardLayoutSelection {
             width: 70%;
@@ -292,8 +301,18 @@
             gap: 14%;
         }
 
+        &--gazeLengthSelection,
+        &--connectionTypeSelection,
+        &--keyboardLayoutSelection,
         &--headsetSelection {
             gap: 2vw;
+        }
+
+        &--colorSelection,
+        &--patternSelection {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 3vw;
         }
     }
 

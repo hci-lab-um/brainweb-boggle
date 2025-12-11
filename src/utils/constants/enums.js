@@ -193,28 +193,28 @@ const Settings = Object.freeze({
     DEFAULT_STIMULI_PATTERN: {
         NAME: "defaultStimuliPattern",
         LABEL: "Default Stimuli Pattern",
-        DESCRIPTION: "The default pattern used for SSVEP stimuli.",
+        DESCRIPTION: "The default pattern used for rendering the SSVEP stimuli.",
         DEFAULT: Stimuli.PATTERNS_TYPES.PATTERNS.LINE.VALUE,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_LIGHT_COLOR: {
         NAME: "defaultStimuliLightColor",
         LABEL: "Default Stimuli Light Color",
-        DESCRIPTION: "The default light color used for SSVEP stimuli.",
+        DESCRIPTION: "The default light color used for rendering the SSVEP stimuli.",
         DEFAULT: Stimuli.LIGHT_COLORS.COLOURS.WHITE.RGBA,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_STIMULI_DARK_COLOR: {
         NAME: "defaultStimuliDarkColor",
         LABEL: "Default Stimuli Dark Color",
-        DESCRIPTION: "The default dark color used for SSVEP stimuli.",
+        DESCRIPTION: "The default dark color used for rendering the SSVEP stimuli.",
         DEFAULT: Stimuli.DARK_COLORS.COLOURS.GREY.RGBA,
         CATEGORY: SettingCategories.STIMULI,
     },
     DEFAULT_GAZE_LENGTH: {
         NAME: "gazeLengthInSecs",
         LABEL: "Gaze Length (seconds)",
-        DESCRIPTION: "Number of seconds of EEG data collected per window before the classifier runs.",
+        DESCRIPTION: "Duration of EEG data acquisition before classifier execution.",
         DEFAULT: 4,
         CATEGORY: SettingCategories.STIMULI,
     }
@@ -227,6 +227,7 @@ module.exports = {
     ConnectionTypes,
     Headsets,
     KeyboardLayouts,
+    Stimuli,
     Settings,
     SettingCategories
 };

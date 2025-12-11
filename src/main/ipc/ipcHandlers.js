@@ -1,6 +1,7 @@
 const { app, WebContentsView, BaseWindow, ipcMain, screen, View } = require('electron')
 const path = require('path');
-const { ViewNames } = require('../../utils/constants/enums');
+const fs = require('fs');
+const { ViewNames, Settings } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
@@ -185,8 +186,9 @@ async function registerIpcHandlers(context) {
                     adaptiveSwitchInUse: await db.getAdaptiveSwitchConnected(),
                     stimuliInUse: {
                         pattern: await db.getDefaultStimuliPattern(),
-                        lightColor: await db.getDefaultStimuliLightColor(),
-                        darkColor: await db.getDefaultStimuliDarkColor(),
+                        lightRgba: await db.getDefaultStimuliLightColor(),
+                        darkRgba: await db.getDefaultStimuliDarkColor(),
+                        gazeLengthInSecs: await db.getDefaultGazeLength()
                     }
                 }
         }
@@ -513,6 +515,115 @@ async function registerIpcHandlers(context) {
         } catch (err) {
             logger.error('Error retrieving adaptive switch connected status:', err.message);
             return false;
+        }
+    });
+
+    // Updating the stimuli settings for all open views including the mainwindow
+    function broadcastStimuliSettings(partial) {
+        const payload = partial || {};
+        try {
+            if (mainWindowContent?.webContents) {
+                mainWindowContent.webContents.send('stimuliSettings-update', payload);
+            }
+            if (Array.isArray(viewsList)) {
+                viewsList.forEach(view => {
+                    try {
+                        view.webContentsView?.webContents?.send('stimuliSettings-update', payload);
+                    } catch (_) { }
+                });
+            }
+        } catch (err) {
+            logger.error('Error broadcasting stimuli settings:', err.message);
+        }
+    }
+
+    // Updates all stimuli settings at once and broadcast
+    ipcMain.on('stimuliSettings-update', async (event, settings) => {
+        try {
+            db.updateDefaultStimuliPattern(settings.pattern);
+            db.updateDefaultStimuliLightColor(settings.lightColor);
+            db.updateDefaultStimuliDarkColor(settings.darkColor);
+
+            broadcastStimuliSettings(settings);
+        } catch (err) {
+            logger.error('Error updating stimuli settings:', err.message);
+        }
+    });
+
+    // Update stimuli pattern and broadcast
+    ipcMain.on('stimuliPattern-update', async (event, newPattern) => {
+        try {
+            await db.updateDefaultStimuliPattern(newPattern);
+            broadcastStimuliSettings({ pattern: newPattern });
+        } catch (err) {
+            logger.error('Error updating stimuli pattern:', err.message);
+        }
+    });
+
+    // Update stimuli light color and broadcast
+    ipcMain.on('stimuliLightColor-update', async (event, newColor) => {
+        try {
+            await db.updateDefaultStimuliLightColor(newColor);
+            broadcastStimuliSettings({ lightColor: newColor });
+        } catch (err) {
+            logger.error('Error updating stimuli light color:', err.message);
+        }
+    });
+
+    // Update stimuli dark color and broadcast
+    ipcMain.on('stimuliDarkColor-update', async (event, newColor) => {
+        try {
+            await db.updateDefaultStimuliDarkColor(newColor);
+            broadcastStimuliSettings({ darkColor: newColor });
+        } catch (err) {
+            logger.error('Error updating stimuli dark color:', err.message);
+        }
+    });
+
+    // Returns default stimuli visual settings from the database
+    ipcMain.handle('stimuliSettings-get', async () => {
+        try {
+            const [pattern, lightColor, darkColor] = await Promise.all([
+                db.getDefaultStimuliPattern(),
+                db.getDefaultStimuliLightColor(),
+                db.getDefaultStimuliDarkColor(),
+            ]);
+            return { pattern, lightColor, darkColor };
+        } catch (err) {
+            logger.error('Error retrieving stimuli settings:', err.message);
+        }
+    });
+
+    ipcMain.on('gazeLength-update', (event, newGazeLengthInSecs) => {
+        try {
+            // Update in-memory configuration value used by interval scheduling
+            const numericValue = Number(newGazeLengthInSecs);
+            if (Number.isFinite(numericValue) && numericValue > 0) {
+                fbccaConfiguration.gazeLengthInSecs = numericValue;
+
+                // Persist to DB if setter exists
+                try {
+                    db.updateDefaultGazeLength(numericValue);
+                } catch (dbErr) {
+                    logger.warn('Could not persist gaze length to DB:', dbErr.message);
+                }
+
+                // Update configs/fbccaConfig.json immediately
+                try {
+                    const configFilePath = path.join(__dirname, '../../../configs/fbccaConfig.json');
+                    const configPath = path.resolve(configFilePath);
+                    const raw = fs.readFileSync(configPath, 'utf8');
+                    const cfg = JSON.parse(raw);
+                    cfg.gazeLengthInSecs = numericValue;
+                    fs.writeFileSync(configPath, JSON.stringify(cfg, null, 4));
+                } catch (fsErr) {
+                    logger.warn('Could not write fbccaConfig.json with new gaze length:', fsErr.message);
+                }
+            } else {
+                logger.warn(`Ignored invalid gaze length: ${newGazeLengthInSecs}`);
+            }
+        } catch (err) {
+            logger.error('Error updating gaze length interval:', err.message);
         }
     });
 

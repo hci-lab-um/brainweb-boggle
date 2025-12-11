@@ -85,10 +85,12 @@ async function showHeadsetSettings() {
     await selectScenarioIdForHeadset();
 }
 
-function showStimuliSettings() {
+async function showStimuliSettings() {
     updateVisibility('stimuliSettings');
     populateStimuliSettings();
     setCloseButtonMode('back');
+
+    await updateScenarioId(105, buttons, ViewNames.SETTINGS);
 }
 
 async function showSettingsSelection() {
@@ -144,6 +146,49 @@ function updateVisibility(containerIdToShow) {
                     return;
             }
         }
+    }
+}
+
+// Maps an RGBA string to a defined colour name from enums
+function getColorNameFromRgba(rgbaString, palette) {
+    if (!rgbaString || !palette) return '';
+    try {
+        // palette is Stimuli.LIGHT_COLORS.COLOURS or Stimuli.DARK_COLORS.COLOURS
+        for (const key of Object.keys(palette)) {
+            const colour = palette[key];
+            if (colour && colour.RGBA === rgbaString) {
+                return colour.NAME;
+            }
+        }
+    } catch (err) {
+        logger.warn(`Error mapping RGBA to color name: ${err.message}`);
+    }
+    return '';
+}
+
+function setCloseButtonMode(mode) {
+    if (!closeSettingsButton) {
+        return;
+    }
+
+    closeSettingsButton.dataset.mode = mode;
+
+    const iconElement = closeSettingsButton.querySelector('i');
+    // Update button text and aria-label based on whether to close or go back
+    if (mode === 'back') {
+        if (iconElement) {
+            iconElement.textContent = 'arrow_back';
+        } else {
+            closeSettingsButton.textContent = 'Back';
+        }
+        closeSettingsButton.setAttribute('aria-label', 'Back to Settings');
+    } else {
+        if (iconElement) {
+            iconElement.textContent = 'close';
+        } else {
+            closeSettingsButton.textContent = 'Close';
+        }
+        closeSettingsButton.setAttribute('aria-label', 'Close Settings');
     }
 }
 
@@ -422,56 +467,265 @@ function populateStimuliSettings() {
     container.appendChild(cardsContainer);
 
     // -------------------------------
-    // Default Stimuli Setting
+    // Default Stimuli Pattern
     // ------------------------------- 
-    const stimuliCard = document.createElement('div');
-    stimuliCard.classList.add('settingCard');
+    const patternCard = document.createElement('div');
+    patternCard.classList.add('settingCard');
 
-    const stimuliTextContainer = document.createElement('div');
+    const patternTextContainer = document.createElement('div');
 
-    const stimuliCardH3 = document.createElement('h3');
-    stimuliCardH3.innerHTML = `${Settings.DEFAULT_STIMULI_PATTERN.LABEL}`;
-    stimuliTextContainer.appendChild(stimuliCardH3);
+    const patternCardH3 = document.createElement('h3');
+    patternCardH3.innerHTML = `${Settings.DEFAULT_STIMULI_PATTERN.LABEL}`;
+    patternTextContainer.appendChild(patternCardH3);
 
-    const stimuliDesc = document.createElement('p');
-    stimuliDesc.textContent = Settings.DEFAULT_STIMULI_PATTERN.DESCRIPTION;
-    stimuliTextContainer.appendChild(stimuliDesc);
-    stimuliCard.appendChild(stimuliTextContainer);
+    const patternDesc = document.createElement('p');
+    patternDesc.textContent = Settings.DEFAULT_STIMULI_PATTERN.DESCRIPTION;
+    patternTextContainer.appendChild(patternDesc);
+    patternCard.appendChild(patternTextContainer);
 
-    const stimuliBtn = document.createElement('button');
-    stimuliBtn.innerHTML = `<span>${stimuliInUse.pattern || 'Unknown'}</span>`;
-    stimuliBtn.id = 'stimuliPatternBtn';
-    stimuliBtn.classList.add('button');
-    stimuliBtn.rel = 'noreferrer noopener';
-    stimuliCard.appendChild(stimuliBtn);
+    const patternBtn = document.createElement('button');
+    patternBtn.innerHTML = `<span>${stimuliInUse.pattern || 'Unknown'}</span>`;
+    patternBtn.id = 'stimuliPatternBtn';
+    patternBtn.classList.add('button');
+    patternBtn.rel = 'noreferrer noopener';
+    patternCard.appendChild(patternBtn);
 
-    cardsContainer.appendChild(stimuliCard);
-}
+    cardsContainer.appendChild(patternCard);
 
-function setCloseButtonMode(mode) {
-    if (!closeSettingsButton) {
-        return;
-    }
+    // -------------------------------
+    // Default Stimuli Light Color
+    // -------------------------------
+    const lightColorCard = document.createElement('div');
+    lightColorCard.classList.add('settingCard');
 
-    closeSettingsButton.dataset.mode = mode;
+    const lightColorTextContainer = document.createElement('div');
 
-    const iconElement = closeSettingsButton.querySelector('i');
-    // Update button text and aria-label based on whether to close or go back
-    if (mode === 'back') {
-        if (iconElement) {
-            iconElement.textContent = 'arrow_back';
-        } else {
-            closeSettingsButton.textContent = 'Back';
-        }
-        closeSettingsButton.setAttribute('aria-label', 'Back to Settings');
-    } else {
-        if (iconElement) {
-            iconElement.textContent = 'close';
-        } else {
-            closeSettingsButton.textContent = 'Close';
-        }
-        closeSettingsButton.setAttribute('aria-label', 'Close Settings');
-    }
+    const lightColorH3 = document.createElement('h3');
+    lightColorH3.innerHTML = `${Settings.DEFAULT_STIMULI_LIGHT_COLOR.LABEL}`;
+    lightColorTextContainer.appendChild(lightColorH3);
+
+    const lightColorDesc = document.createElement('p');
+    lightColorDesc.textContent = Settings.DEFAULT_STIMULI_LIGHT_COLOR.DESCRIPTION;
+    lightColorTextContainer.appendChild(lightColorDesc);
+    lightColorCard.appendChild(lightColorTextContainer);
+
+    const lightColorBtn = document.createElement('button');
+    const lightRgba = stimuliInUse.lightRgba || Settings.DEFAULT_STIMULI_LIGHT_COLOR.DEFAULT || '';
+    const lightColorName = getColorNameFromRgba(lightRgba, Stimuli.LIGHT_COLORS.COLOURS) || stimuliInUse.lightRgba;
+    lightColorBtn.innerHTML = `<span>${lightColorName || lightRgba || 'Not configured'}</span>`;
+    lightColorBtn.id = 'stimuliLightColorBtn';
+    lightColorBtn.classList.add('button');
+    lightColorCard.appendChild(lightColorBtn);
+
+    cardsContainer.appendChild(lightColorCard);
+
+    // -------------------------------
+    // Default Stimuli Dark Color
+    // -------------------------------
+    const darkColorCard = document.createElement('div');
+    darkColorCard.classList.add('settingCard');
+
+    const darkColorTextContainer = document.createElement('div');
+
+    const darkColorH3 = document.createElement('h3');
+    darkColorH3.innerHTML = `${Settings.DEFAULT_STIMULI_DARK_COLOR.LABEL}`;
+    darkColorTextContainer.appendChild(darkColorH3);
+
+    const darkColorDesc = document.createElement('p');
+    darkColorDesc.textContent = Settings.DEFAULT_STIMULI_DARK_COLOR.DESCRIPTION;
+    darkColorTextContainer.appendChild(darkColorDesc);
+    darkColorCard.appendChild(darkColorTextContainer);
+
+    const darkColorBtn = document.createElement('button');
+    const darkRgba = stimuliInUse.darkRgba || Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT;
+    const darkColorName = getColorNameFromRgba(darkRgba, Stimuli.DARK_COLORS.COLOURS) || stimuliInUse.darkRgba;
+    darkColorBtn.innerHTML = `<span>${darkColorName || darkRgba || 'Not configured'}</span>`;
+    darkColorBtn.id = 'stimuliDarkColorBtn';
+    darkColorBtn.classList.add('button');
+    darkColorCard.appendChild(darkColorBtn);
+
+    cardsContainer.appendChild(darkColorCard);
+
+    // -------------------------------
+    // Default Gaze Length
+    // -------------------------------
+    const gazeLengthCard = document.createElement('div');
+    gazeLengthCard.classList.add('settingCard');
+
+    const gazeLengthTextContainer = document.createElement('div');
+
+    const gazeLengthH3 = document.createElement('h3');
+    gazeLengthH3.innerHTML = `${Settings.DEFAULT_GAZE_LENGTH.LABEL}`;
+    gazeLengthTextContainer.appendChild(gazeLengthH3);
+
+    const gazeLengthDesc = document.createElement('p');
+    gazeLengthDesc.textContent = Settings.DEFAULT_GAZE_LENGTH.DESCRIPTION;
+    gazeLengthTextContainer.appendChild(gazeLengthDesc);
+    gazeLengthCard.appendChild(gazeLengthTextContainer);
+
+    const gazeLengthBtn = document.createElement('button');
+    const gazeLengthValue = (stimuliInUse.gazeLengthInSecs) || Settings.DEFAULT_GAZE_LENGTH.DEFAULT;
+    gazeLengthBtn.innerHTML = `<span>${gazeLengthValue ?? 'Not configured'}</span>`;
+    gazeLengthBtn.id = 'gazeLengthBtn';
+    gazeLengthBtn.classList.add('button');
+    gazeLengthCard.appendChild(gazeLengthBtn);
+
+    cardsContainer.appendChild(gazeLengthCard);
+
+    // -------------------------------
+    // Restore Default Stimuli Settings
+    // -------------------------------
+    const restoreDefaultsCard = document.createElement('div');
+    restoreDefaultsCard.classList.add('settingCard');
+
+    const restoreDefaultsTextContainer = document.createElement('div');
+
+    const restoreDefaultsH3 = document.createElement('h3');
+    restoreDefaultsH3.innerHTML = `Restore Defaults`;
+    restoreDefaultsTextContainer.appendChild(restoreDefaultsH3);
+
+    const restoreDefaultsDesc = document.createElement('p');
+    restoreDefaultsDesc.textContent = 'Selecting this button will revert all changes to the default settings.';
+    restoreDefaultsTextContainer.appendChild(restoreDefaultsDesc);
+    restoreDefaultsCard.appendChild(restoreDefaultsTextContainer);
+
+    const restoreDefaultsBtn = document.createElement('button');
+    restoreDefaultsBtn.innerHTML = `<span>Reset</span>`;
+    restoreDefaultsBtn.id = 'stimuliRestoreDefaultsBtn';
+    restoreDefaultsBtn.classList.add('button');
+    restoreDefaultsCard.appendChild(restoreDefaultsBtn);
+
+    cardsContainer.appendChild(restoreDefaultsCard);
+
+    // -------------------------------
+    // Event Listeners for Buttons
+    // -------------------------------
+    patternBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        patternBtn.disabled = true;
+        setTimeout(() => { patternBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(patternBtn);
+
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showPatternSelectionPopup();
+            } catch (error) {
+                logger.error('Error creating stimuli pattern selection modal:', error.message);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    lightColorBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        lightColorBtn.disabled = true;
+        setTimeout(() => { lightColorBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(lightColorBtn);
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showColorSelectionPopup('light');
+            } catch (error) {
+                logger.error('Error creating color selection modal:', error.message);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    darkColorBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        darkColorBtn.disabled = true;
+        setTimeout(() => { darkColorBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(darkColorBtn);
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showColorSelectionPopup('dark');
+            } catch (error) {
+                logger.error('Error creating color selection modal:', error.message);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    gazeLengthBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        gazeLengthBtn.disabled = true;
+        setTimeout(() => { gazeLengthBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(gazeLengthBtn);
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                await showGazeLengthSelectionPopup();
+            } catch (error) {
+                logger.error('Error creating gaze length selection modal:', error.message);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    restoreDefaultsBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        restoreDefaultsBtn.disabled = true;
+        setTimeout(() => { restoreDefaultsBtn.disabled = false; }, 1500);
+        addButtonSelectionAnimation(restoreDefaultsBtn);
+
+        setTimeout(async () => {
+            await stopManager();
+
+            try {
+                // Apply defaults from enums
+                const defaultPattern = Settings.DEFAULT_STIMULI_PATTERN.DEFAULT;
+                const defaultLightRgba = Settings.DEFAULT_STIMULI_LIGHT_COLOR.DEFAULT;
+                const defaultDarkRgba = Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT;
+                const defaultGazeLen = Settings.DEFAULT_GAZE_LENGTH.DEFAULT;
+
+                stimuliInUse.pattern = defaultPattern;
+                stimuliInUse.lightColor = {
+                    name: getColorNameFromRgba(defaultLightRgba, Stimuli.LIGHT_COLORS.COLOURS) || 'Default',
+                    rgba: defaultLightRgba
+                };
+                stimuliInUse.darkColor = {
+                    name: getColorNameFromRgba(defaultDarkRgba, Stimuli.DARK_COLORS.COLOURS) || 'Default',
+                    rgba: defaultDarkRgba
+                };
+                stimuliInUse.gazeLengthInSecs = defaultGazeLen;
+
+                // Update UI buttons
+                const patternBtn = document.getElementById('stimuliPatternBtn');
+                const lightColorBtn = document.getElementById('stimuliLightColorBtn');
+                const darkColorBtn = document.getElementById('stimuliDarkColorBtn');
+                const gazeLengthBtnLocal = document.getElementById('gazeLengthBtn');
+
+                if (patternBtn) patternBtn.innerHTML = `<span>${stimuliInUse.pattern || 'Unknown'}</span>`;
+                if (lightColorBtn) lightColorBtn.innerHTML = `<span>${stimuliInUse.lightColor.name || stimuliInUse.lightColor.rgba}</span>`;
+                if (darkColorBtn) darkColorBtn.innerHTML = `<span>${stimuliInUse.darkColor.name || stimuliInUse.darkColor.rgba}</span>`;
+                if (gazeLengthBtnLocal) gazeLengthBtnLocal.innerHTML = `<span>${stimuliInUse.gazeLengthInSecs}</span>`;
+
+                // Persist defaults to DB (using existing IPC channels where available)
+                ipcRenderer.send('stimuliSettings-update', {
+                    pattern: stimuliInUse.pattern,
+                    lightColor: stimuliInUse.lightColor.rgba,
+                    darkColor: stimuliInUse.darkColor.rgba
+                });
+                ipcRenderer.send('gazeLength-update', stimuliInUse.gazeLengthInSecs);
+
+                // Wait for cache update before restarting scenario
+                await new Promise((resolve) => {
+                    const handler = (_event, _settings) => {
+                        ipcRenderer.removeListener('stimuliSettings-update', handler);
+                        resolve();
+                    };
+                    ipcRenderer.on('stimuliSettings-update', handler);
+                });
+
+                await updateScenarioId(105, undefined, ViewNames.SETTINGS);
+            } catch (error) {
+                logger.error('Error restoring default stimuli settings:', error.message);
+            }
+        }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
 }
 
 async function showHeadsetSelectionPopup() {
@@ -690,6 +944,217 @@ async function showKeyboardLayoutSelectionPopup() {
         await updateScenarioId(103, buttonsList, ViewNames.SETTINGS);
     } catch (error) {
         logger.error('Error opening keyboard layout selection popup:', error.message);
+    }
+}
+
+async function showPatternSelectionPopup() {
+    try {
+        const buttonsList = [];
+        const patternCards = [];
+        Object.values(Stimuli.PATTERNS_TYPES.PATTERNS).forEach((patternType, index) => {
+            const idSuffix = ['first', 'second', 'third', 'fourth'][index];
+
+            const patternCard = document.createElement('div');
+            patternCard.classList.add('patternCard');
+
+            let patternPreview;
+            const patternValue = patternType.VALUE.toLowerCase();
+            const assetMap = {
+                line: 'line_stimuli.svg',
+                solid: 'solid_stimuli.png',
+                chequered: 'chequered_stimuli.png',
+                dot: 'dot_stimuli.svg'
+            };
+
+            const maybeAsset = assetMap[patternValue];
+            if (maybeAsset) {
+                const img = document.createElement('img');
+                img.classList.add('patternPreviewImage');
+                img.src = `../../../resources/${maybeAsset}`;
+                img.alt = `${patternType.NAME} preview`;
+                // Fallback to CSS preview if image is missing
+                img.onerror = () => {
+                    const fallback = document.createElement('div');
+                    fallback.classList.add('patternPreview', `patternPreview--${patternValue}`);
+                    img.replaceWith(fallback);
+                };
+                patternPreview = img;
+            } else {
+                patternPreview = document.createElement('div');
+                patternPreview.classList.add('patternPreview', `patternPreview--${patternValue}`);
+            }
+            patternCard.appendChild(patternPreview);
+
+            const selectPatternBtn = document.createElement('button');
+            selectPatternBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
+            selectPatternBtn.classList.add('button', 'popup__btn', 'popup__btn--pattern');
+            selectPatternBtn.textContent = `${patternType.NAME}`;
+
+            patternCard.appendChild(selectPatternBtn);
+            buttonsList.push(selectPatternBtn);
+            patternCards.push(patternCard);
+
+            selectPatternBtn.onclick = () => {
+                addButtonSelectionAnimation(selectPatternBtn);
+                setTimeout(async () => {
+                    stimuliInUse.pattern = patternType.VALUE;
+
+                    // Updating the UI
+                    const patternBtn = document.getElementById('stimuliPatternBtn');
+                    patternBtn.innerHTML = `<span>${stimuliInUse.pattern || 'Unknown'}</span>`;
+
+                    // Updating the default stimuli pattern in the db
+                    ipcRenderer.send('stimuliPattern-update', stimuliInUse.pattern);
+
+                    // Wait for the renderer cache to be updated via 'stimuliSettings-update' before changing scenario
+                    await new Promise((resolve) => {
+                        const handler = (_event, _settings) => {
+                            ipcRenderer.removeListener('stimuliSettings-update', handler);
+                            resolve();
+                        };
+                        ipcRenderer.on('stimuliSettings-update', handler);
+                    });
+
+                    popupElements.close();
+                    await updateScenarioId(105, buttonsList, ViewNames.SETTINGS);
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+            };
+        });
+
+        const popupElements = createPopup({
+            name: 'patternSelection',
+            message: 'Choose Stimuli Pattern',
+            classes: ['popup--patternSelection'],
+            buttons: patternCards
+        });
+        await updateScenarioId(106, buttonsList, ViewNames.SETTINGS);
+    } catch (error) {
+        logger.error('Error opening pattern selection popup:', error.message);
+    }
+}
+
+async function showColorSelectionPopup(type) {
+    try {
+        const buttonsList = [];
+        const colorCards = [];
+
+        Object.values(type === 'light' ? Stimuli.LIGHT_COLORS.COLOURS : Stimuli.DARK_COLORS.COLOURS).forEach((colorType, index) => {
+            const idSuffix = ['first', 'second', 'third', 'fourth'][index];
+
+            const colorCard = document.createElement('div');
+            colorCard.classList.add('colorCard');
+
+            const colorPreview = document.createElement('div');
+            colorPreview.classList.add('colorPreview');
+            colorPreview.style.backgroundColor = `rgba(${colorType.RGBA})`;
+            colorCard.appendChild(colorPreview);
+
+            const selectColorBtn = document.createElement('button');
+            selectColorBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
+            selectColorBtn.classList.add('button', 'popup__btn', 'popup__btn--color');
+            selectColorBtn.textContent = `${colorType.NAME}`;
+            colorCard.appendChild(selectColorBtn);
+
+            buttonsList.push(selectColorBtn);
+            colorCards.push(colorCard);
+
+            selectColorBtn.onclick = () => {
+                addButtonSelectionAnimation(selectColorBtn);
+                setTimeout(async () => {
+                    if (type === 'light') {
+                        stimuliInUse.lightColor = {
+                            name: colorType.NAME,
+                            rgba: colorType.RGBA
+                        };
+                    } else {
+                        stimuliInUse.darkColor = {
+                            name: colorType.NAME,
+                            rgba: colorType.RGBA
+                        };
+                    }
+
+                    // Updating the UI
+                    const colorBtn = document.getElementById(type === 'light' ? 'stimuliLightColorBtn' : 'stimuliDarkColorBtn');
+                    colorBtn.innerHTML = `<span>${type === 'light' ? stimuliInUse.lightColor.name : stimuliInUse.darkColor.name || 'Unknown'}</span>`;
+
+                    // Updating the default stimuli light color in the db
+                    ipcRenderer.send(type === 'light' ? 'stimuliLightColor-update' : 'stimuliDarkColor-update', type === 'light' ? stimuliInUse.lightColor.rgba : stimuliInUse.darkColor.rgba);
+
+                    // Wait for the renderer cache to be updated via 'stimuliSettings-update' before changing scenario
+                    await new Promise((resolve) => {
+                        const handler = (_event, _settings) => {
+                            ipcRenderer.removeListener('stimuliSettings-update', handler);
+                            resolve();
+                        };
+                        ipcRenderer.on('stimuliSettings-update', handler);
+                    });
+
+                    popupElements.close();
+                    await updateScenarioId(105, buttonsList, ViewNames.SETTINGS);
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+            };
+        });
+
+        const popupElements = createPopup({
+            name: 'colorSelection',
+            message: `Choose Stimuli ${type === 'light' ? 'Light' : 'Dark'} Color`,
+            classes: ['popup--colorSelection'],
+            buttons: colorCards
+        });
+        await updateScenarioId(106, buttonsList, ViewNames.SETTINGS);
+    } catch (error) {
+        logger.error('Error opening light color selection popup:', error.message);
+    }
+}
+
+async function showGazeLengthSelectionPopup() {
+    try {
+        const buttonsList = [];
+        const gazeLengthCards = [];
+        const gazeLengths = [2, 3, 4]; // in seconds
+
+        gazeLengths.forEach((gazeLength, index) => {
+            const idSuffix = ['first', 'second', 'third'][index];
+
+            const gazeLengthCard = document.createElement('div');
+            gazeLengthCard.classList.add('gazeLengthCard');
+
+            const selectGazeLengthBtn = document.createElement('button');
+            selectGazeLengthBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
+            selectGazeLengthBtn.classList.add('button', 'popup__btn', 'popup__btn--gazeLength');
+            selectGazeLengthBtn.textContent = `${gazeLength} Seconds`;
+            gazeLengthCard.appendChild(selectGazeLengthBtn);
+
+            buttonsList.push(selectGazeLengthBtn);
+            gazeLengthCards.push(gazeLengthCard);
+
+            selectGazeLengthBtn.onclick = () => {
+                addButtonSelectionAnimation(selectGazeLengthBtn);
+                setTimeout(async () => {
+                    stimuliInUse.gazeLengthInSecs = gazeLength;
+
+                    // Updating the UI
+                    const gazeLengthBtn = document.getElementById('gazeLengthBtn');
+                    gazeLengthBtn.innerHTML = `<span>${stimuliInUse.gazeLengthInSecs || 'Unknown'}</span>`;
+
+                    // Updating the default gaze length in the db
+                    ipcRenderer.send('gazeLength-update', stimuliInUse.gazeLengthInSecs);
+
+                    popupElements.close();
+                    await updateScenarioId(105, buttonsList, ViewNames.SETTINGS);
+                }, CssConstants.SELECTION_ANIMATION_DURATION);
+            };
+        });
+
+        const popupElements = createPopup({
+            name: 'gazeLengthSelection',
+            message: 'Choose Gaze Length',
+            classes: ['popup--gazeLengthSelection'],
+            buttons: gazeLengthCards
+        });
+        await updateScenarioId(106, buttonsList, ViewNames.SETTINGS);
+    } catch (error) {
+        logger.error('Error opening gaze length selection popup:', error.message);
     }
 }
 

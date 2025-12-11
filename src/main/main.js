@@ -1,4 +1,4 @@
-const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut, ipcRenderer } = require('electron')
+const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut } = require('electron')
 const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
 const path = require('path')
 const fs = require('fs');
@@ -16,7 +16,7 @@ let tabView;
 let viewsList = [];                         // This contains all the instantces of WebContentsView that are created. IMP: It excludes the tabs 
 let scenarioIdDict = {};                    // This is a dictionary that contains the scenarioId for each view
 let webpageBounds;
-let defaultUrl = "https://www.google.com"
+let defaultUrl;
 let bookmarksList = [];                     // This will hold the bookmarks fetched from the database
 let tabsList = [];                          // This will hold the list of tabs created in the main window
 let tabsFromDatabase = [];                  // This will hold the tabs fetched from the database
@@ -29,15 +29,6 @@ let isHeadsetConnected = false;             // This flag indicates if the EEG he
 let ipcHandlersReady = false;               // This flag indicates if IPC handlers are ready
 
 app.whenReady().then(async () => {
-    try {
-        await spawnPythonWebSocketServer();
-        connectWebSocketClient();
-
-        // app.commandLine.appendSwitch('no-sandbox');
-    } catch (err) {
-        logger.error('Error starting LSL WebSocket:', err.message);
-    }
-
     eegEvents.on('headset-connected', () => {
         isHeadsetConnected = true;
         broadcastStatusBarState({ headsetConnected: isHeadsetConnected }); // Send to main window renderer
@@ -61,10 +52,12 @@ app.whenReady().then(async () => {
         // await db.deleteHeadsetsTable();          // For development purposes only
         // await db.deleteKeyboardLayoutsTable();   // For development purposes only
         // await db.deleteSettingsTable();          // For development purposes only
-        await initialiseVariables();
 
         await updateConfigFromDatabase();
 
+        bookmarksList = await db.getBookmarks();
+        tabsFromDatabase = await db.getTabs();
+        defaultUrl = await db.getDefaultURL();
         adaptiveSwitchInUse = await db.getAdaptiveSwitchConnected();
         const defaultHeadset = await db.getDefaultHeadset();
 
@@ -76,6 +69,14 @@ app.whenReady().then(async () => {
         });
     } catch (err) {
         logger.error('Error initialising database:', err.message);
+    }
+
+    try {
+        const defaultConnectionType = await db.getDefaultConnectionType();
+        await spawnPythonWebSocketServer(defaultConnectionType);
+        connectWebSocketClient();
+    } catch (err) {
+        logger.error('Error starting EEG transport through the Python WebSocket server:', err.message);
     }
 
     try {
@@ -183,15 +184,6 @@ async function updateConfigFromDatabase() {
             logger.error('Error fetching headset details from database:', err.message);
         }
     });
-}
-
-async function initialiseVariables() {
-    try {
-        bookmarksList = await db.getBookmarks();
-        tabsFromDatabase = await db.getTabs();
-    } catch (err) {
-        logger.error("Error initialising variables: ", err.message);
-    }
 }
 
 function updateStatusBarState(partial = {}) {

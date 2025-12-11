@@ -330,7 +330,7 @@ function createKeyboardLayoutsTable() {
     });
 }
 
-function populateKeyboardLayoutsTable() {
+async function populateKeyboardLayoutsTable() {
     return new Promise((resolve, reject) => {
         const allRows = [];
         const values = [];
@@ -901,7 +901,6 @@ async function getSetting(setting) {
             const query = `SELECT value FROM settings WHERE name = ?`;
             db.get(query, [setting], (err, row) => {
                 if (err) {
-                    logger.error(`Error retrieving ${setting}:`, err.message);
                     reject(err);
                 } else {
                     resolve(row.value);
@@ -1015,6 +1014,10 @@ function updateDefaultStimuliDarkColor(newColor) {
     return updateSetting(Settings.DEFAULT_STIMULI_DARK_COLOR.NAME, newColor);
 }
 
+function updateDefaultGazeLength(newGazeLength) {
+    return updateSetting(Settings.DEFAULT_GAZE_LENGTH.NAME, newGazeLength);
+}
+
 module.exports = {
     connect,
     close,
@@ -1058,4 +1061,5 @@ module.exports = {
     updateDefaultStimuliPattern,
     updateDefaultStimuliLightColor,
     updateDefaultStimuliDarkColor,
+    updateDefaultGazeLength
 };

@@ -70,7 +70,7 @@ function createPopup({
         const buttonsContainer = document.createElement('div');
         buttonsContainer.classList.add('popup__btnsContainer');
         if (name === 'itemAction') buttonsContainer.classList.add('popup__btnsContainer--itemAction')
-        else if (name === 'headsetSelection' || name === 'connectionTypeSelection' || name === 'keyboardLayoutSelection') buttonsContainer.classList.add('popup__btnsContainer--headsetSelection')
+        else buttonsContainer.classList.add(`popup__btnsContainer--${name}`)
         buttons.forEach(btn => buttonsContainer.appendChild(btn));
         popup.appendChild(buttonsContainer);
     }

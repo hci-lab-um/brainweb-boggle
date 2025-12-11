@@ -4,11 +4,11 @@ const { spawn } = require('child_process');
 const WebSocket = require('ws');
 const { EventEmitter } = require('events');
 const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
-const { browserConfig } = require('../../../configs/browserConfig');
+const { ConnectionTypes } = require('../../utils/constants/enums');
 
 const eegEvents = new EventEmitter();
-const eegDataSource = browserConfig.eegDataSource; // 'lsl' or 'emotiv'
 const requiredSampleCount = totalDataPointCount();
+let connectionType;
 let messageResult = { data: [] };
 let ws = null;
 let pythonShellInstance = null;
@@ -28,22 +28,29 @@ function clearMessageBuffer() {
 }
 
 // Function used to run the LSL or Emotiv WebSocket Server
-async function spawnPythonWebSocketServer() {
+async function spawnPythonWebSocketServer(defaultConnectionType) {
     return new Promise((resolve, reject) => {
-        let pythonScriptPath;
+        connectionType = defaultConnectionType;
 
-        console.log(`Starting ${eegDataSource.toUpperCase()} EEG WebSocket server...`);
+        console.log(`Starting ${defaultConnectionType.toUpperCase()} EEG WebSocket server...`);
 
         // reset state at start
         serverState.ready = false;
         serverState.errorSinceReady = false;
 
-        // Choose the appropriate Python script based on configuration
-        if (eegDataSource === 'emotiv') {
-            pythonScriptPath = path.join(__dirname, '../../ssvep/lsl/emotiv_websocket_server.py');
-        } else {
-            pythonScriptPath = path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
-        }
+        // Selecting the appropriate Python script based on configuration
+        const pythonScriptPath = (() => {
+            switch (connectionType) {
+                case ConnectionTypes.CORTEX_API.NAME:
+                    return path.join(__dirname, '../../ssvep/lsl/emotiv_websocket_server.py');
+                case ConnectionTypes.TCP_IP.NAME:
+                    return "";
+                case ConnectionTypes.LSL.NAME:                    
+                    return path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
+                default:
+                    return path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
+            }
+        })();
 
         const pythonProcess = spawn('python', ['-u', pythonScriptPath]); // -u was used to disable output buffering (allow logs to pass in stdout)
         pythonProcessRef = pythonProcess; // store for later kill
@@ -131,7 +138,7 @@ async function spawnPythonWebSocketServer() {
         });
 
         pythonProcess.on('close', (code) => {
-            console.log(`${eegDataSource}_websocket_server.py process exited with code ${code}`);
+            console.log(`${defaultConnectionType}_websocket_server.py process exited with code ${code}`);
         });
     });
 }
@@ -140,7 +147,7 @@ function connectWebSocketClient() {
     ws = new WebSocket('ws://localhost:8765');
 
     ws.on('open', () => {
-        console.log(`Connected to ${eegDataSource.toUpperCase()} WebSocket server`);
+        console.log(`Connected to ${connectionType.toUpperCase()} WebSocket server`);
     });
 
     ws.on('message', function incoming(data) {
@@ -157,7 +164,7 @@ function connectWebSocketClient() {
                 const jsonData = JSON.parse(dataString);
 
                 // Handle different data formats based on the EEG data source
-                if (eegDataSource === 'emotiv') {
+                if (connectionType === 'emotiv') {
                     // Emotiv data format enhanced: {time, values, qualityData: {timestamp, data: [...]}}
                     // Marking headset as connected only upon receiving actual data
                     if (jsonData.time && Array.isArray(jsonData.values)) {
@@ -215,11 +222,11 @@ function connectWebSocketClient() {
     });
 
     ws.on('error', (error) => {
-        console.error(`${eegDataSource.toUpperCase()} WebSocket error:`, error.message);
+        console.error(`${connectionType.toUpperCase()} WebSocket error:`, error.message);
 
         // Retry on ECONNREFUSED error
         if (error.message.includes('ECONNREFUSED')) {
-            console.log(`Retrying ${eegDataSource.toUpperCase()} WebSocket connection in 1 second...`);
+            console.log(`Retrying ${connectionType.toUpperCase()} WebSocket connection in 1 second...`);
             setTimeout(connectWebSocketClient, 1000);  // Retry after 1 second
         }
     });
@@ -381,7 +388,7 @@ async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequen
         //     return -1;
         // }
 
-        console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${eegDataSource.toUpperCase()}`);
+        console.log(`[DEBUG] Processing ${messageResult.data.length} data points from ${connectionType.toUpperCase()}`);
 
         const dataPoints = messageResult.data.slice(-requiredSampleCount);
         messageResult.data = [];

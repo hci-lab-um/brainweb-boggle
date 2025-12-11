@@ -1,7 +1,6 @@
 const stimuli = require("ssvep-stimuli");
 // const scenarioConfig = require('../../configs/scenarioConfig.json');
 const scenarioConfig = require('../../configs/scenarioConfig_lowFreqs.json');
-const { browserConfig } = require('../../configs/browserConfig');
 const { ipcRenderer } = require("electron");
 const logger = require('../main/modules/logger');
 const { pushStatusUpdate } = require('./statusBar');
@@ -9,6 +8,35 @@ const { pushStatusUpdate } = require('./statusBar');
 let manager;
 // -1 = all flickering; 0 = all off; 1..N = group number 
 let currentAdaptiveGroupIndex = -1;
+
+// Cache for stimuli visual settings to avoid frequent DB queries
+let stimuliSettingsCache = null;
+
+async function getStimuliSettingsCached() {
+    try {
+        if (stimuliSettingsCache) return stimuliSettingsCache;
+        const settings = await ipcRenderer.invoke('stimuliSettings-get');
+        stimuliSettingsCache = settings;
+        return settings;
+    } catch (err) {
+        logger.error('Error loading stimuli settings:', err.message);
+    }
+}
+
+// Listen for updates from main when UI changes settings
+ipcRenderer.on('stimuliSettings-update', (event, settings) => {
+    try {
+        debugger;
+        // Merge partial updates into cache without overwriting other fields
+        stimuliSettingsCache = {
+            ...(stimuliSettingsCache || {}),
+            ...(settings || {})
+        };
+        console.log('Updated cached stimuli settings:', stimuliSettingsCache);
+    } catch (err) {
+        logger.error('Error updating cached stimuli settings:', err.message);
+    }
+});
 
 ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetViewName) => {
     try {
@@ -86,6 +114,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
 
 async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
     try {
+        console.log('Updating scenario ID to:', scenarioId);
         let adaptiveSwitchButtons = [];
         let groupCount = 0;
 
@@ -106,6 +135,10 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
             return;
         }
 
+        debugger;
+        // Get stimuli visual settings from cache (loads once and updates via IPC)
+        const { pattern, lightColor, darkColor } = await getStimuliSettingsCached();
+
         buttons.forEach((button) => {
             const currentBtnId = button.getAttribute('id');
             const buttonIdIndex = buttonIds.indexOf(currentBtnId);
@@ -113,9 +146,9 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
             if (buttonIdIndex !== -1) {
                 button.setAttribute('data-phase-shift', phases[buttonIdIndex]);
                 button.setAttribute('data-frequency', frequencies[buttonIdIndex]);
-                button.setAttribute('data-pattern', browserConfig.stimuli.customSetup.patterns.line);
-                button.setAttribute('data-light-color', browserConfig.stimuli.customSetup.colors.lightColor);
-                button.setAttribute('data-dark-color', browserConfig.stimuli.customSetup.colors.darkColor);
+                button.setAttribute('data-pattern', pattern);
+                button.setAttribute('data-light-color', lightColor);
+                button.setAttribute('data-dark-color', darkColor);
 
                 manager.set(button);
                 numberOfActiveButtons++;

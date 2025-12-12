@@ -17,8 +17,8 @@ let stimuliInUse = '';
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
-        const { scenarioId } = overlayData;
-
+        const { scenarioId, buttonId } = overlayData;
+    
         buttons = document.querySelectorAll('button');
         settingsContentContainer = document.querySelector('.settingsContent');
         closeSettingsButton = document.getElementById('closeSettingsBtn');
@@ -32,6 +32,10 @@ ipcRenderer.on('settings-loaded', async (event, overlayData) => {
         setCloseButtonMode('close');
         await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
         attachEventListeners();
+
+        if (buttonId === 'headsetSettingsBtn') {
+            await showHeadsetSettings();
+        }
     } catch (error) {
         logger.error('Error in settings-loaded handler:', error.message);
     }

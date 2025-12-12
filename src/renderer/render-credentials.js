@@ -2,8 +2,6 @@ const { ipcRenderer } = require('electron');
 const logger = require('../main/modules/logger');
 const { ViewNames } = require('../utils/constants/enums');
 
-let buttons = [];
-
 ipcRenderer.on('credentials-loaded', (event, overlayData) => {
     try {
         const info = overlayData?.credentialsInfo || {};
@@ -36,7 +34,7 @@ ipcRenderer.on('credentials-invalid', async (event) => {
     }  
 });
 
-function setupUI({ headsetName, companyName, connectionType, defaultHeadsetLabel }) {
+function setupUI({ headsetName, companyName, connectionType }) {
     const title = document.getElementById('cred-title');
     const desc = document.getElementById('cred-desc');
     const idInput = document.getElementById('cred-client-id');
@@ -45,7 +43,7 @@ function setupUI({ headsetName, companyName, connectionType, defaultHeadsetLabel
     const secretError = ensureErrorNode('cred-client-secret-error');
 
     if (title) title.textContent = 'Credentials Required';
-    if (desc) desc.textContent = `${defaultHeadsetLabel} using '${connectionType}' requires credentials. Enter them below or change defaults.`;
+    if (desc) desc.textContent = `${headsetName} by ${companyName} using ${connectionType} requires credentials. Enter them below or change the default headset and connection type from the settings.`;
     if (idInput) {
         idInput.value = '';
         idInput.addEventListener('input', () => clearError(idError));
@@ -76,15 +74,19 @@ function attachEvents({ headsetName, companyName, connectionType }) {
                 let hasError = false;
                 if (!clientId) {
                     setError(idError, 'Client ID is required');
+                    idInput.classList.add('input--error');
                     hasError = true;
                 } else {
                     clearError(idError);
+                    idInput.classList.remove('input--error');
                 }
                 if (!clientSecret) {
                     setError(secretError, 'Client Secret is required');
+                    secretInput.classList.add('input--error');
                     hasError = true;
                 } else {
                     clearError(secretError);
+                    secretInput.classList.remove('input--error');
                 }
 
                 if (hasError) return;
@@ -111,6 +113,7 @@ function attachEvents({ headsetName, companyName, connectionType }) {
     }
 }
 
+// Used for ensuring error nodes exist
 function ensureErrorNode(id) {
     let node = document.getElementById(id);
     if (!node) {

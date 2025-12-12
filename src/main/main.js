@@ -390,8 +390,7 @@ function createMainWindow() {
                                         ipcMain.emit('overlay-create', null, ViewNames.CREDENTIALS, -1, null, false, {
                                             headsetName,
                                             companyName,
-                                            connectionType: defaultConnectionType,
-                                            defaultHeadsetLabel: defaultHeadset
+                                            connectionType: defaultConnectionType
                                         });
                                     }
                                 } catch (credErr) {

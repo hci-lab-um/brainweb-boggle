@@ -27,6 +27,9 @@ let adaptiveSwitchInUse;                    // This flag indicates if the adapti
 let statusBarState = { ...defaultState };   // This holds the current state of the status bar
 let isHeadsetConnected = false;             // This flag indicates if the EEG headset is properly connected
 let ipcHandlersReady = false;               // This flag indicates if IPC handlers are ready
+let defaultHeadset;
+let defaultConnectionType;
+let credentials = null;
 
 app.whenReady().then(async () => {
     eegEvents.on('headset-connected', () => {
@@ -59,7 +62,8 @@ app.whenReady().then(async () => {
         tabsFromDatabase = await db.getTabs();
         defaultUrl = await db.getDefaultURL();
         adaptiveSwitchInUse = await db.getAdaptiveSwitchConnected();
-        const defaultHeadset = await db.getDefaultHeadset();
+        defaultHeadset = await db.getDefaultHeadset();
+        defaultConnectionType = await db.getDefaultConnectionType();
 
         updateStatusBarState({
             headset: defaultHeadset,
@@ -71,12 +75,11 @@ app.whenReady().then(async () => {
         logger.error('Error initialising database:', err.message);
     }
 
-    try {
-        const defaultConnectionType = await db.getDefaultConnectionType();
-        await spawnPythonWebSocketServer(defaultConnectionType);
-        connectWebSocketClient();
-    } catch (err) {
-        logger.error('Error starting EEG transport through the Python WebSocket server:', err.message);
+    const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
+    const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
+    credentials = await db.getCredentials(headsetName, companyName, defaultConnectionType);
+    if (credentials) {
+        await setupWebSocket();
     }
 
     try {
@@ -149,6 +152,15 @@ app.on('window-all-closed', async () => {
         logger.error('Error during app closure:', err.message);
     }
 });
+
+async function setupWebSocket() {
+    try {
+        await spawnPythonWebSocketServer(defaultConnectionType);
+        connectWebSocketClient();
+    } catch (err) {
+        logger.error('Error starting EEG transport through the Python WebSocket server:', err.message);
+    }
+}
 
 async function updateConfigFromDatabase() {
     // Getting the current headset from the database
@@ -319,7 +331,8 @@ function createMainWindow() {
                                     createTabView,
                                     deleteAndInsertAllTabs,
                                     updateNavigationButtons,
-                                    broadcastStatusBarState
+                                    broadcastStatusBarState,
+                                    setupWebSocket,
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
                                 ipcHandlersReady = true;   // Set flag to indicate that IPC handlers are ready
@@ -332,6 +345,22 @@ function createMainWindow() {
                                         logger.error('Error performing initial resize:', resizeErr.message);
                                     }
                                 }, 0);
+
+                                // After IPC is ready, check for credentials for default headset/connection.
+                                try {
+                                    const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
+                                    const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
+                                    if (!credentials || !credentials.clientId || !credentials.clientSecret) {
+                                        ipcMain.emit('overlay-create', null, ViewNames.CREDENTIALS, -1, null, false, {
+                                            headsetName,
+                                            companyName,
+                                            connectionType: defaultConnectionType,
+                                            defaultHeadsetLabel: defaultHeadset
+                                        });
+                                    }
+                                } catch (credErr) {
+                                    logger.error('Error checking default credentials:', credErr.message);
+                                }
                             })
                         });
                     } catch (err) {

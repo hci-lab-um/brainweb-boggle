@@ -29,7 +29,8 @@ async function registerIpcHandlers(context) {
         createTabView,
         deleteAndInsertAllTabs,
         updateNavigationButtons,
-        broadcastStatusBarState
+        broadcastStatusBarState,
+        setupWebSocket
     } = context;
 
     // Helper function to serialise tabsList
@@ -174,6 +175,10 @@ async function registerIpcHandlers(context) {
             case ViewNames.DROPDOWN:
                 overlayData.elementProperties = elementProperties;
                 overlayData.optionsList = elementProperties ? elementProperties.options : null;
+                break;
+
+            case ViewNames.CREDENTIALS:
+                overlayData.credentialsInfo = elementProperties; // {headsetName, companyName, connectionType, defaultHeadsetLabel}
                 break;
 
             case ViewNames.SETTINGS:
@@ -463,6 +468,61 @@ async function registerIpcHandlers(context) {
             db.updateDefaultConnectionType(newConnectionType);
         } catch (err) {
             logger.error('Error updating default connection type:', err.message);
+        }
+    });
+
+    ipcMain.handle('credentials-save', async (event, payload) => {
+        try {
+            const { headsetName, companyName, connectionType, clientId, clientSecret } = payload || {};
+            if (!headsetName || !companyName || !connectionType) {
+                throw new Error('Missing required fields to save credentials');
+            }
+
+            // Update .env with new credentials used by LSL/Cortex integration
+            let envUpdated = false;
+            try {
+                const envFilePath = path.join(__dirname, '../../ssvep/lsl/.env');
+                const envPath = path.resolve(envFilePath);
+
+                // Ensure directory exists
+                const envDir = path.dirname(envPath);
+                if (!fs.existsSync(envDir)) {
+                    fs.mkdirSync(envDir, { recursive: true });
+                }
+
+                // Prepare content
+                let lines = [];
+                if (fs.existsSync(envPath)) {
+                    const raw = fs.readFileSync(envPath, 'utf8');
+                    lines = raw.split(/\r?\n/);
+                }
+
+                const setOrUpdate = (key, value) => {
+                    const pattern = new RegExp(`^\s*${key}\s*=`);
+                    const formatted = `${key} = '${value}'`;
+                    const idx = lines.findIndex(l => pattern.test(l));
+                    if (idx >= 0) lines[idx] = formatted; else lines.push(formatted);
+                };
+
+                setOrUpdate('EMOTIV_CLIENT_ID', clientId || '');
+                setOrUpdate('EMOTIV_CLIENT_SECRET', clientSecret || '');
+
+                await fs.promises.writeFile(envPath, lines.join('\n'));
+                envUpdated = true;
+            } catch (fsErr) {
+                logger.warn('Could not write .env with new credentials:', fsErr.message);
+            }
+
+            // Start WebSocket only after .env update succeeds
+            if (envUpdated && typeof setupWebSocket === 'function') {
+                await setupWebSocket();
+            }
+
+            await db.updateCredentials(headsetName, companyName, connectionType, clientId, clientSecret);
+            return true;
+        } catch (err) {
+            logger.error('Error saving credentials:', err.message);
+            return false;
         }
     });
 

@@ -259,6 +259,8 @@ function createHeadsetConnectionTypesTable() {
                 company_name TEXT NOT NULL,
                 headset_name TEXT NOT NULL,
                 connection_type TEXT NOT NULL,
+                client_id TEXT,
+                client_secret TEXT,
                 PRIMARY KEY (company_name, headset_name, connection_type),
                 FOREIGN KEY (company_name, headset_name)
                     REFERENCES headsets(company_name, headset_name),
@@ -858,8 +860,56 @@ async function getConnectionTypeData(connectionType) {
                 }
             });
         });
-    } catch (err_1) {
-        logger.error('Error getting connection type data:', err_1.message);
+    } catch (err) {
+        logger.error('Error getting connection type data:', err.message);
+    }
+}
+
+async function getCredentials(headsetName, companyName, connectionType) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+            const query = `SELECT client_id, client_secret FROM headset_connection_types WHERE headset_name = ? AND company_name = ? AND connection_type = ?`;
+            db.get(query, [headsetName, companyName, connectionType], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving credentials for headset connection type:', err.message);
+                    reject(err);
+                } else {
+                    resolve(row ? { clientId: row.client_id, clientSecret: row.client_secret } : null);
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting credentials for headset connection type:', err.message);
+    }
+}
+
+async function updateCredentials(headsetName, companyName, connectionType, clientId, clientSecret) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+            const sql = `
+                UPDATE headset_connection_types
+                SET client_id = ?, client_secret = ?
+                WHERE headset_name = ? AND company_name = ? AND connection_type = ?
+            `;
+            db.run(sql, [clientId || null, clientSecret || null, headsetName, companyName, connectionType], function (err) {
+                if (err) {
+                    logger.error('Error updating credentials for headset connection type:', err.message);
+                    reject(err);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error updating credentials for headset connection type:', err.message);
     }
 }
 
@@ -1033,6 +1083,8 @@ module.exports = {
     getHeadsetChannelNumber,
     getHeadsets,
     getConnectionTypeData,
+    getCredentials,
+    updateCredentials,
     getKeyboardLayouts,
     getAdaptiveSwitchConnected,
     getBestUserFrequencies,

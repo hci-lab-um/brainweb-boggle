@@ -89,6 +89,7 @@ ipcRenderer.on('adaptiveSwitch-toggle', async (event, currentScenarioId, targetV
         // Getting the best user frequencies from the database, and setting them to the active buttons
         const bestFrequenciesString = await ipcRenderer.invoke('bestUserFrequencies-get');
         const bestFrequenciesArray = bestFrequenciesString.split(',').map(Number);
+        console.log('Best frequencies for adaptive switch:', bestFrequenciesArray);
 
         activeButtons.forEach((button, index) => {
             button.setAttribute('data-frequency', bestFrequenciesArray[index]);

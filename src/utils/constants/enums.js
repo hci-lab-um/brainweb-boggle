@@ -185,7 +185,7 @@ const Settings = Object.freeze({
         NAME: "bestUserFrequencies",
         LABEL: "Best User Frequencies",
         DESCRIPTION: "The best frequencies for the user’s brain activity.",
-        DEFAULT: [6.5, 7.5, 8.5, 7, 8],
+        DEFAULT: "6.5, 7.5, 8.5, 7, 8",
         CATEGORY: SettingCategories.GENERAL,
     },
     DEFAULT_HEADSET: {

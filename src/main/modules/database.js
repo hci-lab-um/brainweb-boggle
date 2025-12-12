@@ -319,7 +319,7 @@ function createKeyboardLayoutsTable() {
             CREATE TABLE IF NOT EXISTS keyboard_layouts (
                 name TEXT PRIMARY KEY,
                 description TEXT NOT NULL,
-                image BLOB NOT NULL
+                image BLOB
             );
         `;
         db.run(createKeyboardLayoutsTable, (err) => {
@@ -396,75 +396,49 @@ function createSettingsTable() {
 }
 
 function populateSettingsTable() {
-    return new Promise((resolve, reject) => {
-        const insertSetting = `INSERT OR IGNORE INTO settings (name, value, category) VALUES (?, ?, ?)`;
+  return new Promise((resolve, reject) => {
+    const insertSql = `INSERT OR IGNORE INTO settings (name, value, category) VALUES (?, ?, ?)`;
 
-        const defaultSettings = [
-            {
-                name: Settings.DEFAULT_URL.NAME,
-                value: Settings.DEFAULT_URL.DEFAULT,
-                category: Settings.DEFAULT_URL.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_KEYBOARD_LAYOUT.NAME,
-                value: Settings.DEFAULT_KEYBOARD_LAYOUT.DEFAULT,
-                category: Settings.DEFAULT_KEYBOARD_LAYOUT.CATEGORY,
-            },
-            {
-                name: Settings.ADAPTIVE_SWITCH_CONNECTED.NAME,
-                value: Settings.ADAPTIVE_SWITCH_CONNECTED.DEFAULT,
-                category: Settings.ADAPTIVE_SWITCH_CONNECTED.CATEGORY,
-            },
-            {
-                name: Settings.BEST_USER_FREQUENCIES.NAME,
-                value: Settings.BEST_USER_FREQUENCIES.DEFAULT,
-                category: Settings.BEST_USER_FREQUENCIES.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_HEADSET.NAME,
-                value: Settings.DEFAULT_HEADSET.DEFAULT,
-                category: Settings.DEFAULT_HEADSET.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_CONNECTION_TYPE.NAME,
-                value: Settings.DEFAULT_CONNECTION_TYPE.DEFAULT,
-                category: Settings.DEFAULT_CONNECTION_TYPE.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_STIMULI_PATTERN.NAME,
-                value: Settings.DEFAULT_STIMULI_PATTERN.DEFAULT,
-                category: Settings.DEFAULT_STIMULI_PATTERN.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_STIMULI_LIGHT_COLOR.NAME,
-                value: Settings.DEFAULT_STIMULI_LIGHT_COLOR.DEFAULT,
-                category: Settings.DEFAULT_STIMULI_LIGHT_COLOR.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_STIMULI_DARK_COLOR.NAME,
-                value: Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT,
-                category: Settings.DEFAULT_STIMULI_DARK_COLOR.CATEGORY,
-            },
-            {
-                name: Settings.DEFAULT_GAZE_LENGTH.NAME,
-                value: Settings.DEFAULT_GAZE_LENGTH.DEFAULT,
-                category: Settings.DEFAULT_GAZE_LENGTH.CATEGORY,
-            }
-        ];
+    const defaultSettings = [
+      { name: Settings.DEFAULT_URL.NAME, value: Settings.DEFAULT_URL.DEFAULT, category: Settings.DEFAULT_URL.CATEGORY },
+      { name: Settings.DEFAULT_KEYBOARD_LAYOUT.NAME, value: Settings.DEFAULT_KEYBOARD_LAYOUT.DEFAULT, category: Settings.DEFAULT_KEYBOARD_LAYOUT.CATEGORY },
+      { name: Settings.ADAPTIVE_SWITCH_CONNECTED.NAME, value: Settings.ADAPTIVE_SWITCH_CONNECTED.DEFAULT, category: Settings.ADAPTIVE_SWITCH_CONNECTED.CATEGORY },
+      { name: Settings.BEST_USER_FREQUENCIES.NAME, value: Settings.BEST_USER_FREQUENCIES.DEFAULT, category: Settings.BEST_USER_FREQUENCIES.CATEGORY },
+      { name: Settings.DEFAULT_HEADSET.NAME, value: Settings.DEFAULT_HEADSET.DEFAULT, category: Settings.DEFAULT_HEADSET.CATEGORY },
+      { name: Settings.DEFAULT_CONNECTION_TYPE.NAME, value: Settings.DEFAULT_CONNECTION_TYPE.DEFAULT, category: Settings.DEFAULT_CONNECTION_TYPE.CATEGORY },
+      { name: Settings.DEFAULT_STIMULI_PATTERN.NAME, value: Settings.DEFAULT_STIMULI_PATTERN.DEFAULT, category: Settings.DEFAULT_STIMULI_PATTERN.CATEGORY },
+      { name: Settings.DEFAULT_STIMULI_LIGHT_COLOR.NAME, value: Settings.DEFAULT_STIMULI_LIGHT_COLOR.DEFAULT, category: Settings.DEFAULT_STIMULI_LIGHT_COLOR.CATEGORY },
+      { name: Settings.DEFAULT_STIMULI_DARK_COLOR.NAME, value: Settings.DEFAULT_STIMULI_DARK_COLOR.DEFAULT, category: Settings.DEFAULT_STIMULI_DARK_COLOR.CATEGORY },
+      { name: Settings.DEFAULT_GAZE_LENGTH.NAME, value: Settings.DEFAULT_GAZE_LENGTH.DEFAULT, category: Settings.DEFAULT_GAZE_LENGTH.CATEGORY },
+    ];
 
-        db.serialize(() => {
-            defaultSettings.forEach(({ name, value, category }) => {
-                db.run(insertSetting, [name, value.toString(), category], (err) => {
-                    if (err) {
-                        logger.error('Error populating settings table:', err.message);
-                        reject(err);
-                    }
-                });
+    db.serialize(() => {
+      db.run('BEGIN', (err) => {
+        if (err) return reject(err);
+
+        const stmt = db.prepare(insertSql, (prepErr) => {
+          if (prepErr) return reject(prepErr);
+
+          for (const { name, value, category } of defaultSettings) {
+            // Store arrays as JSON for round-tripping
+            const coerced = Array.isArray(value) ? JSON.stringify(value) : String(value);
+            stmt.run([name, coerced, category], (runErr) => {
+              if (runErr) return reject(runErr);
             });
-            logger.info('Settings table populated with default values.');
-            resolve();
+          }
+
+          stmt.finalize((finErr) => {
+            if (finErr) return reject(finErr);
+            db.run('COMMIT', (commitErr) => {
+              if (commitErr) return reject(commitErr);
+              logger.info('Settings table populated with default values.');
+              resolve();
+            });
+          });
         });
+      });
     });
+  });
 }
 
 async function createTables() {

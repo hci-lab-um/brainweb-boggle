@@ -6,7 +6,7 @@ ipcRenderer.on('credentials-loaded', (event, overlayData) => {
     try {
         const info = overlayData?.credentialsInfo || {};
         setupUI(info);
-        attachEvents(info);
+        attachEventListeners(info);
     } catch (err) {
         logger.error('Error initialising credentials overlay:', err.message);
     }
@@ -56,7 +56,7 @@ function setupUI({ headsetName, companyName, connectionType }) {
     buttons = Array.from(document.querySelectorAll('button'));
 }
 
-function attachEvents({ headsetName, companyName, connectionType }) {
+function attachEventListeners({ headsetName, companyName, connectionType }) {
     const saveBtn = document.getElementById('cred-save-btn');
     const changeBtn = document.getElementById('cred-change-defaults-btn');
     const closeBtn = document.getElementById('cred-close-btn');
@@ -103,6 +103,7 @@ function attachEvents({ headsetName, companyName, connectionType }) {
         changeBtn.addEventListener('click', () => {
             // Placeholder for future implementation
             ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
+            ipcRenderer.send('overlay-create', ViewNames.SETTINGS, -1, 'headsetSettingsBtn');
         });
     }
 

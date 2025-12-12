@@ -183,6 +183,7 @@ async function registerIpcHandlers(context) {
 
             case ViewNames.SETTINGS:
                 overlayData.scenarioId = scenarioId;
+                if (buttonId) overlayData.buttonId = buttonId;
                 overlayData.settingsObject = {
                     homeUrl: await db.getDefaultURL(),
                     keyboardLayout: await db.getDefaultKeyboardLayout(),

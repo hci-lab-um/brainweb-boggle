@@ -43,7 +43,10 @@ const Headsets = Object.freeze({
         USED_ELECTRODES: ["O1", "P7", "P8", "O2"],
         SAMPLING_RATE: 256,
         CONNECTION_TYPE: {
-            CONNECTION_TYPE_1: ConnectionTypes.CORTEX_API.NAME,
+            CONNECTION_TYPE_1: ConnectionTypes.CORTEX_API.NAME
+        },
+        REQUIRES_CREDENTIALS: {
+            CONNECTION_TYPE_1: true
         },
         IMAGE: "../../resources/epocx_headset.png"
     },
@@ -54,7 +57,12 @@ const Headsets = Object.freeze({
         SAMPLING_RATE: 300,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
-            CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME,
+            CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME
+            
+        },
+        REQUIRES_CREDENTIALS: {
+            CONNECTION_TYPE_1: false,
+            CONNECTION_TYPE_2: false,
         },
         IMAGE: "../../resources/dsi_vr300_headset.png"
     },
@@ -65,6 +73,9 @@ const Headsets = Object.freeze({
         SAMPLING_RATE: 256,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME
+        },
+        REQUIRES_CREDENTIALS: {
+            CONNECTION_TYPE_1: false
         },
         IMAGE: "../../resources/gusbamp_headset.png"
     }

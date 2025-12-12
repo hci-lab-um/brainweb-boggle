@@ -24,12 +24,13 @@ let isMainWindowLoaded = false;             // This is a flag to track if main w
 let lastAdaptiveToggleTs = 0;               // This is a timestamp of the last adaptive toggle event
 const ADAPTIVE_TOGGLE_COOLDOWN_MS = 500;    // This is the cooldown period to prevent rapid toggling
 let adaptiveSwitchInUse;                    // This flag indicates if the adaptive switch feature is enabled
-let statusBarState = { ...defaultState };   // This holds the current state of the status bar
+let statusBarState = { ...defaultState };   // This will hold the current state of the status bar
 let isHeadsetConnected = false;             // This flag indicates if the EEG headset is properly connected
 let ipcHandlersReady = false;               // This flag indicates if IPC handlers are ready
-let defaultHeadset;
-let defaultConnectionType;
-let credentials = null;
+let defaultHeadset;                         // This will hold the default headset name and company (e.g., "EPOC X - Emotiv")
+let defaultConnectionType;                  // This will hold the default connection type for the headset (e.g., "Cortex API")  
+let credentials = null;                     // This will hold the stored credentials for the default headset and connection type (i.e., clientId and clientSecret)
+let requiresCredentials;                    // This flag indicates if the default headset and connection type require credentials
 
 app.whenReady().then(async () => {
     eegEvents.on('headset-connected', () => {
@@ -105,7 +106,13 @@ app.whenReady().then(async () => {
     const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
     const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
     credentials = await db.getCredentials(headsetName, companyName, defaultConnectionType);
-    if (credentials && credentials.clientId && credentials.clientSecret) {
+    requiresCredentials = await db.getRequiresCredentials(headsetName, companyName, defaultConnectionType);
+
+    if (!requiresCredentials) {
+        // If the default headset and connection type do not require credentials, set up the WebSocket connection directly
+        await setupWebSocket();
+    } else if (credentials && credentials.clientId && credentials.clientSecret) {
+    // If the default headset and connection type require credentials, and they are already populated, set up the WebSocket connection
         await setupWebSocket();
     }
 
@@ -377,7 +384,9 @@ function createMainWindow() {
                                 try {
                                     const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
                                     const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
-                                    if (!credentials || !credentials.clientId || !credentials.clientSecret) {
+                                    
+                                    // If credentials are required but not present, open the credentials overlay
+                                    if (requiresCredentials && (!credentials || !credentials.clientId || !credentials.clientSecret)) {
                                         ipcMain.emit('overlay-create', null, ViewNames.CREDENTIALS, -1, null, false, {
                                             headsetName,
                                             companyName,

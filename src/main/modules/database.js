@@ -261,6 +261,7 @@ function createHeadsetConnectionTypesTable() {
                 connection_type TEXT NOT NULL,
                 client_id TEXT,
                 client_secret TEXT,
+                requires_credentials BOOLEAN NOT NULL DEFAULT 0,
                 PRIMARY KEY (company_name, headset_name, connection_type),
                 FOREIGN KEY (company_name, headset_name)
                     REFERENCES headsets(company_name, headset_name),
@@ -287,9 +288,10 @@ function populateHeadsetConnectionTypesTable() {
 
         Object.values(Headsets).forEach((headset) => {
             const connectionTypes = Object.values(headset.CONNECTION_TYPE || {});
-            connectionTypes.forEach((connType) => {
-                allRows.push('(?, ?, ?)');
-                values.push(headset.COMPANY, headset.NAME, connType);
+            const requires_credentials = Object.values(headset.REQUIRES_CREDENTIALS || {});
+            connectionTypes.forEach((connType, index) => {
+                allRows.push('(?, ?, ?, ?, ?, ?)');
+                values.push(headset.COMPANY, headset.NAME, connType, null, null, requires_credentials[index]);
             });
         });
 
@@ -298,7 +300,7 @@ function populateHeadsetConnectionTypesTable() {
             return;
         }
 
-        const sql = `INSERT OR IGNORE INTO headset_connection_types (company_name, headset_name, connection_type) VALUES ${allRows.join(', ')}`;
+        const sql = `INSERT OR IGNORE INTO headset_connection_types (company_name, headset_name, connection_type, client_id, client_secret, requires_credentials) VALUES ${allRows.join(', ')}`;
         db.run(sql, values, (err) => {
             if (err) {
                 logger.error('Error populating headset_connection_types table:', err.message);
@@ -865,6 +867,28 @@ async function getConnectionTypeData(connectionType) {
     }
 }
 
+async function getRequiresCredentials(headsetName, companyName, connectionType) {
+    try {
+        return await new Promise((resolve, reject) => {
+            if (!db) {
+                reject(new Error('Database not initialised'));
+                return;
+            }
+            const query = `SELECT requires_credentials FROM headset_connection_types WHERE headset_name = ? AND company_name = ? AND connection_type = ?`;
+            db.get(query, [headsetName, companyName, connectionType], (err, row) => {
+                if (err) {
+                    logger.error('Error retrieving requires_credentials for headset connection type:', err.message);
+                    reject(err);
+                } else {
+                    resolve(row ? Boolean(row.requires_credentials) : false);
+                }
+            });
+        });
+    } catch (err) {
+        logger.error('Error getting requires_credentials for headset connection type:', err.message);
+    }
+}
+
 async function getCredentials(headsetName, companyName, connectionType) {
     try {
         return await new Promise((resolve, reject) => {
@@ -1084,7 +1108,7 @@ module.exports = {
     getHeadsets,
     getConnectionTypeData,
     getCredentials,
-    updateCredentials,
+    getRequiresCredentials,
     getKeyboardLayouts,
     getAdaptiveSwitchConnected,
     getBestUserFrequencies,
@@ -1113,5 +1137,6 @@ module.exports = {
     updateDefaultStimuliPattern,
     updateDefaultStimuliLightColor,
     updateDefaultStimuliDarkColor,
-    updateDefaultGazeLength
+    updateDefaultGazeLength,
+    updateCredentials
 };

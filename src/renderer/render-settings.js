@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron')
+const { ipcRenderer, View } = require('electron')
 const { ViewNames, CssConstants, Settings, Stimuli } = require('../utils/constants/enums');
 const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
 const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
@@ -18,7 +18,7 @@ let stimuliInUse = '';
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
         const { scenarioId, buttonId } = overlayData;
-    
+
         buttons = document.querySelectorAll('button');
         settingsContentContainer = document.querySelector('.settingsContent');
         closeSettingsButton = document.getElementById('closeSettingsBtn');
@@ -46,6 +46,15 @@ ipcRenderer.on('selectedButton-click', (event, buttonId) => {
         document.getElementById(buttonId).click();
     } catch (error) {
         logger.error('Error in selectedButton-click handler:', error.message);
+    }
+});
+
+ipcRenderer.on('scenarioId-update', async (event, scenarioId) => {
+    try {
+        await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
+    } catch (error) {
+        logger.error('Error in scenarioId-update handler:', error.message);
     }
 });
 
@@ -86,7 +95,8 @@ async function showHeadsetSettings() {
     populateHeadsetSettings();
     setCloseButtonMode('back');
 
-    await selectScenarioIdForHeadset();
+    const scenarioId = await getScenarioIdForHeadset();
+    await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
 }
 
 async function showStimuliSettings() {
@@ -105,7 +115,7 @@ async function showSettingsSelection() {
     await updateScenarioId(100, buttons, ViewNames.SETTINGS);
 }
 
-async function selectScenarioIdForHeadset() {
+async function getScenarioIdForHeadset() {
     // Extracting company and headset name from headsetInUse to be used in the database query
     const companyName = headsetInUse.split(' - ')[1] || '';
     const headsetName = headsetInUse.split(' - ')[0] || '';
@@ -113,9 +123,9 @@ async function selectScenarioIdForHeadset() {
 
     buttons = document.querySelectorAll('button');
     if (multipleConnectionTypesExist) {
-        await updateScenarioId(101, buttons, ViewNames.SETTINGS);
+        return 101;
     } else {
-        await updateScenarioId(102, buttons, ViewNames.SETTINGS);
+        return 102;
     }
 }
 
@@ -352,7 +362,7 @@ function populateGeneralSettings() {
     });
 }
 
-function populateHeadsetSettings() {
+async function populateHeadsetSettings() {
     const container = document.getElementById('headsetSettings');
     container.innerHTML = ''; // Clear existing content
 
@@ -417,6 +427,19 @@ function populateHeadsetSettings() {
     connectionTypeBtn.rel = 'noreferrer noopener';
     connectionTypeCard.appendChild(connectionTypeBtn);
 
+    // Adding a button to update credentials ONLY IF the selected headset & connection type requires it
+    let updateCredentialsBtn;
+    const headsetName = headsetInUse.split(' - ')[0];
+    const companyName = headsetInUse.split(' - ')[1];
+    const requiresCredentials = await ipcRenderer.invoke('credentials-exist', headsetName, companyName, connectionTypeInUse);
+
+    if (requiresCredentials) {
+        updateCredentialsBtn = document.createElement('button');
+        updateCredentialsBtn.innerHTML = `<span>Update Credentials</span>`;
+        updateCredentialsBtn.id = 'updateCredentialsBtn';
+        connectionTypeCard.appendChild(updateCredentialsBtn);
+    }
+
     cardsContainer.appendChild(headsetCard);
     cardsContainer.appendChild(connectionTypeCard);
 
@@ -459,6 +482,23 @@ function populateHeadsetSettings() {
                 logger.error('Error creating connection type selection modal:', error.message);
             }
         }, CssConstants.SELECTION_ANIMATION_DURATION);
+    });
+
+    updateCredentialsBtn.addEventListener('click', async () => {
+        // Disable the button immediately to prevent multiple clicks
+        updateCredentialsBtn.disabled = true;
+        setTimeout(() => { updateCredentialsBtn.disabled = false; }, 1500);
+
+        await stopManager();
+
+        try {
+            const credentials = await ipcRenderer.invoke('credentials-get', headsetName, companyName, connectionTypeInUse);
+            const loadedFrom = ViewNames.SETTINGS;
+            ipcRenderer.send('overlay-create', ViewNames.CREDENTIALS, -1, null, null, {credentials, loadedFrom});
+        } catch (error) {
+            logger.error('Error creating credentials overlay:', error.message);
+        }
+
     });
 }
 
@@ -794,7 +834,8 @@ async function showHeadsetSelectionPopup() {
                         ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
                     }
 
-                    await selectScenarioIdForHeadset();
+                    const scenarioId = await getScenarioIdForHeadset();
+                    await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
                 }, CssConstants.SELECTION_ANIMATION_DURATION);
             };
             headsetCard.appendChild(selectHeadsetBtn);
@@ -858,7 +899,8 @@ async function showConnectionTypeSelectionPopup() {
 
                     // Update the default connection type in the db
                     ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
-                    await selectScenarioIdForHeadset();
+                    const scenarioId = await getScenarioIdForHeadset();
+                    await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
 
                     connectionTypeCards.push(connectionTypeCard);
                 }, CssConstants.SELECTION_ANIMATION_DURATION);

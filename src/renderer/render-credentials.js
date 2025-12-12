@@ -4,6 +4,23 @@ const { ViewNames } = require('../utils/constants/enums');
 
 ipcRenderer.on('credentials-loaded', (event, overlayData) => {
     try {
+        const previousCredentials = overlayData?.previousCredentials || {};
+        // Pre-fill inputs if previous credentials exist
+        if (previousCredentials.clientId) {
+            const idInput = document.getElementById('cred-client-id');
+            if (idInput) idInput.value = previousCredentials.clientId;
+        }
+        if (previousCredentials.clientSecret) {
+            const secretInput = document.getElementById('cred-client-secret');
+            if (secretInput) secretInput.value = previousCredentials.clientSecret;
+        }
+
+        // If loaded from settings, we need to remove the 'Change Default' button since we're already in settings
+        if (overlayData.loadedFrom === ViewNames.SETTINGS) { 
+            const changeBtn = document.getElementById('cred-change-defaults-btn');
+            if (changeBtn) changeBtn.style.display = 'none';
+        }
+
         const info = overlayData?.credentialsInfo || {};
         setupUI(info);
         attachEventListeners(info);

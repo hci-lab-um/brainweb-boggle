@@ -179,6 +179,8 @@ async function registerIpcHandlers(context) {
 
             case ViewNames.CREDENTIALS:
                 overlayData.credentialsInfo = elementProperties; // {headsetName, companyName, connectionType, defaultHeadsetLabel}
+                if (elementProperties.credentials) overlayData.previousCredentials = elementProperties.credentials; // {clientId, clientSecret}
+                if (elementProperties.loadedFrom) overlayData.loadedFrom = elementProperties.loadedFrom;
                 break;
 
             case ViewNames.SETTINGS:
@@ -469,6 +471,24 @@ async function registerIpcHandlers(context) {
             db.updateDefaultConnectionType(newConnectionType);
         } catch (err) {
             logger.error('Error updating default connection type:', err.message);
+        }
+    });
+
+    ipcMain.handle('credentials-get', async (event, headsetName, companyName, connectionType) => {
+        try {
+            return await db.getCredentials(headsetName, companyName, connectionType);
+        } catch (err) {
+            logger.error('Error retrieving credentials from DB:', err.message);
+            return null;
+        }
+    });
+
+    ipcMain.handle('credentials-exist', async (event, headsetName, companyName, connectionType) => {
+        try {
+            return await db.getRequiresCredentials(headsetName, companyName, connectionType);    
+        } catch (err) {
+            logger.error('Error checking credentials existence in DB:', err.message);
+            return false;
         }
     });
 

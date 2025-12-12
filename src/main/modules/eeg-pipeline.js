@@ -90,6 +90,16 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
                     }
                     return true;
                 }
+
+                if (type === 'credentials-invalid') {
+                    serverState.errorSinceReady = true;
+                    eegEvents.emit('credentials-invalid');
+                    return true;
+                } else if (type === 'credentials-valid') {
+                    eegEvents.emit('credentials-valid', params);
+                    return true;
+                }
+
                 return false;
             } catch (err) {
                 console.error('Error handling JSON event:', err.message);

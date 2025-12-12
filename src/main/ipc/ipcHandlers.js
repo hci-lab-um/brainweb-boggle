@@ -490,24 +490,23 @@ async function registerIpcHandlers(context) {
                     fs.mkdirSync(envDir, { recursive: true });
                 }
 
-                // Prepare content
+                // Read existing content and remove any previous entries for these keys
                 let lines = [];
                 if (fs.existsSync(envPath)) {
                     const raw = fs.readFileSync(envPath, 'utf8');
                     lines = raw.split(/\r?\n/);
                 }
 
-                const setOrUpdate = (key, value) => {
-                    const pattern = new RegExp(`^\s*${key}\s*=`);
-                    const formatted = `${key} = '${value}'`;
-                    const idx = lines.findIndex(l => pattern.test(l));
-                    if (idx >= 0) lines[idx] = formatted; else lines.push(formatted);
-                };
+                const keyPattern = /^\s*(EMOTIV_CLIENT_ID|EMOTIV_CLIENT_SECRET)\s*=/;
+                const preserved = lines.filter(l => !keyPattern.test(l));
 
-                setOrUpdate('EMOTIV_CLIENT_ID', clientId || '');
-                setOrUpdate('EMOTIV_CLIENT_SECRET', clientSecret || '');
+                // Append exactly one entry for each key
+                preserved.push(`EMOTIV_CLIENT_ID = '${clientId || ''}'`);
+                preserved.push(`EMOTIV_CLIENT_SECRET = '${clientSecret || ''}'`);
 
-                await fs.promises.writeFile(envPath, lines.join('\n'));
+                // Ensure trailing newline for POSIX friendliness
+                const content = preserved.join('\n');
+                await fs.promises.writeFile(envPath, content.endsWith('\n') ? content : content + '\n');
                 envUpdated = true;
             } catch (fsErr) {
                 logger.warn('Could not write .env with new credentials:', fsErr.message);
@@ -517,12 +516,19 @@ async function registerIpcHandlers(context) {
             if (envUpdated && typeof setupWebSocket === 'function') {
                 await setupWebSocket();
             }
-
-            await db.updateCredentials(headsetName, companyName, connectionType, clientId, clientSecret);
             return true;
         } catch (err) {
             logger.error('Error saving credentials:', err.message);
             return false;
+        }
+    });
+
+    ipcMain.on('credentials-persistInDb', async (event, credentialsInfo) => {
+        try {
+            const { headsetName, companyName, connectionType, clientId, clientSecret } = credentialsInfo || {};
+            await db.updateCredentials(headsetName, companyName, connectionType, clientId, clientSecret);
+        } catch (err) {
+            logger.error('Error persisting credentials in DB:', err.message);
         }
     });
 

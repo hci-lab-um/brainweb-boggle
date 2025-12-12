@@ -385,6 +385,9 @@ class EmotivEEGClient:
                     print("[INFO] requestAccess failed. Assuming app may already be registered. Trying authorise...")
                     self.access_granted = True
                     self.authorise()
+                    if code == -32021:
+                        # Informing Node.js that credentials are invalid
+                        emit_event("credentials-invalid")
                     return
 
                 if data.get('id') == 1:
@@ -418,6 +421,8 @@ class EmotivEEGClient:
             if granted:
                 self.access_granted = True
                 print("[INFO] Access granted (app registered). Proceeding to authorise...")
+                # emit event with the client credentials
+                emit_event("credentials-valid", clientId=CLIENT_ID, clientSecret=CLIENT_SECRET)
                 self.authorise()
             else:
                 print("[WARN] Access not granted yet. Will retry...")

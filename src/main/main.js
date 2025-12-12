@@ -49,6 +49,33 @@ app.whenReady().then(async () => {
         broadcastStatusBarState({ signalQuality: { percent, color } });
     });
 
+    eegEvents.on('credentials-invalid', () => {
+        try {
+            // Notify credentials overlay if it is open
+            let credentialsOverlay = viewsList.find(view => view.name === ViewNames.CREDENTIALS);
+            if (credentialsOverlay) {
+                credentialsOverlay.webContentsView.webContents.send('credentials-invalid');
+            }
+        } catch (err) {
+            logger.error('Error notifying invalid credentials to credentials overlay:', err.message);
+        }
+    });
+
+    eegEvents.on('credentials-valid', ({ clientId, clientSecret }) => {
+        try {
+            // Notify credentials overlay if it is open
+            let credentialsOverlay = viewsList.find(view => view.name === ViewNames.CREDENTIALS);
+            if (credentialsOverlay) {
+                const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
+                const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
+                const connectionType = defaultConnectionType;
+                credentialsOverlay.webContentsView.webContents.send('credentials-valid', { headsetName, companyName, connectionType, clientId, clientSecret });
+            }
+        } catch (err) {
+            logger.error('Error notifying valid credentials to credentials overlay:', err.message);
+        }
+    });
+
     try {
         await db.connect();
         await db.createTables();
@@ -78,7 +105,7 @@ app.whenReady().then(async () => {
     const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
     const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
     credentials = await db.getCredentials(headsetName, companyName, defaultConnectionType);
-    if (credentials) {
+    if (credentials && credentials.clientId && credentials.clientSecret) {
         await setupWebSocket();
     }
 

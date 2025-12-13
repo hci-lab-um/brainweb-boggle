@@ -112,7 +112,7 @@ app.whenReady().then(async () => {
         // If the default headset and connection type do not require credentials, set up the WebSocket connection directly
         await setupWebSocket();
     } else if (credentials && credentials.clientId && credentials.clientSecret) {
-    // If the default headset and connection type require credentials, and they are already populated, set up the WebSocket connection
+        // If the default headset and connection type require credentials, and they are already populated, set up the WebSocket connection
         await setupWebSocket();
     }
 
@@ -384,7 +384,7 @@ function createMainWindow() {
                                 try {
                                     const headsetName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[0];
                                     const companyName = (defaultHeadset || '').split(' - ').map(s => (s || '').trim())[1];
-                                    
+
                                     // If credentials are required but not present, open the credentials overlay
                                     if (requiresCredentials && (!credentials || !credentials.clientId || !credentials.clientSecret)) {
                                         ipcMain.emit('overlay-create', null, ViewNames.CREDENTIALS, -1, null, false, {

@@ -36,7 +36,12 @@ ipcRenderer.on('credentials-valid', async (event, credentialsInfo) => {
     try {
         // Close overlay on valid credentials and save in the db
         ipcRenderer.send('credentials-persistInDb', credentialsInfo);
-        ipcRenderer.send('overlay-close', ViewNames.CREDENTIALS);
+        if (previousCredentials) {
+            await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
+        }
+        else {
+            ipcRenderer.send('overlay-close', ViewNames.CREDENTIALS);
+        }
     } catch (err) {
         logger.error('Error closing credentials overlay on valid credentials:', err.message);
     }
@@ -114,9 +119,9 @@ function attachEventListeners({ headsetName, companyName, connectionType }) {
                     const prev = previousCredentials;
                     // If credentials are unchanged, just close the overlay
                     if (prev.clientId === clientId && prev.clientSecret === clientSecret) {
-                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
+                        await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
                         return;
-                    // If credentials have changed, stop the EEG infrastructure before saving new credentials
+                        // If credentials have changed, stop the EEG infrastructure before saving new credentials
                     } else {
                         await ipcRenderer.invoke('eegInfrastructure-stop', ViewNames.CREDENTIALS);
                     }

@@ -26,7 +26,6 @@ async function getStimuliSettingsCached() {
 // Listen for updates from main when UI changes settings
 ipcRenderer.on('stimuliSettings-update', (event, settings) => {
     try {
-        debugger;
         // Merge partial updates into cache without overwriting other fields
         stimuliSettingsCache = {
             ...(stimuliSettingsCache || {}),
@@ -136,7 +135,6 @@ async function updateScenarioId(scenarioId, buttons, viewName, stop = false) {
             return;
         }
 
-        debugger;
         // Get stimuli visual settings from cache (loads once and updates via IPC)
         const { pattern, lightColor, darkColor } = await getStimuliSettingsCached();
 

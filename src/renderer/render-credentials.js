@@ -3,6 +3,10 @@ const logger = require('../main/modules/logger');
 const { ViewNames } = require('../utils/constants/enums');
 
 let previousCredentials;
+let actionButtons = [];
+let saveLoader;
+let isSaving = false;
+let hasAttemptedConnection = false;
 
 ipcRenderer.on('credentials-loaded', (event, overlayData) => {
     try {
@@ -49,6 +53,7 @@ ipcRenderer.on('credentials-valid', async (event, credentialsInfo) => {
 
 ipcRenderer.on('credentials-invalid', async (event) => {
     try {
+        toggleSavingState(false);
         // Show error message on invalid credentials
         const idError = document.getElementById('cred-client-id-error');
         const secretError = document.getElementById('cred-client-secret-error');
@@ -76,7 +81,9 @@ function setupUI({ headsetName, companyName, connectionType }) {
         secretInput.addEventListener('input', () => clearError(secretError));
     }
 
-    buttons = Array.from(document.querySelectorAll('button'));
+    actionButtons = Array.from(document.querySelectorAll('button'));
+    saveLoader = document.getElementById('cred-save-loader');
+    toggleSavingState(false);
 }
 
 function attachEventListeners({ headsetName, companyName, connectionType }) {
@@ -90,6 +97,9 @@ function attachEventListeners({ headsetName, companyName, connectionType }) {
 
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
+            if (isSaving) return;
+
+            let savingTriggered = false;
             try {
                 const clientId = idInput?.value.trim() || '';
                 const clientSecret = secretInput?.value.trim() || '';
@@ -114,22 +124,38 @@ function attachEventListeners({ headsetName, companyName, connectionType }) {
 
                 if (hasError) return;
 
-                // If there were previous credentials, then the websocket is already connected with those credentials
-                if (previousCredentials) {
+                const prevExists = Boolean(previousCredentials && (previousCredentials.clientId || previousCredentials.clientSecret));
+                let shouldStopInfrastructure = hasAttemptedConnection;
+
+                if (prevExists) {
                     const prev = previousCredentials;
-                    // If credentials are unchanged, just close the overlay
                     if (prev.clientId === clientId && prev.clientSecret === clientSecret) {
                         await ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
                         return;
-                        // If credentials have changed, stop the EEG infrastructure before saving new credentials
-                    } else {
-                        await ipcRenderer.invoke('eegInfrastructure-stop', ViewNames.CREDENTIALS);
                     }
+                    shouldStopInfrastructure = true;
                 }
 
-                // Persist only after successful validation
-                await ipcRenderer.invoke('credentials-save', { headsetName, companyName, connectionType, clientId, clientSecret });
+                toggleSavingState(true);
+                savingTriggered = true;
+
+                if (shouldStopInfrastructure) {
+                    await ipcRenderer.invoke('eegInfrastructure-stop', ViewNames.CREDENTIALS);
+                }
+
+                hasAttemptedConnection = true;
+                const didSave = await ipcRenderer.invoke('credentials-save', { headsetName, companyName, connectionType, clientId, clientSecret });
+                if (!didSave) {
+                    throw new Error('credentials-save returned false');
+                }
             } catch (err) {
+                if (savingTriggered) {
+                    toggleSavingState(false);
+                    setError(idError, 'Unable to save credentials. Please try again.');
+                    setError(secretError, 'Unable to save credentials. Please try again.');
+                    idInput?.classList.add('input--error');
+                    secretInput?.classList.add('input--error');
+                }
                 logger.error('Error saving credentials:', err.message);
             }
         });
@@ -137,6 +163,7 @@ function attachEventListeners({ headsetName, companyName, connectionType }) {
 
     if (changeBtn) {
         changeBtn.addEventListener('click', () => {
+            if (isSaving) return;
             // Placeholder for future implementation
             ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
             ipcRenderer.send('overlay-create', ViewNames.SETTINGS, -1, 'headsetSettingsBtn');
@@ -145,6 +172,7 @@ function attachEventListeners({ headsetName, companyName, connectionType }) {
 
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
+            if (isSaving) return;
             ipcRenderer.invoke('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
         });
     }
@@ -175,4 +203,19 @@ function setError(node, message) {
 
 function clearError(node) {
     if (node) node.textContent = '';
+}
+
+function toggleSavingState(active) {
+    isSaving = Boolean(active);
+    if (actionButtons.length) {
+        actionButtons.forEach((button) => {
+            if (!button) return;
+            if (isSaving) button.setAttribute('disabled', 'disabled');
+            else button.removeAttribute('disabled');
+        });
+    }
+    if (saveLoader) {
+        saveLoader.classList.toggle('save-loader--visible', isSaving);
+        saveLoader.setAttribute('aria-hidden', isSaving ? 'false' : 'true');
+    }
 }

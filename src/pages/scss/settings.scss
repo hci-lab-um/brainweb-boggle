@@ -113,6 +113,15 @@ h4 {
         padding: 20px;
         line-height: 2rem;
         position: relative;
+
+        &--clickable {
+            cursor: pointer;
+            background-color: colors.$primary;
+
+            &:hover {
+                background-color: colors.$primary-bright;
+            }
+        }
         
         &--activatable::after {
             content: "";

@@ -5,6 +5,7 @@ const { ViewNames } = require('../utils/constants/enums');
 ipcRenderer.on('credentials-loaded', (event, overlayData) => {
     try {
         const previousCredentials = overlayData?.previousCredentials || {};
+
         // Pre-fill inputs if previous credentials exist
         if (previousCredentials.clientId) {
             const idInput = document.getElementById('cred-client-id');
@@ -16,7 +17,7 @@ ipcRenderer.on('credentials-loaded', (event, overlayData) => {
         }
 
         // If loaded from settings, we need to remove the 'Change Default' button since we're already in settings
-        if (overlayData.loadedFrom === ViewNames.SETTINGS) { 
+        if (overlayData.loadedFrom === ViewNames.SETTINGS) {
             const changeBtn = document.getElementById('cred-change-defaults-btn');
             if (changeBtn) changeBtn.style.display = 'none';
         }
@@ -48,7 +49,7 @@ ipcRenderer.on('credentials-invalid', async (event) => {
         setError(secretError, 'Invalid credentials. Please try again.');
     } catch (err) {
         logger.error('Error handling invalid credentials in overlay:', err.message);
-    }  
+    }
 });
 
 function setupUI({ headsetName, companyName, connectionType }) {
@@ -62,11 +63,9 @@ function setupUI({ headsetName, companyName, connectionType }) {
     if (title) title.textContent = 'Credentials Required';
     if (desc) desc.textContent = `${headsetName} by ${companyName} using ${connectionType} requires credentials. Enter them below or change the default headset and connection type from the settings.`;
     if (idInput) {
-        idInput.value = '';
         idInput.addEventListener('input', () => clearError(idError));
     }
     if (secretInput) {
-        secretInput.value = '';
         secretInput.addEventListener('input', () => clearError(secretError));
     }
 

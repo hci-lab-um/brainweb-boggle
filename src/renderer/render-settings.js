@@ -437,6 +437,7 @@ async function populateHeadsetSettings() {
         updateCredentialsBtn = document.createElement('button');
         updateCredentialsBtn.innerHTML = `<span>Update Credentials</span>`;
         updateCredentialsBtn.id = 'updateCredentialsBtn';
+        updateCredentialsBtn.classList.add('button', 'button--clickable');
         connectionTypeCard.appendChild(updateCredentialsBtn);
     }
 
@@ -494,7 +495,7 @@ async function populateHeadsetSettings() {
         try {
             const credentials = await ipcRenderer.invoke('credentials-get', headsetName, companyName, connectionTypeInUse);
             const loadedFrom = ViewNames.SETTINGS;
-            ipcRenderer.send('overlay-create', ViewNames.CREDENTIALS, -1, null, null, {credentials, loadedFrom});
+            ipcRenderer.send('overlay-create', ViewNames.CREDENTIALS, -1, null, null, {headsetName, companyName, connectionType: connectionTypeInUse, credentials, loadedFrom});
         } catch (error) {
             logger.error('Error creating credentials overlay:', error.message);
         }

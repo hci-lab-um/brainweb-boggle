@@ -458,6 +458,13 @@ h4 {
   line-height: 2rem;
   position: relative;
 }
+.settingCard .button--clickable {
+  cursor: pointer;
+  background-color: #1d2b5d;
+}
+.settingCard .button--clickable:hover {
+  background-color: #233985;
+}
 .settingCard .button--activatable::after {
   content: "";
   position: absolute;

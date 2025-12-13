@@ -178,7 +178,7 @@ async function registerIpcHandlers(context) {
                 break;
 
             case ViewNames.CREDENTIALS:
-                overlayData.credentialsInfo = elementProperties; // {headsetName, companyName, connectionType, defaultHeadsetLabel}
+                overlayData.credentialsInfo = elementProperties; // {headsetName, companyName, connectionType}
                 if (elementProperties.credentials) overlayData.previousCredentials = elementProperties.credentials; // {clientId, clientSecret}
                 if (elementProperties.loadedFrom) overlayData.loadedFrom = elementProperties.loadedFrom;
                 break;

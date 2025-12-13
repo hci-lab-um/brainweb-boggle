@@ -242,25 +242,25 @@ function connectWebSocketClient() {
     });
 }
 
-function disconnectWebSocketClient() {
+async function disconnectWebSocketClient() {
     if (ws) {
-        try { ws.close(); } catch (_) { }
+        try { await ws.close(); } catch (_) { }
         ws = null;
     }
     headsetConnected = false;
     clearMessageBuffer(); // ensure buffer cleared when socket closes
 }
 
-function stopEegInfrastructure() {
+async function stopEegInfrastructure() {
     try {
-        disconnectWebSocketClient();
+        await disconnectWebSocketClient();
     } catch (e) {
         console.error('WS close error:', e);
     }
 
     if (pythonProcessRef && !pythonProcessRef.killed) {
         try {
-            pythonProcessRef.kill('SIGTERM');
+            await pythonProcessRef.kill('SIGTERM');
         } catch (e) {
             console.error('Python process kill error:', e);
         }

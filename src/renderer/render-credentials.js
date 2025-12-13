@@ -2,9 +2,11 @@ const { ipcRenderer } = require('electron');
 const logger = require('../main/modules/logger');
 const { ViewNames } = require('../utils/constants/enums');
 
+let previousCredentials;
+
 ipcRenderer.on('credentials-loaded', (event, overlayData) => {
     try {
-        const previousCredentials = overlayData?.previousCredentials || {};
+        previousCredentials = overlayData?.previousCredentials || {};
 
         // Pre-fill inputs if previous credentials exist
         if (previousCredentials.clientId) {
@@ -106,6 +108,19 @@ function attachEventListeners({ headsetName, companyName, connectionType }) {
                 }
 
                 if (hasError) return;
+
+                // If there were previous credentials, then the websocket is already connected with those credentials
+                if (previousCredentials) {
+                    const prev = previousCredentials;
+                    // If credentials are unchanged, just close the overlay
+                    if (prev.clientId === clientId && prev.clientSecret === clientSecret) {
+                        ipcRenderer.send('overlay-closeAndGetPreviousScenario', ViewNames.CREDENTIALS);
+                        return;
+                    // If credentials have changed, stop the EEG infrastructure before saving new credentials
+                    } else {
+                        await ipcRenderer.invoke('eegInfrastructure-stop', ViewNames.CREDENTIALS);
+                    }
+                }
 
                 // Persist only after successful validation
                 await ipcRenderer.invoke('credentials-save', { headsetName, companyName, connectionType, clientId, clientSecret });

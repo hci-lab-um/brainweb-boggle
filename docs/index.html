@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boggle</title>
     <meta name="description"
-        content="Boggle is the first brain-native web browser designed to give people with severe motor impairments barrier-free access to the internet. A deliverable of the BrainWeb project.">
+        content="Boggle is an award-winning brain-native web browser designed to give people with severe motor impairments barrier-free access to the internet. A deliverable of the BrainWeb project.">
     <meta name="author" content="BrainWeb Research Team">
 
     <!-- Open Graph metadata -->
@@ -190,7 +190,8 @@
                     <div class="card-body">
                         <h3 class="card-title pb-2">Inclusive by Design</h3>
                         <p class="card-text fs-5">
-                            Boggle is designed to work outside the lab and developed for people who cannot use traditional assistive technology.
+                            Boggle is designed to work outside the lab and developed for people who cannot use
+                            traditional assistive technology.
                             Using Steady State Visually Evoked Potentials (SSVEPs) and accessible EEG hardware, it
                             brings reliable, low-cost brain-computer interaction to the web, enabling access to the
                             internet for all, without limitations.
@@ -258,7 +259,8 @@
                             alt="SSVEP Stimuli Generator">
                         <div class="card-body py-4">
                             <h5 class="card-title">Integrates with the ssvep-stimuli Generator Library</h5>
-                            <p class="text-muted card-text">Generates SSVEP stimuli for Boggle using an in-house library developed for SSVEP brain-computer interfaces.</p>
+                            <p class="text-muted card-text">Generates SSVEP stimuli for Boggle using an in-house library
+                                developed for SSVEP brain-computer interfaces.</p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
                             data-longDescription="Boggle leverages the ssvep-stimuli library to create precise visual stimuli patterns for SSVEP-based brain–computer interaction (BCI), enabling customisable and reliable browser control. Key features include: flexible frequency support with a wide range of SSVEP stimuli frequencies; adaptive rendering that synchronises with monitor refresh rates; customisable appearance through CSS or WebGL; user-defined colours for stimuli; and multiple pattern types, including dot, solid, chequered, and line. The library was originally developed as part of the BrainWeb project and now can be used to support other BCI research and applications."
@@ -307,8 +309,7 @@
                 </div>
                 <div class="col">
                     <div class="card h-100 text-start shadow-lg feature-card text-light">
-                        <img src="./assets/features/settings.png" class="card-img-top"
-                            alt="EEG Headsets">
+                        <img src="./assets/features/settings.png" class="card-img-top" alt="EEG Headsets">
                         <div class="card-body py-4">
                             <h5 class="card-title">Works with multiple EEG headsets</h5>
                             <p class="text-muted card-text">Compatible with multiple EEG headsets so that users can
@@ -367,11 +368,27 @@
                                 to tailor the user experience according to individual preferences.</p>
                         </div>
                         <button class="stretched-link feature-modal-trigger feature-modal-btn"
-                            data-longDescription="To be implemented..." data-bs-toggle="modal"
-                            data-bs-target="#featureModal" data-title="Highly Customisable"
+                            data-longDescription="Boggle includes a dedicated settings page where users can tailor their experience by configuring the default home URL, choosing their preferred BCI keyboard layout, enabling or disabling an adaptive switch, selecting the EEG headset and connection type, and adjusting SSVEP stimuli properties such as pattern, light and dark colours, and gaze length. In addition, Boggle is designed to work alongside a browser-based calibration application (NeuroTune), allowing users to fine tune these SSVEP parameters to individual preferences before everyday use."
+                            data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Highly Customisable"
                             data-description="A settings page that offers extensive customisation options to tailor the user experience according to individual preferences."
                             data-video="./assets/features/settings.png"
                             aria-label="View more about Highly Customisable"></button>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 text-start shadow-lg feature-card text-light">
+                        <img src="./assets/features/adaptive_switch.png" class="card-img-top" alt="Adaptive Switch Integration">
+                        <div class="card-body py-4">
+                            <h5 class="card-title">Adaptive Switch Integration</h5>
+                            <p class="card-text text-muted">An optional adaptive switch support which reduces on-screen flicker to lower cognitive load and improve selection accuracy.</p>
+                        </div>
+                        <button class="stretched-link feature-modal-trigger feature-modal-btn"
+                            data-longDescription="Boggle can be configured to work with an external adaptive switch, helping users achieve more reliable selections. The adaptive switch is completely optional: Boggle is designed to operate fully with EEG-only control, so it can be used without any additional switch hardware. When enabled, the adaptive switch controls how many flickering stimuli are shown at once, reducing cognitive load and improving selection accuracy for users with a limited usable frequency range. Each time the adaptive switch is activated, it cycles through different modes: all targets flickering, all targets temporarily off, and then a series of smaller groups of targets shown one group at a time. This gradual narrowing of the active stimuli helps users focus on fewer choices while still retaining full control over the browser."
+                            data-bs-toggle="modal" data-bs-target="#featureModal" 
+                            data-title="Adaptive Switch Integration"
+                            data-description="An optional adaptive switch support which reduces on-screen flicker to lower cognitive load and improve selection accuracy."
+                            data-video="./assets/features/adaptive_switch.png"
+                            aria-label="View more about Adaptive Switch Integration"></button>
                     </div>
                 </div>
             </div>
@@ -483,8 +500,7 @@
                                     as
                                     a novel SSVEP-based BCI web browser.
                                 </p>
-                                <div
-                                    class="citation citation-md col-12 d-flex flex-row align-items-center">
+                                <div class="citation citation-md col-12 d-flex flex-row align-items-center">
                                     <a href="javascript:void(0);" class="btn btn-outline-secondary copy-citation-btn"
                                         onclick="copyCitation()" data-bs-toggle="tooltip" data-bs-placement="top"
                                         title="Copy citation">
@@ -538,15 +554,14 @@
                         <div class="row w-100 pt-4 pb-5 py-md-5 gap-4 gap-md-0 justify-content-center">
                             <div class="col-12 col-md-8 mb-4 d-flex flex-column justify-content-center">
                                 <h2 class="pb-2">3. Publication</h2>
-                                <a href="https://dl.acm.org/doi/10.1145/3750069.3757721"
-                                    target="_blank" rel="noopener" class="publication-title pb-2 fs-5">
+                                <a href="https://dl.acm.org/doi/10.1145/3750069.3757721" target="_blank" rel="noopener"
+                                    class="publication-title pb-2 fs-5">
                                     Advancing Boggle - Taking BCI Web-Browsing Out of the Lab</a>
                                 <p class="publication-desc text-muted fs-5">
                                     Explore our third paper which was presented at CHItaly 2025 Interactive Experience
                                     Session. It shows the improvements made to Boggle since its initial release.
                                 </p>
-                                <div
-                                    class="citation citation-md col-12 d-flex flex-row align-items-center">
+                                <div class="citation citation-md col-12 d-flex flex-row align-items-center">
                                     <a href="javascript:void(0);" class="btn btn-outline-secondary copy-citation-btn"
                                         onclick="copyCitation()" data-bs-toggle="tooltip" data-bs-placement="top"
                                         title="Copy citation">
@@ -557,8 +572,10 @@
                                             </svg>
                                         </i>
                                     </a>
-                                    <p>D. Calleja, M. Buhagiar, C. Porter, T. Camilleri, and K. Camilleri, “Advancing Boggle - Taking BCI Web-Browsing Out
-                                        of the Lab,” Proceedings of the 16th Biannual Conference of the Italian SIGCHI Chapter, pp. 1–2, Oct. 2025, 
+                                    <p>D. Calleja, M. Buhagiar, C. Porter, T. Camilleri, and K. Camilleri, “Advancing
+                                        Boggle - Taking BCI Web-Browsing Out
+                                        of the Lab,” Proceedings of the 16th Biannual Conference of the Italian SIGCHI
+                                        Chapter, pp. 1–2, Oct. 2025,
                                         Available: https://dl.acm.org/doi/10.1145/3750069.3757721.
                                         DOI: https://doi.org/10.1145/3750069.3757721.
                                     </p>
@@ -566,8 +583,10 @@
                                 <a href="javascript:void(0);"
                                     class="citation citation-sm col-12 d-flex flex-column align-items-center justify-content-center"
                                     onclick="copyCitation()">
-                                    <p>D. Calleja, M. Buhagiar, C. Porter, T. Camilleri, and K. Camilleri, “Advancing Boggle - Taking BCI Web-Browsing Out
-                                        of the Lab,” Proceedings of the 16th Biannual Conference of the Italian SIGCHI Chapter, pp. 1–2, Oct. 2025, 
+                                    <p>D. Calleja, M. Buhagiar, C. Porter, T. Camilleri, and K. Camilleri, “Advancing
+                                        Boggle - Taking BCI Web-Browsing Out
+                                        of the Lab,” Proceedings of the 16th Biannual Conference of the Italian SIGCHI
+                                        Chapter, pp. 1–2, Oct. 2025,
                                         Available: https://dl.acm.org/doi/10.1145/3750069.3757721.
                                         DOI: https://doi.org/10.1145/3750069.3757721.
                                     </p>
@@ -575,8 +594,8 @@
                                 </a>
                             </div>
                             <div class="paper-container col-12 col-md-4 d-flex align-items-center">
-                                <a href="https://dl.acm.org/doi/10.1145/3750069.3757721"
-                                    target="_blank" rel="noopener" class="text-decoration-none text-reset">
+                                <a href="https://dl.acm.org/doi/10.1145/3750069.3757721" target="_blank" rel="noopener"
+                                    class="text-decoration-none text-reset">
                                     <div class="paper d-flex flex-column justify-content-between align-items-center">
                                         <h1 class="text-center">
                                             Advancing Boggle - Taking BCI Web-Browsing Out of the Lab
@@ -643,7 +662,8 @@
                             <img src="./assets/chrisporter.jpg" alt="profile-image" class="profile" />
                         </div>
                         <div class="card-content">
-                            <h2>prof. chris porter<small>Principal Investigator<br>(Human Computer Interaction)</small></h2>
+                            <h2>prof. chris porter<small>Principal Investigator<br>(Human Computer Interaction)</small>
+                            </h2>
                             <div class="icon-block">
                                 <a href="https://www.linkedin.com/in/chrisporter/" target="_blank" rel="noopener"><i
                                         class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
@@ -739,7 +759,8 @@
                             <img src="./assets/traceycamilleri.png" alt="profile-image" class="profile" />
                         </div>
                         <div class="card-content">
-                            <h2>prof. ing. tracey camilleri<small>Co-Investigator<br>(Biomedical Signal Processing)</small></h2>
+                            <h2>prof. ing. tracey camilleri<small>Co-Investigator<br>(Biomedical Signal
+                                    Processing)</small></h2>
                             <div class="icon-block">
                                 <a href="https://www.linkedin.com/in/tracey-camilleri-6473a5a/" target="_blank"
                                     rel="noopener"><i class="icon"><svg xmlns="http://www.w3.org/2000/svg"
@@ -767,7 +788,8 @@
                             <img src="./assets/kennethcamilleri.png" alt="profile-image" class="profile" />
                         </div>
                         <div class="card-content">
-                            <h2>prof. ing. kenneth camilleri<small>Co-Investigator<br>(Biomedical Signal Processing)</small></h2>
+                            <h2>prof. ing. kenneth camilleri<small>Co-Investigator<br>(Biomedical Signal
+                                    Processing)</small></h2>
                             <div class="icon-block">
                                 <a href="https://www.linkedin.com/in/kenneth-camilleri-b07a6228/" target="_blank"
                                     rel="noopener"><i class="icon"><svg xmlns="http://www.w3.org/2000/svg"

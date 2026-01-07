@@ -1,25 +1,44 @@
 // Base colors
 $white: #ffffff;
 $black: #000000;
+$bright-green: #08FF00;
+$purple: #cb33fb;
+$steel-blue: #8885d3;
+$denim-blue: #5fc2ed;
 
 // Brand colors
-$primary: #1e90ff;
+$primary: #1d2b5d;
 $secondary: #ff7f50;
-$accent: #ffd700;
+$accent: #b7ff00;
 
 // Muted Brand colors
-$primary-muted: #125291;
-$secondary-muted: #913412;
-$accent-muted: #917e12;
+$primary-muted: #29388e80;
+$primary-bright: #233985;
+
+// $primary-muted: #2a4b4d; // or #2a4e51
+$secondary-muted: #ff7474;
+$accent-transparent: rgba(183, 255, 0, 0.702);
+$accent-transparent-85: rgb(183 255 0 / 85%);
 
 // Backgrounds
 $bg-light: #f8f9fa;
 $bg-dark: #1f1f1f;
-$bg-white-transparent: rgba(255, 255, 255, 0.11);
+$bg-dark-blue: #061524;
+$bg-white-transparent-7: rgba(255, 255, 255, 0.07);
+$bg-white-transparent-11: rgba(255, 255, 255, 0.11);
+$bg-white-transparent-30: rgba(255, 255, 255, 0.3);
+$bg-white-transparent-50: rgba(255, 255, 255, 0.5);
+$bg-black-transparent: rgba(0, 0, 0, 0.329);
+$bg-black-transparent-80: rgba(0, 0, 0, 0.8);
+$bg-black-transparent-70: rgba(0, 0, 0, 0.7);
+$bg-black-transparent-25: rgba(0, 0, 0, 0.25);
+$blue-transparent: rgba(29, 43, 93, 0.341);
+$grey-transparent: rgba(31, 31, 31, 0.659);
 
 // Text
 $text-primary: #212529;
-$text-muted: #6c757d;
+$text-muted: #b5c2cd; //a blue-ish white
+$transparent-text-muted: #b6c3cd38;
 
 // Semantic button colors
 $button-primary-bg: $primary;
@@ -27,6 +46,12 @@ $button-primary-text: $text-primary;
 
 $button-secondary-bg: $secondary;
 $button-secondary-text: $text-muted;
+
+// Signal circle colors
+$quality-grey: #5a5a5a;
+$quality-red: #d73737;
+$quality-yellow: #e3bb00;
+$quality-green: #2c9c3f;
 
 // // UI states
 // $success: #28a745;

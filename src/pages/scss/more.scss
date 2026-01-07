@@ -1,0 +1,68 @@
+@use "colors";
+@use "icons";
+@use "animation";
+@use "components";
+
+#moreOptions {
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: colors.$bg-dark;
+    display: grid;
+    gap: 3vw;
+    width: 100%;
+    height: 100%;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas:
+        "tabs bookmarks refresh"
+        "zoomIn zoomOut zoomReset"
+        "settings about exit"
+        "close close close";
+
+    #tabsBtn {
+        grid-area: tabs;
+    }
+
+    #bookmarksBtn {
+        grid-area: bookmarks;
+    }
+
+    #refreshBtn {
+        grid-area: refresh;
+    }
+
+    #zoomInBtn {
+        grid-area: zoomIn;
+    }
+
+    #zoomOutBtn {
+        grid-area: zoomOut;
+    }
+
+    #zoomResetBtn {
+        grid-area: zoomReset;
+    }
+
+    #settingsBtn {
+        grid-area: settings;
+    }
+
+    #aboutBtn {
+        grid-area: about;
+    }
+
+    #exitBtn {
+        grid-area: exit;
+    }
+
+    #closeMoreBtn {
+        grid-area: close;
+
+        i {
+            margin: -20px;
+        }
+    }
+}
+
+.button {
+    font-size: 32px;
+}

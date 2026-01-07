@@ -9,43 +9,51 @@
 
 <body id="browser">
     <div id='sidebar'>
-        <button id='selectBtn'>
+        <button id='selectBtn' class="button">
             <p>Select</p>
             <i class="material-icons--s" aria-hidden="true">ads_click</i>
         </button>
 
-        <button id='readBtn'>
+        <button id='seekBtn' class="button">
+            <p>Seek</p>
+            <i class="material-icons--s" aria-hidden="true">swap_vert</i>
+        </button>
+
+        <button id='readBtn' class="button">
             <p>Read</p>
             <i class="material-icons--s" aria-hidden="true">auto_stories</i>
         </button>
 
-        <button id='searchBtn'>
-            <p>Search</p>
-            <i class="material-icons--s" aria-hidden="true">search</i>
-        </button>
-
-        <button id='moreBtn'>
+        <button id='moreBtn' class="button">
             <p>More</p>
             <i class="material-icons--s" aria-hidden="true">menu</i>
         </button>
     </div>
     <div id='browsing-container'>
         <nav id="navbar">
-            <button id="backBtn">
+            <button id="backBtn" class="button">
                 <i class="material-icons--s" aria-hidden="true">arrow_back_ios</i>
             </button>
-            <div id="urlHolder">
+            <button id="searchBtn" class="button">
                 <div id="loader"></div>
-                <div id="favicon">
+                <div id="favicon" class="favicon">
                     <i class="material-icons--s">check</i>
                 </div>
-                <input type="text" id="url" placeholder="Loading...">
-            </div>
-            <button id="forwardBtn">
+                <input type="text" id="omnibox" readonly placeholder="Loading..." unselectable="on"
+                    onfocus="this.blur();">
+            </button>
+            <button id="forwardBtn" class="button">
                 <i class="material-icons--s" aria-hidden="true">arrow_forward_ios</i>
             </button>
         </nav>
-        <div id="webpage" class="webpage"></div>
+        <div id="webpage" class="webpage">
+            <div id="loaderContainer">
+                <video id="brainLoader" width="64" height="64" autoplay loop muted>
+                    <source src="../../../resources/loadingBrain.webm" type="video/webm">
+                    Loading...
+                </video>
+            </div>
+        </div>
     </div>
 </body>
 

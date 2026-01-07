@@ -1,105 +1,154 @@
-const stimuli = require("ssvep-stimuli");
 const { ipcRenderer } = require('electron')
-const { scenarioConfig } = require('../../configs/scenarioConfig');
-const { browserConfig } = require('../../configs/browserConfig');
+const { ViewNames, CssConstants } = require('../utils/constants/enums');
+const { updateScenarioId, stopManager } = require('../utils/scenarioManager');
+const { addButtonSelectionAnimation } = require('../utils/selectionAnimation');
+const { initStatusBar, applyStatusBarStateChange } = require('../utils/statusBar');
+const logger = require('../main/modules/logger');
 
 let buttons = [];
-let manager;
 
-ipcRenderer.on('ipc-mainwindow-loaded', async (event, scenarioId) => {
+ipcRenderer.on('mainWindow-loaded', async (event, scenarioId) => {
     try {
-        await updateScenarioId(scenarioId);
-        attachEventListeners();
-    } catch (error) {
-        console.error('Error in ipc-mainwindow-loaded handler:', error);
-    }
-});
+        initStatusBar();
 
-ipcRenderer.on('ipc-update-scenarioId', async (event, scenarioId) => {
-    try {
-        await updateScenarioId(scenarioId);
-    } catch (error) {
-        console.error('Error in ipc-update-scenarioId handler:', error);
-    }
-});
-
-async function updateScenarioId(scenarioId) {
-    try {
-        // This index counter is used to track the number of buttons that have been assigned
-        // properties and to ensure that the properties are assigned in the correct order
-        let index = 0;
-
-        // Get the frequencies for the current scenario using the config.js file
-        // Contains the number of active frequencies in the current scenario
-        const frequencies = scenarioConfig[`scenario_${scenarioId}`].frequencies;
-        const phases = scenarioConfig[`scenario_${scenarioId}`].phases;
-        const buttonIds = scenarioConfig[`scenario_${scenarioId}`].buttonIds;
-
-        manager = new stimuli.CSS('approximation', frequencies.length); // Using frequencies.length to set the number of ACTIVE buttons
         buttons = document.querySelectorAll('button');
-
-        if (!frequencies) {
-            console.error(`No frequencies found for scenario ID: ${scenarioId}`);
-            return;
-        }
-
-        // Assign properties to buttons
-        buttons.forEach((button) => {
-            const currentBtnId = button.getAttribute('id');
-
-            // Check if the buttonProperties array has a value for the current index
-            if (buttonIds.includes(currentBtnId)) {
-                button.setAttribute('data-phase-shift', phases[index]);
-                button.setAttribute('data-frequency', frequencies[index]);
-                button.setAttribute('data-pattern', browserConfig.stimuli.customSetup.patterns.line);
-                button.setAttribute('data-light-color', browserConfig.stimuli.customSetup.colors.lightColor);
-                button.setAttribute('data-dark-color', browserConfig.stimuli.customSetup.colors.darkColor);
-
-                manager.set(button);
-                index++;
-            }
-        });
-
-        await manager.start();
+        // This line below was commented out because the scenario will be updated when the tab stops loading
+        // await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW);  
+        attachEventListeners();
+        ipcRenderer.send('mainWindow-loaded-complete');
     } catch (error) {
-        console.error('Error in updateScenarioId:', error);
+        logger.error('Error in mainWindow-loaded handler:', error.message);
+    }
+});
+
+ipcRenderer.on('statusBar-applyStateChange', (event, changes) => {
+    try {
+        applyStatusBarStateChange(changes);
+    } catch (error) {
+        logger.error('Error handling statusBar-applyStateChange:', error.message);
+    }
+});
+
+ipcRenderer.on('selectedButton-click', (event, buttonId) => {
+    try {
+        document.getElementById(buttonId).click();
+    } catch (error) {
+        logger.error('Error in selectedButton-click handler:', error.message);
+    }
+});
+
+ipcRenderer.on('scenarioId-update', async (event, scenarioId, stopManager) => {
+    try {
+        await updateScenarioId(scenarioId, buttons, ViewNames.MAIN_WINDOW, stopManager);
+        ipcRenderer.send('scenarioId-update-complete', scenarioId);
+    } catch (error) {
+        logger.error('Error in scenarioId-update handler:', error.message);
+    }
+});
+
+ipcRenderer.on('omniboxText-update', (event, title, isErrorPage = false) => {
+    try {
+        console.log('title in omniboxText-update', title)
+        updateOmniboxText(title, isErrorPage);
+    } catch (error) {
+        logger.error('Error in omniboxText-update handler:', error.message);
+    }
+});
+
+ipcRenderer.on('webpageBounds-get', () => {
+    const element = document.querySelector('#webpage');
+    if (element) {
+        const rect = element.getBoundingClientRect();
+        ipcRenderer.send('webpageBounds-response', {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+        });
+    } else {
+        ipcRenderer.send('webpageBounds-response', null);
+    }
+});
+
+function updateOmniboxText(title, isErrorPage = false) {
+    const omniboxText = document.getElementById('omnibox');
+    omniboxText.value = title;
+
+    const omniboxFav = document.querySelector('#favicon');
+    const omniboxIcon = omniboxFav.querySelector('i');
+
+    if (isErrorPage) {
+        omniboxIcon.innerText = 'close';
+        omniboxFav.classList.add('favicon--error');
+    } else {
+        omniboxIcon.innerText = 'check';
+        omniboxFav.classList.remove('favicon--error');
     }
 }
 
-// Add event listeners to each button
 function attachEventListeners() {
     buttons.forEach((button, index) => {
         button.addEventListener('click', async () => {
-            console.log(`Button ${index + 1} clicked:`, button.textContent.trim());
+            // Disable the button immediately to prevent multiple clicks
+            button.disabled = true;
+            setTimeout(() => { button.disabled = false; }, 1500);
+
+            addButtonSelectionAnimation(button);
             const buttonId = button.getAttribute('id');
 
-            switch (buttonId) {
-                case "selectBtn":
-                    // tbi
-                    break;
-                case "readBtn":
-                    try {
-                        const textElement = button.querySelector('p'); // Fix to access the <p> element inside the button
-                        if (textElement.textContent.trim() === "Read") {
-                            manager.stop();
-                            textElement.textContent = "Stop Reading";
-                            await updateScenarioId(4);
-                        } else {
-                            manager.stop();
-                            textElement.textContent = "Read";
-                            await updateScenarioId(0);
+            setTimeout(async () => {
+                await stopManager();
+
+                switch (buttonId) {
+                    case "seekBtn":
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.SEEK, -1);
+                        break;
+                    case "selectBtn":
+                        // -1 is an invalid scenarioId. In this case, the scenarioId will be calculated inside the overlay itself.
+                        ipcRenderer.send('overlay-create', ViewNames.SELECT, -1);
+                        break;
+                    case "readBtn":
+                        try {
+                            const textElement = button.querySelector('p'); // Fix to access the <p> element inside the button
+                            if (textElement.textContent.trim() === "Read") {
+                                textElement.textContent = "Stop Reading";
+                                await updateScenarioId(4, buttons, ViewNames.MAIN_WINDOW);
+                            } else {
+                                textElement.textContent = "Read";
+                                ipcRenderer.send('readMode-stop');
+                            }
+                        } catch (error) {
+                            logger.error('Error toggling read mode:', error.message);
                         }
-                    } catch (error) {
-                        console.error('Error toggling read mode:', error);
-                    }
-                    break;
-                case "searchBtn":
-                    // tbi
-                    break;
-                case "moreBtn":
-                    // tbi
-                    break;
-            }
+                        break;
+                    case "searchBtn":
+                        try {
+                            const omnibox = document.getElementById('omnibox');
+                            let elementProperties = {
+                                id: 'omnibox',
+                                type: omnibox.type,
+                            }
+                            ipcRenderer.send('overlay-create', ViewNames.KEYBOARD, 80, null, null, elementProperties);
+                        } catch (error) {
+                            logger.error('Error creating keyboard overlay:', error.message);
+                        }
+                        break;
+                    case "moreBtn":
+                        try {
+                            ipcRenderer.send('overlay-create', ViewNames.MORE, 20);
+                        } catch (error) {
+                            logger.error('Error creating keyboard overlay:', error.message);
+                        }
+                        break;
+                    case "backBtn":
+                        ipcRenderer.send('webpage-goBack');
+                        break;
+                    case "forwardBtn":
+                        ipcRenderer.send('webpage-goForward');
+                        break;
+                }
+            }, CssConstants.SELECTION_ANIMATION_DURATION);
         });
     });
 }

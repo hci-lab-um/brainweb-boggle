@@ -1,0 +1,166 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/about.css">
+</head>
+
+<body>
+    <div id="aboutOverlay" class="overlay">
+        <div id="sidebar">
+            <div id="sidebar-buttons">
+                <button class="button scroll-button scroll-up" id="scrollUpBtn">
+                    <i class="material-icons--xl">keyboard_arrow_up</i>
+                </button>
+                <button class="button scroll-button scroll-down" id="scrollDownBtn">
+                    <i class="material-icons--xl">keyboard_arrow_down</i>
+                </button>
+            </div>
+            <button id='closeAboutBtn' class="button accent">
+                <i class="material-icons--s" aria-hidden="true">close</i>
+            </button>
+        </div>
+        <div id="browsing-container">
+            <h2>About Boggle</h2>
+            <div class="aboutCard">
+                <div id="boggleLogo-container">
+                    <img id="boggleLogo-logo" src="../../../resources/boggle_logo.png"></img>
+                    <div id="boggleLogo-text">
+                        <img src="../../../docs/assets/boggle_title.png" alt="Boggle Title">
+                        <h4>Version <span id="appVersion"></span></h4>
+                    </div>
+                </div>
+                <p>
+                    Boggle is an award-winning brain-controlled web browser that redefines internet access for people with severe motor
+                    impairments. Powered by neural responses to visual stimulation (Steady-State Visually Evoked
+                    Potentials), it enables users who cannot rely on traditional assistive technologies, such as eye
+                    trackers and switch control, to navigate the web freely.
+                </p>
+            </div>
+            <div class="aboutCard">
+                <h3>Disclaimer</h3>
+                <p>
+                    This is a research tool and should be used with care. Boggle offers BCI-based web browsing based on
+                    Steady State Visually Evoked Potentials.
+                </p>
+            </div>
+            <div class="aboutCard">
+                <h3>Project License</h3>
+                <p>
+                    This project is licensed under the GPL v3 License. You can select the button below to view the full
+                    license.
+                </p>
+                <div class="linkButtonsContainer">
+                    <button id="licenseBtn" class="button linkButton"
+                        data-link="https://github.com/hci-lab-um/brainweb-boggle/blob/develop/LICENSE">
+                        GPL-3 License
+                    </button>
+                </div>
+            </div>
+            <div class="aboutCard">
+                <h3>Custom SSVEP Stimuli Generation Library</h3>
+                <p>
+                    All the stimuli used within Boggle was produced using this library. It was built from the ground up
+                    using CSS
+                    and WebGL to implement four cross-platform
+                    methods for
+                    generating SSVEP stimuli. These stimuli are produced using constant-period and square-wave
+                    approximation techniques,
+                    all suitable for BCI applications. The library enables users to customise the frequency, phase,
+                    colour, and pattern
+                    of the stimuli, with available patterns including solid, chequered, dot, and line.
+                </p>
+                <div class="linkButtonsContainer">
+                    <button id="npmBtn" class="button linkButton"
+                        data-link="https://www.npmjs.com/package/ssvep-stimuli">
+                        NPM Library
+                    </button>
+                </div>
+            </div>
+            <div class="aboutCard">
+                <h3>Adaptive Switch Functionality</h3>
+                <p>
+                    The physical switch is an optional feature, as users can operate Boggle without it. However,
+                    integrating an adaptive switch can enhance the system’s performance, particularly by improving
+                    classification accuracy. This is achieved by allowing the switch to segment the on-screen buttons
+                    into distinct groups each time it is pressed. In practice, the switch cycles through several states:
+                    all off (also known as read mode), followed by group 1, group 2, and so on, until all buttons are
+                    flickering again. For added visibility, the current cycle state and the required keyboard shortcut
+                    are displayed in the status bar at the bottom of the window.
+                </p>
+            </div>
+            <div class="aboutCard">
+                <h3>Third Party Libraries</h3>
+                <p>
+                    This project uses the following third-party libraries.
+                </p>
+                <div class="linkButtonsContainer_grid">
+                    <div class="linkButton">
+                        electron (MIT)
+                    </div>
+                    <div class="linkButton">
+                        sass (MIT)
+                    </div>
+                    <div class="linkButton">
+                        nut-tree-fork/nut-js (Apache-2.0)
+                    </div>
+                    <div class="linkButton">
+                        child_process (ISC)
+                    </div>
+                    <div class="linkButton">
+                        mathjs (Apache-2.0)
+                    </div>
+                    <div class="linkButton">
+                        ml-matrix (MIT)
+                    </div>
+                    <div class="linkButton">
+                        path (MIT)
+                    </div>
+                    <div class="linkButton">
+                        python-shell (MIT)
+                    </div>
+                    <div class="linkButton">
+                        sqlite3 (BSD-3-Clause)
+                    </div>
+                    <div class="linkButton">
+                        winston (MIT)
+                    </div>
+                    <div class="linkButton">
+                        winston-daily-rotate-file (MIT)
+                    </div>
+                    <div class="linkButton">
+                        ws (MIT)
+                    </div>
+                </div>
+            </div>
+            <div class="aboutCard">
+                <h3>Python Dependencies</h3>
+                <p>
+                    This project also uses the following third-party Python libraries for FBCCA-based classification.
+                </p>
+                <div class="linkButtonsContainer_grid">
+                    <div class="linkButton">
+                        websockets (BSD-3-Clause)
+                    </div>
+                    <div class="linkButton">
+                        numpy (BSD-3-Clause)
+                    </div>
+                    <div class="linkButton">
+                        scipy (BSD-3-Clause)
+                    </div>
+                    <div class="linkButton">
+                        scikit-learn (BSD-3-Clause)
+                    </div>
+                    <div class="linkButton">
+                        pylsl (MIT)
+                    </div>
+                    <div class="linkButton">
+                        websocket-client (Apache-2.0)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

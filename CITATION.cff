@@ -1,0 +1,31 @@
+cff-version: "1.2.0"
+message: "If you use this software, please cite it as below."
+title: "Boggle"
+version: "1.0.0"
+date-released: "2025-10-17"
+authors:
+- family-names: "Calleja"
+  given-names: "Daniel"
+  orcid: "https://orcid.org/0009-0002-4401-8766"
+- family-names: "Buhagiar"
+  given-names: "Marie"
+  orcid: "https://orcid.org/0009-0001-5234-7052"
+- family-names: "Porter"
+  given-names: "Chris"
+  orcid: "https://orcid.org/0000-0003-3813-2941"
+- family-names: "Camilleri"
+  given-names: "Tracey"
+  orcid: "https://orcid.org/0000-0002-4908-1863"
+- family-names: "Camilleri"
+  given-names: "Kenneth"
+  orcid: "https://orcid.org/0000-0003-0436-6408"
+repository-type: "git"
+repository-url: "https://github.com/hci-lab-um/brainweb-boggle"
+url: "https://hci-lab-um.github.io/brainweb-boggle/"
+license: "MIT"
+keywords:
+  - boggle
+  - bci-browser
+  - ssvep
+  - python
+  - electron

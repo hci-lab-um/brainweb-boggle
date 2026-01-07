@@ -1,0 +1,129 @@
+@use "colors";
+@use "icons";
+@use "animation";
+@use "components";
+
+body {
+    height: 100%;
+    font-family: "Roboto", sans-serif;
+    margin: 0;
+    background-color: transparent;
+    overflow: hidden;
+}
+
+#webpage {
+    background-color: transparent !important;
+}
+
+#sidebar {
+    background-color: colors.$bg-dark;
+    gap: 5%;
+}
+
+#sidebar-buttons {
+    @include components.sidebar;
+    border-radius: 10px;
+    padding: 15px;
+    gap: 6%;
+    flex: 6;
+    background-color: colors.$bg-white-transparent-7;
+    color: colors.$text-muted;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.grid {
+    &__container {
+        display: grid;
+    }
+
+    &__region {
+        border: 2px solid colors.$accent-transparent;
+    }
+
+    &__label {
+        padding: 5px 10px;
+        color: colors.$text-primary;
+        font-size: 1.5rem;
+        background-color: colors.$accent-transparent;
+        width: min-content;
+    }
+}
+
+#selectOverlay .button {
+    max-height: 20%;
+    font-size: 2rem;
+
+    &--toggle {
+        max-height: unset;
+    }
+}
+
+#seekOverlay .button {
+    font-size: 2vw;
+    border-radius: 8px;
+    gap: 5%;
+}
+
+.toggle-numbers-container {
+    flex: 0.59;
+    background-color: colors.$bg-dark;
+    border-radius: 6px;
+}
+
+.element-number {
+    position: absolute;
+    transform: translate(-50%, -50%); // shifts to the top left corner
+    width: 23px;
+    height: 23px;
+    background-color: rgba(183, 255, 0, 0.85);
+    color: black;
+    border-radius: 50%;
+    border: 2px solid black;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.scroll-title {
+    font-size: 2vw;
+    margin-top: 13px;
+    color: colors.$white;
+    text-wrap: auto;
+
+    // Adding ellipsis for long titles (multi-line)
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: max-content;
+}
+
+.scroll-counter--notFound {
+    font-size: 1.7vw;
+    margin-top: -20vh;
+}
+
+.navbar-title {
+    align-content: center;
+    background-color: colors.$bg-white-transparent-7;
+    font-size: 2.25vw;
+    color: colors.$white;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+}
+
+.scroll-buttons-container {
+    display: flex;
+    gap: 10%;
+    // padding: 0 20px 20px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+}

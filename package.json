@@ -1,16 +1,35 @@
 {
   "name": "brainweb-boggle",
+  "productName": "Boggle",
   "version": "1.0.0",
-  "description": "",
+  "description": "BCI-controlled Web Browser",
   "main": "src/main/main.js",
   "scripts": {
     "start": "sass src/pages/scss:src/pages/css && electron .",
-    "sass": "sass --watch src/pages/scss:src/pages/css"
+    "sass": "sass --watch src/pages/scss:src/pages/css",
+    "dist": "sass src/pages/scss:src/pages/css && electron-builder"
   },
-  "author": "",
+  "author": "HCI Lab - Faculty of ICT, University of Malta",
   "license": "GPL-3.0",
+  "build": {
+    "appId": "org.um.boggle",
+    "files": [
+      "src/**/*",
+      "configs/**/*",
+      "resources/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/ssvep",
+        "to": "ssvep",
+        "filter": [ "**/*.py" ]
+      }
+    ]
+  },
   "devDependencies": {
     "electron": "^36.1.0",
+    "electron-builder": "^26.4.0",
     "sass": "^1.87.0"
   },
   "dependencies": {

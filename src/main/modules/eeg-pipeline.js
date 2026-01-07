@@ -1,4 +1,5 @@
 const path = require('path');
+const { app } = require('electron');
 const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
@@ -18,6 +19,11 @@ let serverState = { ready: false, errorSinceReady: false };
 let headsetConnected = false;
 let pythonProcessRef = null; // track spawned websocket server process
 let lastQualityPercent = null; // track latest Emotiv signal quality percent
+
+// Base path for SSVEP-related Python scripts (development vs packaged app)
+const ssvepBasePath = app.isPackaged
+    ? path.join(process.resourcesPath, 'ssvep')
+    : path.join(__dirname, '..', '..', 'ssvep');
 
 function totalDataPointCount(config = fbccaConfiguration) {
     return Math.ceil(config.samplingRate * config.gazeLengthInSecs);
@@ -42,13 +48,13 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
         const pythonScriptPath = (() => {
             switch (connectionType) {
                 case ConnectionTypes.CORTEX_API.NAME:
-                    return path.join(__dirname, '../../ssvep/lsl/emotiv_websocket_server.py');
+                    return path.join(ssvepBasePath, 'lsl', 'emotiv_websocket_server.py');
                 case ConnectionTypes.TCP_IP.NAME:
                     return "";
-                case ConnectionTypes.LSL.NAME:                    
-                    return path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
+                case ConnectionTypes.LSL.NAME:
+                    return path.join(ssvepBasePath, 'lsl', 'lsl_websocket_server.py');
                 default:
-                    return path.join(__dirname, '../../ssvep/lsl/lsl_websocket_server.py');
+                    return path.join(ssvepBasePath, 'lsl', 'lsl_websocket_server.py');
             }
         })();
 
@@ -302,7 +308,7 @@ async function ensurePythonShell() {
     if (!pythonShellInitPromise) {
         pythonShellInitPromise = new Promise((resolve, reject) => {
             try {
-                const scriptPath = path.join(__dirname, '../../ssvep/fbcca-py/run_fbcca.py');
+                const scriptPath = path.join(ssvepBasePath, 'fbcca-py', 'run_fbcca.py');
                 const shell = new PythonShell(scriptPath, { mode: 'json' });
 
                 shell.on('stderr', (error) => {
@@ -451,7 +457,7 @@ async function processDataWithFbcca(currentScenarioID, viewsList, stimuliFrequen
             console.error('Error when executing Python:', error.message);
             return -1;
         });
-        
+
     } else if (messageResult.data && messageResult.data.length > 0) {
         console.log(`[DEBUG] Not enough EEG data for processing. messageResult.data length: ${messageResult.data.length}`);
     }

@@ -887,7 +887,7 @@ async function showConnectionTypeSelectionPopup() {
             const selectConnectionTypeBtn = document.createElement('button');
             selectConnectionTypeBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
             selectConnectionTypeBtn.classList.add('button', 'popup__btn', 'popup__btn--connectionType');
-            selectConnectionTypeBtn.textContent = `${connectionType.name}`;
+            selectConnectionTypeBtn.innerHTML = `<span>${connectionType.name}</span>`;
             selectConnectionTypeBtn.onclick = async () => {
                 addButtonSelectionAnimation(selectConnectionTypeBtn);
                 setTimeout(async () => {
@@ -958,7 +958,7 @@ async function showKeyboardLayoutSelectionPopup() {
             const selectKeyboardLayoutBtn = document.createElement('button');
             selectKeyboardLayoutBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
             selectKeyboardLayoutBtn.classList.add('button', 'popup__btn', 'popup__btn--keyboardLayout');
-            selectKeyboardLayoutBtn.textContent = `${keyboardLayout.name}`;
+            selectKeyboardLayoutBtn.innerHTML = `<span>${keyboardLayout.name}</span>`;
             selectKeyboardLayoutBtn.onclick = () => {
                 addButtonSelectionAnimation(selectKeyboardLayoutBtn);
                 setTimeout(async () => {
@@ -1035,7 +1035,7 @@ async function showPatternSelectionPopup() {
             const selectPatternBtn = document.createElement('button');
             selectPatternBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
             selectPatternBtn.classList.add('button', 'popup__btn', 'popup__btn--pattern');
-            selectPatternBtn.textContent = `${patternType.NAME}`;
+            selectPatternBtn.innerHTML = `<span>${patternType.NAME}</span>`;
 
             patternCard.appendChild(selectPatternBtn);
             buttonsList.push(selectPatternBtn);
@@ -1099,7 +1099,7 @@ async function showColorSelectionPopup(type) {
             const selectColorBtn = document.createElement('button');
             selectColorBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
             selectColorBtn.classList.add('button', 'popup__btn', 'popup__btn--color');
-            selectColorBtn.textContent = `${colorType.NAME}`;
+            selectColorBtn.innerHTML = `<span>${colorType.NAME}</span>`;
             colorCard.appendChild(selectColorBtn);
 
             buttonsList.push(selectColorBtn);
@@ -1169,7 +1169,7 @@ async function showGazeLengthSelectionPopup() {
             const selectGazeLengthBtn = document.createElement('button');
             selectGazeLengthBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
             selectGazeLengthBtn.classList.add('button', 'popup__btn', 'popup__btn--gazeLength');
-            selectGazeLengthBtn.textContent = `${gazeLength} Seconds`;
+            selectGazeLengthBtn.innerHTML = `<span>${gazeLength} Seconds</span>`;
             gazeLengthCard.appendChild(selectGazeLengthBtn);
 
             buttonsList.push(selectGazeLengthBtn);

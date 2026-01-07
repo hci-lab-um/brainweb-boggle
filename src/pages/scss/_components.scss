@@ -136,6 +136,22 @@
     }
 }
 
+// When DOT is the active global stimuli pattern,
+// style the children of every button across the app.
+body.dot-pattern-active {
+    button > *, #omnibox {
+        background: colors.$grey-transparent;
+        padding: 5px 10px;
+        border-radius: 9px;
+        // font-weight: 900;
+        // -webkit-text-stroke: 1px #000000;
+    }
+
+    #searchBtn > div {
+        padding: 0px !important;
+    }
+}
+
 @mixin pagination-grid($columns: 5) {
     display: flex;
     flex-wrap: wrap;
@@ -147,36 +163,30 @@
     @if $columns ==5 {
         flex: 4;
 
-        &>* {
+        & > * {
             flex: 1 1 calc(20% - 10px);
             max-width: calc(20% - 40px);
         }
-    }
-
-    @else if $columns ==4 {
+    } @else if $columns ==4 {
         flex: 7;
 
-        &>* {
+        & > * {
             flex: 1 1 calc(25% - 10px);
             max-width: calc(25% - 40px);
         }
-    }
-
-    @else if $columns ==3 {
-        &>* {
+    } @else if $columns ==3 {
+        & > * {
             flex: 1 1 calc(33.333% - 10px);
             max-width: calc(33.333% - 40px);
         }
-    }
-
-    @else if $columns ==2 {
-        &>* {
+    } @else if $columns ==2 {
+        & > * {
             flex: 1 1 calc(50% - 10px);
             max-width: calc(50% - 65px);
         }
     }
 
-    &>* {
+    & > * {
         box-sizing: border-box;
         height: 60%;
     }

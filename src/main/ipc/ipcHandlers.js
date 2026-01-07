@@ -121,7 +121,7 @@ async function registerIpcHandlers(context) {
 
         overlayContent.setBounds({ x: 0, y: 0, width: mainWindowContentBounds.width, height: overlayHeight })
         overlayContent.webContents.focus();
-        overlayContent.webContents.openDevTools();
+        // overlayContent.webContents.openDevTools();
 
         const activeTab = tabsList.find(tab => tab.isActive);
         let overlayData = {};

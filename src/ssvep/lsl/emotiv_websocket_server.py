@@ -117,7 +117,13 @@ from scipy.signal import butter, lfilter, iirnotch
 import websocket
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load credentials from a path provided by the Electron app when available.
+_ENV_PATH = os.getenv("EMOTIV_ENV_PATH")
+if _ENV_PATH and os.path.isfile(_ENV_PATH):
+    load_dotenv(dotenv_path=_ENV_PATH)
+else:
+    # Fallback to default .env discovery (e.g. for development)
+    load_dotenv()
 
 # === Emotiv Cortex Credentials ===
 CLIENT_ID = os.getenv('EMOTIV_CLIENT_ID')

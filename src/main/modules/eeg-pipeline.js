@@ -25,6 +25,19 @@ const ssvepBasePath = app.isPackaged
     ? path.join(process.resourcesPath, 'ssvep')
     : path.join(__dirname, '..', '..', 'ssvep');
 
+// Central helper for where Emotiv/Cortex credentials (.env) live.
+// In dev, we keep using the repo-local src/ssvep/lsl/.env.
+// In a packaged app, we move this to a writable userData folder.
+function getEmotivEnvPath() {
+    if (app.isPackaged) {
+        // Example: C:\Users\\<user>\\AppData\\Roaming\\Boggle\\emotiv\\.env
+        return path.join(app.getPath('userData'), 'emotiv', '.env');
+    }
+
+    // Development: existing project-relative .env
+    return path.join(__dirname, '..', '..', 'ssvep', 'lsl', '.env');
+}
+
 function totalDataPointCount(config = fbccaConfiguration) {
     return Math.ceil(config.samplingRate * config.gazeLengthInSecs);
 }
@@ -58,7 +71,14 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
             }
         })();
 
-        const pythonProcess = spawn('python', ['-u', pythonScriptPath]); // -u was used to disable output buffering (allow logs to pass in stdout)
+        // Ensure the Python process knows where to find the credentials .env file.
+        const emotivEnvPath = getEmotivEnvPath();
+        const pythonEnv = {
+            ...process.env,
+            EMOTIV_ENV_PATH: emotivEnvPath,
+        };
+
+        const pythonProcess = spawn('python', ['-u', pythonScriptPath], { env: pythonEnv }); // -u was used to disable output buffering (allow logs to pass in stdout)
         pythonProcessRef = pythonProcess; // store for later kill
 
         // Buffer stdout to handle partial lines
@@ -469,5 +489,6 @@ module.exports = {
     disconnectWebSocketClient,
     stopEegInfrastructure,
     processDataWithFbcca,
-    eegEvents
+    eegEvents,
+    getEmotivEnvPath
 };

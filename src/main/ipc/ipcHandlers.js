@@ -5,9 +5,8 @@ const { ViewNames, Settings } = require('../../utils/constants/enums');
 const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
-const { processDataWithFbcca } = require('../modules/eeg-pipeline');
+const { processDataWithFbcca, getEmotivEnvPath, stopEegInfrastructure } = require('../modules/eeg-pipeline');
 const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
-const { stopEegInfrastructure } = require('../modules/eeg-pipeline');
 
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
@@ -495,7 +494,7 @@ async function registerIpcHandlers(context) {
 
     ipcMain.handle('credentials-exist', async (event, headsetName, companyName, connectionType) => {
         try {
-            return await db.getRequiresCredentials(headsetName, companyName, connectionType);    
+            return await db.getRequiresCredentials(headsetName, companyName, connectionType);
         } catch (err) {
             logger.error('Error checking credentials existence in DB:', err.message);
             return false;
@@ -512,8 +511,9 @@ async function registerIpcHandlers(context) {
             // Update .env with new credentials used by LSL/Cortex integration
             let envUpdated = false;
             try {
-                const envFilePath = path.join(__dirname, '../../ssvep/lsl/.env');
-                const envPath = path.resolve(envFilePath);
+                // Use central helper so dev and packaged builds both
+                // write to the same location that the Python server loads.
+                const envPath = getEmotivEnvPath();
 
                 // Ensure directory exists
                 const envDir = path.dirname(envPath);

@@ -12,7 +12,7 @@
   "author": "HCI Lab - Faculty of ICT, University of Malta",
   "license": "GPL-3.0",
   "build": {
-    "appId": "org.um.boggle",
+    "appId": "com.hci-lab-um.boggle",
     "publish": {
       "provider": "github",
       "owner": "hci-lab-um",

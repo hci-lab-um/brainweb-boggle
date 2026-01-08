@@ -1,7 +1,7 @@
 {
   "name": "brainweb-boggle",
   "productName": "Boggle",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "BCI-controlled Web Browser",
   "main": "src/main/main.js",
   "scripts": {

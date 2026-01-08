@@ -469,10 +469,14 @@ h4 {
 }
 .settingCard .button--clickable {
   cursor: pointer;
-  background-color: #1d2b5d;
+  background-color: #081c7b;
+  margin-bottom: 20px;
+  height: 20%;
+  border: 2px solid #ffffff;
+  padding: 30px;
 }
 .settingCard .button--clickable:hover {
-  background-color: #233985;
+  background-color: #0b2b85;
 }
 .settingCard .button--activatable::after {
   content: "";

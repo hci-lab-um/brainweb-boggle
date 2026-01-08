@@ -116,10 +116,14 @@ h4 {
 
         &--clickable {
             cursor: pointer;
-            background-color: colors.$primary;
+            background-color: #081c7b;
+            margin-bottom: 20px;
+            height: 20%;
+            border: 2px solid colors.$white;
+            padding: 30px;
 
             &:hover {
-                background-color: colors.$primary-bright;
+                background-color: #0b2b85;
             }
         }
 

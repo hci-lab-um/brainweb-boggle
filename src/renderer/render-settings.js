@@ -14,6 +14,7 @@ let connectionTypeInUse = '';
 let closeSettingsButton = null;
 let adaptiveSwitchInUse;
 let stimuliInUse = '';
+let updateCredentialsBtn = null;
 
 ipcRenderer.on('settings-loaded', async (event, overlayData) => {
     try {
@@ -427,19 +428,6 @@ async function populateHeadsetSettings() {
     connectionTypeBtn.rel = 'noreferrer noopener';
     connectionTypeCard.appendChild(connectionTypeBtn);
 
-    // Adding a button to update credentials ONLY IF the selected headset & connection type requires it
-    let updateCredentialsBtn;
-    const headsetName = headsetInUse.split(' - ')[0];
-    const companyName = headsetInUse.split(' - ')[1];
-    const requiresCredentials = await ipcRenderer.invoke('credentials-exist', headsetName, companyName, connectionTypeInUse);
-
-    if (requiresCredentials) {
-        updateCredentialsBtn = document.createElement('button');
-        updateCredentialsBtn.innerHTML = `<span>Update Credentials</span>`;
-        updateCredentialsBtn.id = 'updateCredentialsBtn';
-        updateCredentialsBtn.classList.add('button', 'button--clickable');
-        connectionTypeCard.appendChild(updateCredentialsBtn);
-    }
 
     cardsContainer.appendChild(headsetCard);
     cardsContainer.appendChild(connectionTypeCard);
@@ -447,6 +435,9 @@ async function populateHeadsetSettings() {
     // container.appendChild(description);
     container.appendChild(cardsContainer);
     container.appendChild(disclaimer);
+
+    // Ensure the Update Credentials button is only created after its DOM container exists
+    await updateCredentialsButtonVisibility();
 
     // -------------------------------
     // Event Listeners for Buttons
@@ -485,22 +476,74 @@ async function populateHeadsetSettings() {
         }, CssConstants.SELECTION_ANIMATION_DURATION);
     });
 
-    updateCredentialsBtn.addEventListener('click', async () => {
-        // Disable the button immediately to prevent multiple clicks
-        updateCredentialsBtn.disabled = true;
-        setTimeout(() => { updateCredentialsBtn.disabled = false; }, 1500);
+    if (updateCredentialsBtn) {
+        updateCredentialsBtn.addEventListener('click', handleUpdateCredentialsClick);
+    }
+}
 
-        await stopManager();
+async function updateCredentialsButtonVisibility() {
+    try {
+        const connectionTypeBtn = document.getElementById('connectionTypeBtn');
+        if (!connectionTypeBtn) return;
 
-        try {
-            const credentials = await ipcRenderer.invoke('credentials-get', headsetName, companyName, connectionTypeInUse);
-            const loadedFrom = ViewNames.SETTINGS;
-            ipcRenderer.send('overlay-create', ViewNames.CREDENTIALS, -1, null, null, {headsetName, companyName, connectionType: connectionTypeInUse, credentials, loadedFrom});
-        } catch (error) {
-            logger.error('Error creating credentials overlay:', error.message);
+        const connectionTypeCard = connectionTypeBtn.closest('.settingCard');
+        if (!connectionTypeCard) return;
+
+        const headsetName = (headsetInUse || '').split(' - ')[0] || '';
+        const companyName = (headsetInUse || '').split(' - ')[1] || '';
+
+        if (!headsetName || !companyName || !connectionTypeInUse) {
+            if (updateCredentialsBtn) {
+                updateCredentialsBtn.remove();
+                updateCredentialsBtn = null;
+            }
+            return;
         }
 
-    });
+        const requiresCredentials = await ipcRenderer.invoke('credentials-exist', headsetName, companyName, connectionTypeInUse);
+
+        if (requiresCredentials) {
+            if (!updateCredentialsBtn) {
+                updateCredentialsBtn = document.createElement('button');
+                updateCredentialsBtn.innerHTML = `<span>Update Credentials</span>`;
+                updateCredentialsBtn.id = 'updateCredentialsBtn';
+                updateCredentialsBtn.classList.add('button', 'button--clickable');
+                connectionTypeCard.insertBefore(updateCredentialsBtn, connectionTypeBtn);
+                updateCredentialsBtn.addEventListener('click', handleUpdateCredentialsClick);
+            } else if (!connectionTypeCard.contains(updateCredentialsBtn)) {
+                connectionTypeCard.insertBefore(updateCredentialsBtn, connectionTypeBtn);
+            }
+        } else if (updateCredentialsBtn) {
+            updateCredentialsBtn.remove();
+            updateCredentialsBtn = null;
+        }
+    } catch (error) {
+        logger.error('Error updating credentials button visibility:', error.message);
+    }
+}
+
+async function handleUpdateCredentialsClick() {
+    if (!updateCredentialsBtn) return;
+
+    // Disable the button immediately to prevent multiple clicks
+    updateCredentialsBtn.disabled = true;
+    setTimeout(() => {
+        if (updateCredentialsBtn) {
+            updateCredentialsBtn.disabled = false;
+        }
+    }, 1500);
+
+    await stopManager();
+
+    try {
+        const headsetName = (headsetInUse || '').split(' - ')[0] || '';
+        const companyName = (headsetInUse || '').split(' - ')[1] || '';
+        const credentials = await ipcRenderer.invoke('credentials-get', headsetName, companyName, connectionTypeInUse);
+        const loadedFrom = ViewNames.SETTINGS;
+        ipcRenderer.send('overlay-create', ViewNames.CREDENTIALS, -1, null, null, { headsetName, companyName, connectionType: connectionTypeInUse, credentials, loadedFrom });
+    } catch (error) {
+        logger.error('Error creating credentials overlay:', error.message);
+    }
 }
 
 function populateStimuliSettings() {
@@ -835,6 +878,8 @@ async function showHeadsetSelectionPopup() {
                         ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
                     }
 
+                    await updateCredentialsButtonVisibility();
+
                     const scenarioId = await getScenarioIdForHeadset();
                     await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
                 }, CssConstants.SELECTION_ANIMATION_DURATION);
@@ -900,6 +945,7 @@ async function showConnectionTypeSelectionPopup() {
 
                     // Update the default connection type in the db
                     ipcRenderer.send('defaultConnectionType-update', connectionTypeInUse);
+                    await updateCredentialsButtonVisibility();
                     const scenarioId = await getScenarioIdForHeadset();
                     await updateScenarioId(scenarioId, buttons, ViewNames.SETTINGS);
 

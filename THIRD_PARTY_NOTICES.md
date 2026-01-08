@@ -298,7 +298,39 @@ This document lists the open-source and third-party packages used in the brainwe
    ```
    </details>
 
-3. **[mathjs](https://github.com/josdejong/mathjs)**  
+3. **[electron-updater](https://github.com/electron-userland/electron-builder)**  
+    Version: ^6.7.3  
+    License: [MIT](https://github.com/electron-userland/electron-builder/blob/master/LICENSE)  
+
+    <details>
+    <summary>Full text of the MIT License for electron-updater:</summary>
+
+    ```
+    The MIT License (MIT)
+
+    Copyright (c) 2015 Loopline Systems
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    ```
+    </details>
+
+4. **[mathjs](https://github.com/josdejong/mathjs)**  
    Version: ^14.5.2  
    License: [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
@@ -510,7 +542,7 @@ This document lists the open-source and third-party packages used in the brainwe
    ```
    </details>
 
-4. **[ml-matrix](https://github.com/mljs/matrix)**  
+5. **[ml-matrix](https://github.com/mljs/matrix)**  
    Version: ^6.12.1  
    License: [MIT](https://opensource.org/license/mit/)
 
@@ -542,7 +574,7 @@ This document lists the open-source and third-party packages used in the brainwe
    ```
    </details>
 
-5. **[path](https://github.com/jinder/path)**  
+6. **[path](https://github.com/jinder/path)**  
    Version: ^0.12.7  
    License: [MIT](https://opensource.org/license/mit/)
 
@@ -574,7 +606,7 @@ This document lists the open-source and third-party packages used in the brainwe
    ```
    </details>
 
-6. **[python-shell](https://github.com/extrabacon/python-shell)**  
+7. **[python-shell](https://github.com/extrabacon/python-shell)**  
    Version: ^5.0.0  
    License: [MIT](https://opensource.org/license/mit/)
 
@@ -606,7 +638,7 @@ This document lists the open-source and third-party packages used in the brainwe
    ```
    </details>
 
-7. **[sqlite3](https://github.com/TryGhost/node-sqlite3)**  
+8. **[sqlite3](https://github.com/TryGhost/node-sqlite3)**  
    Version: ^5.1.7  
    License: [BSD-3-Clause](https://opensource.org/license/bsd-3-clause/)
 
@@ -628,7 +660,7 @@ This document lists the open-source and third-party packages used in the brainwe
    ```
    </details>
 
-8. **[ssvep-stimuli](https://github.com/hci-lab-um/web-ssvep-stimuli-generators)**  
+9. **[ssvep-stimuli](https://github.com/hci-lab-um/web-ssvep-stimuli-generators)**  
    Version: ^0.1.5  
    License: [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -1268,15 +1300,15 @@ This document lists the open-source and third-party packages used in the brainwe
       ```
    </details>
 
-9. **[winston](https://github.com/winstonjs/winston)**  
+10. **[winston](https://github.com/winstonjs/winston)**  
    Version: ^3.17.0  
    License: [MIT](https://opensource.org/license/mit/)
 
-   <details>
-   <summary>Full text of the MIT License for winston:</summary>
+    <details>
+    <summary>Full text of the MIT License for winston-daily-rotate-file:</summary>
 
-   ```text
-   MIT License
+    ```text
+    MIT License
 
     Copyright (c) <year> <copyright holders>
 
@@ -1297,10 +1329,10 @@ This document lists the open-source and third-party packages used in the brainwe
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-   ```
-   </details>
+    ```
+    </details>
 
-10. **[winston-daily-rotate-file](https://github.com/winstonjs/winston-daily-rotate-file)**  
+11. **[winston-daily-rotate-file](https://github.com/winstonjs/winston-daily-rotate-file)**  
     Version: ^5.0.0  
     License: [MIT](https://opensource.org/license/mit/)
 
@@ -1332,7 +1364,7 @@ This document lists the open-source and third-party packages used in the brainwe
     ```
     </details>
 
-11. **[ws](https://github.com/websockets/ws)**  
+12. **[ws](https://github.com/websockets/ws)**  
     Version: ^8.18.3  
     License: [MIT](https://opensource.org/license/mit/)
 

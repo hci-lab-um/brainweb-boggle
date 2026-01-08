@@ -1,4 +1,5 @@
 const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut } = require('electron')
+const { autoUpdater } = require('electron-updater');
 const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
 const path = require('path')
 const fs = require('fs');
@@ -31,6 +32,41 @@ let defaultHeadset;                         // This will hold the default headse
 let defaultConnectionType;                  // This will hold the default connection type for the headset (e.g., "Cortex API")  
 let credentials = null;                     // This will hold the stored credentials for the default headset and connection type (i.e., clientId and clientSecret)
 let requiresCredentials;                    // This flag indicates if the default headset and connection type require credentials
+
+
+// ==================================
+// ===== AUTO UPDATER LISTENERS =====
+// ==================================
+
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+
+autoUpdater.on("update-available", () => {
+  dialog.showMessageBox({
+    type: "info",
+    title: "Update available",
+    message: "A new version of Boggle is downloading..."
+  });
+
+  logger.info('AUTO-UPDATER\t\tUpdate available!');
+});
+
+autoUpdater.on("update-downloaded", () => {
+  dialog.showMessageBox({
+    type: "info",
+    title: "Update ready",
+    message: "Update will be installed on restart."
+  });
+
+  logger.info('AUTO-UPDATER\t\tUpdate downloaded! Waiting for user to restart the app to install it.');
+});
+
+autoUpdater.checkForUpdates();
+
+
+// =================================
+// ====== APP EVENT LISTENERS ======
+// =================================
 
 app.whenReady().then(async () => {
     eegEvents.on('headset-connected', () => {
@@ -195,6 +231,11 @@ async function setupWebSocket() {
         logger.error('Error starting EEG transport through the Python WebSocket server:', err.message);
     }
 }
+
+
+// ==================================
+// ======= HELPER FUNCTIONS =========
+// ==================================
 
 async function updateConfigFromDatabase() {
     // Getting the current headset from the database

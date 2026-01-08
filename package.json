@@ -14,56 +14,57 @@
   "build": {
     "appId": "org.um.boggle",
     "publish": {
-			"provider": "github",
-			"owner": "hci-lab-um",
-			"repo": "brainweb-boggle"
-		},
+      "provider": "github",
+      "owner": "hci-lab-um",
+      "repo": "brainweb-boggle"
+    },
     "asar": false,
+    "artifactName": "Boggle-Setup-${version}.${ext}",
     "dmg": {
-			"contents": [
-				{
-					"x": 110,
-					"y": 150
-				},
-				{
-					"x": 240,
-					"y": 150,
-					"type": "link",
-					"path": "/Applications"
-				}
-			]
-		},
-		"linux": {
-			"target": [
-				"AppImage",
-				"deb"
-			],
-			"icon": "resources/logo.ico"
-		},
-		"win": {
-			"target": [
-				"nsis"
-			],
-			"icon": "resources/logo.ico"
-		},
-		"mac": {
-			"target": [
-				"dmg"
-			],
-			"icon": "resources/logo.ico"
-		},
-		"nsis": {
-			"oneClick": false,
-			"allowToChangeInstallationDirectory": true,
-			"installerIcon": "resources/logo.ico",
-			"installerHeaderIcon": "resources/logo.ico",
-			"uninstallerIcon": "resources/logo.ico",
+      "contents": [
+        {
+          "x": 110,
+          "y": 150
+        },
+        {
+          "x": 240,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "resources/logo.ico"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "resources/logo.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "resources/logo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "resources/logo.ico",
+      "installerHeaderIcon": "resources/logo.ico",
+      "uninstallerIcon": "resources/logo.ico",
       "installerSidebar": "resources/installerSidebar.bmp",
-			"uninstallerSidebar": "resources/installerSidebar.bmp",
-			"createDesktopShortcut": true,
-			"createStartMenuShortcut": true,
-			"shortcutName": "Boggle"
-		},
+      "uninstallerSidebar": "resources/installerSidebar.bmp",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Boggle"
+    },
     "files": [
       "src/**/*",
       "configs/**/*",
@@ -74,7 +75,9 @@
       {
         "from": "src/ssvep",
         "to": "ssvep",
-        "filter": [ "**/*.py" ]
+        "filter": [
+          "**/*.py"
+        ]
       }
     ]
   },
@@ -86,6 +89,7 @@
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
     "child_process": "^1.0.2",
+    "electron-updater": "^6.7.3",
     "mathjs": "^14.5.2",
     "ml-matrix": "^6.12.1",
     "path": "^0.12.7",

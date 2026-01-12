@@ -5,23 +5,56 @@ import numpy as np
 from test_fbcca import test_fbcca
 from fbcca_config_service import fbcca_config, total_data_point_count
 
+
+def _find_scenario_config_path():
+    """Locate scenarioConfig_lowFreqs.json in dev and packaged layouts.
+
+    Search order:
+    1. FBCCA_SCENARIO_CONFIG_PATH env (if set and valid)
+    2. Dev layout: <repo_root>/configs/scenarioConfig_lowFreqs.json
+    3. Packaged layout: <resources>/app/configs/scenarioConfig_lowFreqs.json
+    """
+
+    # 1) Explicit override via environment variable
+    env_path = os.environ.get("FBCCA_SCENARIO_CONFIG_PATH")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 2) Development layout
+    dev_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+    dev_path = os.path.join(dev_root, "configs", "scenarioConfig_lowFreqs.json")
+    if os.path.isfile(dev_path):
+        return dev_path
+
+    # 3) Packaged layout (electron-builder)
+    resources_root = os.path.dirname(os.path.dirname(script_dir))
+    packaged_path = os.path.join(resources_root, "app", "configs", "scenarioConfig_lowFreqs.json")
+    if os.path.isfile(packaged_path):
+        return packaged_path
+
+    return None
+
+
 # Load scenario configuration
 def load_scenario_config():
-    # Get the root directory of the project (3 levels up from current script)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-    # config_path = os.path.join(project_root, 'configs', 'scenarioConfig.json')
-    config_path = os.path.join(project_root, 'configs', 'scenarioConfig_lowFreqs.json')
-    
+    config_path = _find_scenario_config_path()
+
+    if not config_path:
+        print("Error: Could not locate scenario configuration in any known location", file=sys.stderr)
+        return None
+
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"Error: Could not find scenarioConfig.json at {config_path}", file=sys.stderr)
+        print(f"Error: Could not find scenarioConfig_lowFreqs.json at {config_path}", file=sys.stderr)
         return None
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in scenarioConfig.json: {e}", file=sys.stderr)
+        print(f"Error: Invalid JSON in scenarioConfig_lowFreqs.json: {e}", file=sys.stderr)
         return None
+
 
 # Load the scenario config at module level
 scenario_config = load_scenario_config()

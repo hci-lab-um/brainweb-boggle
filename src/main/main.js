@@ -1,4 +1,4 @@
-const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut } = require('electron')
+const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut, dialog } = require('electron')
 const { autoUpdater } = require('electron-updater');
 const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
 const path = require('path')
@@ -41,24 +41,36 @@ let requiresCredentials;                    // This flag indicates if the defaul
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
-autoUpdater.on("update-available", () => {
-  dialog.showMessageBox({
-    type: "info",
-    title: "Update available",
-    message: "A new version of Boggle is downloading..."
-  });
+autoUpdater.on("checking-for-update", () => {
+logger.info('\tAUTO-UPDATER\tChecking for updates...');
+});
 
-  logger.info('AUTO-UPDATER\t\tUpdate available!');
+autoUpdater.on("update-not-available", () => {
+logger.info('\tAUTO-UPDATER\tNo updates available.');
+});
+
+autoUpdater.on("update-available", () => {
+    dialog.showMessageBox({
+        type: "info",
+        title: "Update available",
+        message: "A new version of Boggle is downloading..."
+    });
+
+    logger.info('\tAUTO-UPDATER\tUpdate available!');
 });
 
 autoUpdater.on("update-downloaded", () => {
-  dialog.showMessageBox({
-    type: "info",
-    title: "Update ready",
-    message: "Update will be installed on restart."
-  });
+    dialog.showMessageBox({
+        type: "info",
+        title: "Update ready",
+        message: "Update will be installed on restart."
+    });
 
-  logger.info('AUTO-UPDATER\t\tUpdate downloaded! Waiting for user to restart the app to install it.');
+    logger.info('\tAUTO-UPDATER\tUpdate downloaded! Waiting for user to restart the app to install it.');
+});
+
+autoUpdater.on('error', (err) => {
+  logger.error('\tAUTO-UPDATER\tError:', err && (err.stack || err.message || err));
 });
 
 autoUpdater.checkForUpdates();

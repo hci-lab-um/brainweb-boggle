@@ -229,6 +229,15 @@
   clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
 }
 
+body.dot-pattern-active button > *, body.dot-pattern-active #omnibox {
+  background: rgba(31, 31, 31, 0.659);
+  padding: 5px 10px;
+  border-radius: 9px;
+}
+body.dot-pattern-active #searchBtn > div {
+  padding: 0px !important;
+}
+
 .overlay {
   position: absolute;
   top: 0;
@@ -498,18 +507,25 @@ p:not(.disclaimerText) {
   color: #ff7474;
 }
 
-.headsetDesc, .connectionTypeDesc, .keyboardLayoutDesc {
+.headsetDesc,
+.connectionTypeDesc,
+.keyboardLayoutDesc {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   color: #b5c2cd;
 }
 
-.connectionTypeDesc, .keyboardLayoutDesc {
+.connectionTypeDesc,
+.keyboardLayoutDesc {
   font-size: 1.3rem;
 }
 
-.headsetCard, .connectionTypeCard, .keyboardLayoutCard, .patternCard, .colorCard {
+.headsetCard,
+.connectionTypeCard,
+.keyboardLayoutCard,
+.patternCard,
+.colorCard {
   background-color: rgba(0, 0, 0, 0.25);
   border-radius: 20px;
   padding: 2vw;
@@ -528,7 +544,8 @@ p:not(.disclaimerText) {
   border-radius: 12px;
 }
 
-.patternPreviewImage, .colorPreview {
+.patternPreviewImage,
+.colorPreview {
   width: 100%;
   height: 100px;
   object-fit: cover;

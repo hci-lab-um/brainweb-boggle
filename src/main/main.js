@@ -439,7 +439,7 @@ function createMainWindow() {
                 if (splashWindow) {
                     splashWindow.close();
                 }
-                mainWindowContent.webContents.openDevTools();
+                // mainWindowContent.webContents.openDevTools();
 
             } catch (err) {
                 logger.error('Error showing main window:', err.message);

@@ -4,6 +4,7 @@ const scenarioConfig = require('../../configs/scenarioConfig_lowFreqs.json');
 const { ipcRenderer } = require("electron");
 const logger = require('../main/modules/logger');
 const { pushStatusUpdate } = require('./statusBar');
+const { Stimuli } = require('./constants/enums');
 
 let manager;
 // -1 = all flickering; 0 = all off; 1..N = group number 
@@ -17,9 +18,68 @@ async function getStimuliSettingsCached() {
         if (stimuliSettingsCache) return stimuliSettingsCache;
         const settings = await ipcRenderer.invoke('stimuliSettings-get');
         stimuliSettingsCache = settings;
+        applySpecialButtonStyleClassFromSettings(settings);
         return settings;
     } catch (err) {
         logger.error('Error loading stimuli settings:', err.message);
+    }
+}
+
+function shouldApplySpecialButtonStyling(pattern, lightColor) {
+    if (!pattern) return false;
+
+    try {
+        let dotValue = 'dot';
+        let chequeredValue = 'chequered';
+        let whiteRgba = '255,255,255,1';
+
+        if (Stimuli
+            && Stimuli.PATTERNS_TYPES
+            && Stimuli.PATTERNS_TYPES.PATTERNS) {
+            if (Stimuli.PATTERNS_TYPES.PATTERNS.DOT?.VALUE) {
+                dotValue = String(Stimuli.PATTERNS_TYPES.PATTERNS.DOT.VALUE).toLowerCase();
+            }
+            if (Stimuli.PATTERNS_TYPES.PATTERNS.CHEQUERED?.VALUE) {
+                chequeredValue = String(Stimuli.PATTERNS_TYPES.PATTERNS.CHEQUERED.VALUE).toLowerCase();
+            }
+        }
+
+        if (Stimuli?.LIGHT_COLORS?.COLOURS?.WHITE?.RGBA) {
+            whiteRgba = String(Stimuli.LIGHT_COLORS.COLOURS.WHITE.RGBA);
+        }
+
+        const patternLower = String(pattern).toLowerCase();
+        const lightNorm = typeof lightColor === 'string' ? lightColor.replace(/\s+/g, '') : '';
+        const whiteNorm = whiteRgba.replace(/\s+/g, '');
+
+        // Apply when pattern is DOT
+        if (patternLower === dotValue) return true;
+
+        // Or when pattern is CHEQUERED and light colour is WHITE
+        if (patternLower === chequeredValue && lightNorm && lightNorm === whiteNorm) return true;
+
+        return false;
+    } catch (err) {
+        logger.warn('Error evaluating special button styling condition:', err.message);
+        return false;
+    }
+}
+
+function applySpecialButtonStyleClassFromSettings(settings) {
+    try {
+        const body = document && document.body;
+        if (!body) return;
+
+        const pattern = (settings && settings.pattern) || (stimuliSettingsCache && stimuliSettingsCache.pattern);
+        const lightColor = (settings && settings.lightColor) || (stimuliSettingsCache && stimuliSettingsCache.lightColor);
+
+        if (shouldApplySpecialButtonStyling(pattern, lightColor)) {
+            body.classList.add('dot-pattern-active');
+        } else {
+            body.classList.remove('dot-pattern-active');
+        }
+    } catch (err) {
+        logger.warn('Error applying DOT pattern body class:', err.message);
     }
 }
 
@@ -32,6 +92,7 @@ ipcRenderer.on('stimuliSettings-update', (event, settings) => {
             ...(settings || {})
         };
         console.log('Updated cached stimuli settings:', stimuliSettingsCache);
+        applySpecialButtonStyleClassFromSettings(stimuliSettingsCache);
     } catch (err) {
         logger.error('Error updating cached stimuli settings:', err.message);
     }

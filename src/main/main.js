@@ -544,7 +544,7 @@ async function createTabView(url, isNewTab = false, tabDataFromDB = null) {
                 nodeIntegration: false,
                 contextIsolation: true,
                 preload: path.join(__dirname, '../preload/render-tabview.js'),
-                partition: 'persist:boggle-remote',  // single shared remote session
+                partition: 'persist:boggle-remote',  // Single shared session for tabs - session data (cookies, localstorage, cache, etc...) is shared across all tabs, as per single-user browser behavior. Multi-profile/incognito will require different partition strings.
             }
         });
 

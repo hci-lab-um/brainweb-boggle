@@ -320,6 +320,32 @@ import gc  # Garbage collector interface
 from pylsl import StreamInlet, resolve_stream
 from scipy.signal import butter, lfilter, iirnotch
 
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Adding the sibling folder fbcca-py to sys.path so it can import fbcca_config_service.fbcca_config.
+try:
+    FBCCA_DIR = os.path.join(os.path.dirname(BASE_DIR), "fbcca-py")
+    if FBCCA_DIR not in sys.path:
+        sys.path.insert(0, FBCCA_DIR)
+
+    from fbcca_config_service import fbcca_config
+except Exception as e:
+    print(f"[ERROR] Failed to import fbcca_config_service.fbcca_config: {e}")
+    # Stop here so the rest of the script doesn't run with missing config
+    raise SystemExit(1)
+
+# ---------- CONFIGS ----------
+CHANNELS = fbcca_config["channels"]              # Default number of EEG channels (will be read from device)
+SAMPLING_RATE = fbcca_config["samplingRate"]
+
+SAMPLES_PER_SECOND = 20000     # Adjust as needed
+APPLY_FILTERING = True         # Set to True/False to enable/disable bandpass and notch filters
+SAVE_RAW_DATA = False          # Set to True/False to enable/disable saving raw data to JSON files
+# -----------------------------
+
+
 # === JSON-RPC event emitter (mirrors emotiv_websocket_server.py) ===
 def emit_event(event_type: str, **params):
     """Emit a JSON-RPC style event line to stdout for Node consumer."""
@@ -330,15 +356,61 @@ def emit_event(event_type: str, **params):
         print(json.dumps(payload), flush=True)
     except Exception:
         pass
-# from fbcca_config import fbcca_config
 
 # Function to initialize the LSL stream inlet
 def initialize_lsl_inlet():
     print("Looking for an EEG stream...")
-    streams = resolve_stream('type', 'EEG')
+
+    # 1) Try Unicorn by explicit name
+    streams = resolve_stream('name', 'Unicorn')   # UNICORN HYBRID BLACK HEADSET - LSL STREAM NAME
+    if streams:
+        print("Found Unicorn LSL stream by name.")
+    else:
+        # 2) Fall back to any EEG-type stream
+        print("No Unicorn stream found, falling back to type='EEG'.")
+        streams = resolve_stream('type', 'EEG')
+
+    if not streams:
+        raise RuntimeError("No suitable EEG LSL stream found (neither Unicorn by name nor type='EEG').")
+   
     inlet = StreamInlet(streams[0])
     print("Connected to EEG stream.")
     return inlet
+
+# Function to save raw EEG sample to JSON in the format:
+# { "eegData": [ [], [], ... ] }
+RAW_JSON_FILENAME = "datasets/RAW-eeg-data.json"
+
+# Buffer for raw samples
+RAW_SAMPLE_BUFFER = []
+RAW_SAMPLE_BUFFER_SIZE = 1000
+
+def save_raw_sample_to_json(sample, filename=RAW_JSON_FILENAME):
+    """
+    Buffer raw EEG samples and write to JSON file once every 1000 samples.
+    """
+    global RAW_SAMPLE_BUFFER
+    RAW_SAMPLE_BUFFER.append(sample)
+    if len(RAW_SAMPLE_BUFFER) >= RAW_SAMPLE_BUFFER_SIZE:
+        try:
+            folder = os.path.dirname(filename)
+            if folder and not os.path.exists(folder):
+                os.makedirs(folder, exist_ok=True)
+            try:
+                with open(filename, "r") as f:
+                    file_data = json.load(f)
+                eeg_data = file_data.get("eegData", [])
+            except (FileNotFoundError, json.JSONDecodeError):
+                eeg_data = [[] for _ in range(len(sample))]
+            # Append buffered samples
+            for buffered_sample in RAW_SAMPLE_BUFFER:
+                for i, value in enumerate(buffered_sample):
+                    eeg_data[i].append(value)
+            with open(filename, "w") as f:
+                json.dump({"eegData": eeg_data}, f, indent=2)
+            RAW_SAMPLE_BUFFER = []
+        except Exception as e:
+            print(f"Error saving raw EEG samples: {e}")
 
 # Bandpass filter
 def butter_bandpass(lowcut, highcut, fs, order=10):
@@ -361,17 +433,23 @@ def apply_filter(data, b, a):
 def fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch):
     sample, timestamp = inlet.pull_sample(timeout=0.0)
     if sample:
-        filtered_sample = apply_filter(sample[:8], b_bandpass, a_bandpass)
-        filtered_sample = apply_filter(filtered_sample, b_notch, a_notch)
-        return {"time": timestamp, "values": filtered_sample.tolist()}
+        # Save raw sample before filtering
+        if SAVE_RAW_DATA:
+            save_raw_sample_to_json(sample)
+
+        if APPLY_FILTERING:
+            filtered_sample = apply_filter(sample[:CHANNELS], b_bandpass, a_bandpass)
+            filtered_sample = apply_filter(filtered_sample, b_notch, a_notch)        
+            return {"time": timestamp, "values": filtered_sample.tolist()}
+        else:
+            return {"time": timestamp, "values": sample[:CHANNELS]}
     return None
 
 # Main streaming function
 async def lsl_to_websocket(websocket):
     inlet = initialize_lsl_inlet()
 
-    # fs = fbcca_config.samplingRate
-    fs = 256
+    fs = SAMPLING_RATE
     lowcut = 2.0
     highcut = 100.0
     notch_freq = 50.0
@@ -395,8 +473,8 @@ async def lsl_to_websocket(websocket):
                 start_time = now
                 count = 0
 
-            # Fetch and send up to 20,000 samples/sec (adjust if needed)
-            if count < 20000:
+            # Fetch and send up to SAMPLES_PER_SECOND
+            if count < SAMPLES_PER_SECOND:
                 sample = fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch)
                 if sample:
                     # Emit headset-connected once when data begins flowing

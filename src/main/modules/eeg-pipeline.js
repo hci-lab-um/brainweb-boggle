@@ -66,6 +66,8 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
                     return "";
                 case ConnectionTypes.LSL.NAME:
                     return path.join(ssvepBasePath, 'lsl', 'lsl_websocket_server.py');
+                case ConnectionTypes.PYTHON_API.NAME:
+                    return path.join(ssvepBasePath, 'lsl', 'unicorn_api_websocket_server.py');
                 default:
                     return path.join(ssvepBasePath, 'lsl', 'lsl_websocket_server.py');
             }

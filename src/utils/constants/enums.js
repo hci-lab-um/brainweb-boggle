@@ -33,6 +33,10 @@ const ConnectionTypes = Object.freeze({
     CORTEX_API: {
         NAME: "Cortex API",
         DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets."
+    },
+    PYTHON_API: {
+        NAME: "Python API",
+        DESCRIPTION: "Connects through a local Python API provided by g.tec. This option is only available for the Unicorn Hybrid Black headset."
     }
 });
 
@@ -78,6 +82,21 @@ const Headsets = Object.freeze({
             CONNECTION_TYPE_1: false
         },
         IMAGE: "../../resources/gusbamp_headset.png"
+    },
+    UNICORN: {
+        NAME: "Unicorn Hybrid Black",
+        COMPANY: "g.tec",
+        USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
+        SAMPLING_RATE: 250,
+        CONNECTION_TYPE: {
+            CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
+            CONNECTION_TYPE_2: ConnectionTypes.PYTHON_API.NAME
+        },
+        REQUIRES_CREDENTIALS: {
+            CONNECTION_TYPE_1: false,
+            CONNECTION_TYPE_2: false
+        },
+        IMAGE: "../../resources/unicorn_headset.png"
     }
 });
 

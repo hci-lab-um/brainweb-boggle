@@ -522,9 +522,9 @@
     "scenario_103": {
         "name": "SETTINGS - Headset Settings",
         "description": "Headset/Connection Selection Popup with 3 buttons",
-        "buttonIds": ["firstSettingOptionBtn", "secondSettingOptionBtn", "thirdSettingOptionBtn"],
-        "frequencies": [6.5, 7.5, 8],
-        "phases": [0.5, 1.5, 1.5]  
+        "buttonIds": ["firstSettingOptionBtn", "secondSettingOptionBtn", "thirdSettingOptionBtn", "fourthSettingOptionBtn"],
+        "frequencies": [6.5, 7.5, 8, 7],
+        "phases": [0.5, 1.5, 1.5, 0]  
     },
     "scenario_104": {
         "name": "SETTINGS - General Settings",

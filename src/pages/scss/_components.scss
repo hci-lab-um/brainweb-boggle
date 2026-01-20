@@ -139,7 +139,8 @@
 // When DOT is the active global stimuli pattern,
 // style the children of every button across the app.
 body.dot-pattern-active {
-    button > *, #omnibox {
+    button > *,
+    #omnibox {
         background: colors.$grey-transparent;
         padding: 5px 10px;
         border-radius: 9px;
@@ -219,6 +220,8 @@ body.dot-pattern-active {
     z-index: 1000;
     gap: 20px;
     align-items: center;
+    max-width: 95vw;
+    max-height: 92vh;
 
     &--gazeLengthSelection,
     &--headsetSelection,
@@ -336,6 +339,13 @@ body.dot-pattern-active {
         &--keyboardLayout {
             width: -webkit-fill-available;
             padding: 40px 50px;
+        }
+
+        &--headset {
+            width: 15vw;
+            font-size: 1.45rem;
+            flex: unset;
+            line-height: 2rem;
         }
     }
 }

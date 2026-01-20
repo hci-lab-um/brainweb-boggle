@@ -5,6 +5,10 @@
     html {
         font-size: 12px;
     }
+
+    .headsetImage {
+        height: 100px !important
+    }
 }
 
 body {
@@ -197,8 +201,8 @@ p:not(.disclaimerText) {
 // ---------------
 
 .headsetImage {
-    height: 45%;
-    width: 75%;
+    height: 150px;
+    width: 70%;
     background-color: colors.$primary;
     padding: 34px;
     border-radius: 12px;

@@ -229,7 +229,8 @@
   clip-path: polygon(25% 0%, 100% 50%, 25% 100%);
 }
 
-body.dot-pattern-active button > *, body.dot-pattern-active #omnibox {
+body.dot-pattern-active button > *,
+body.dot-pattern-active #omnibox {
   background: rgba(31, 31, 31, 0.659);
   padding: 5px 10px;
   border-radius: 9px;
@@ -269,6 +270,8 @@ body.dot-pattern-active #searchBtn > div {
   z-index: 1000;
   gap: 20px;
   align-items: center;
+  max-width: 95vw;
+  max-height: 92vh;
 }
 .popup--gazeLengthSelection, .popup--headsetSelection, .popup--connectionTypeSelection, .popup--keyboardLayoutSelection {
   flex-direction: column;
@@ -359,6 +362,12 @@ body.dot-pattern-active #searchBtn > div {
 .popup__btn--connectionType, .popup__btn--keyboardLayout {
   width: -webkit-fill-available;
   padding: 40px 50px;
+}
+.popup__btn--headset {
+  width: 15vw;
+  font-size: 1.45rem;
+  flex: unset;
+  line-height: 2rem;
 }
 
 body {

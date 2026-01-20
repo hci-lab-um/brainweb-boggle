@@ -852,7 +852,7 @@ async function showHeadsetSelectionPopup() {
             // Create buttons
             const selectHeadsetBtn = document.createElement('button');
             selectHeadsetBtn.setAttribute('id', `${idSuffix}SettingOptionBtn`);
-            selectHeadsetBtn.classList.add('button', 'popup__btn');
+            selectHeadsetBtn.classList.add('button', 'popup__btn', 'popup__btn--headset');
             selectHeadsetBtn.textContent = `${headset.name}`;
             selectHeadsetBtn.onclick = () => {
                 addButtonSelectionAnimation(selectHeadsetBtn);

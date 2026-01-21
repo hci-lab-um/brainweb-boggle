@@ -1,9 +1,9 @@
 {
-    "channels": 4,
+    "channels": 8,
     "subBands": 5,
     "harmonics": 5,
     "idleStateLabel": -1,
-    "samplingRate": 256,
+    "samplingRate": 250,
     "correlationThreshold": 0.9,
     "gazeLengthInSecs": 4
 }

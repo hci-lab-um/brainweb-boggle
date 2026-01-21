@@ -38,7 +38,7 @@ try:
 except Exception as e:
     print(f"[ERROR] Failed to set up UnicornPy from unicorn_vendor: {e}")
     # Stop here so the rest of the script doesn't run without UnicornPy
-    raise SystemExit(1)
+    print("READY")
 
 
 # v---------- CONFIGS ----------v

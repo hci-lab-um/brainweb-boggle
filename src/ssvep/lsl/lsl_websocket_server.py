@@ -437,9 +437,11 @@ def fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch):
         if SAVE_RAW_DATA:
             save_raw_sample_to_json(sample)
 
-        if APPLY_FILTERING:
-            filtered_sample = apply_filter(sample[:CHANNELS], b_bandpass, a_bandpass)
-            filtered_sample = apply_filter(filtered_sample, b_notch, a_notch)        
+        if APPLY_FILTERING: 
+            # APPLYING NOTCH FILTER ONLY
+            # filtered_sample = apply_filter(sample[:CHANNELS], b_bandpass, a_bandpass)
+            # filtered_sample = apply_filter(filtered_sample, b_notch, a_notch)
+            filtered_sample = apply_filter(sample[:CHANNELS], b_notch, a_notch)        
             return {"time": timestamp, "values": filtered_sample.tolist()}
         else:
             return {"time": timestamp, "values": sample[:CHANNELS]}

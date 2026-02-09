@@ -18,7 +18,8 @@ def test_fbcca(eeg, list_freqs):
     num_smpls_resampled = filtered_subbands[0].shape[1]
 
     # Generate reference signals to match downsampled EEG length
-    y_ref = cca_reference(list_freqs, num_smpls_resampled, fs=256)  # <-- updated
+    # y_ref = cca_reference(list_freqs, num_smpls_resampled, fs=256)  # <-- updated
+    y_ref = cca_reference(list_freqs, num_smpls_resampled)  # <-- updated
 
     r = np.zeros((fbcca_config['subBands'], len(list_freqs)))
 
@@ -47,12 +48,14 @@ def test_fbcca(eeg, list_freqs):
     return estimated_label
 
 
-def cca_reference(list_freqs, num_smpls, fs=256):  # fs parameter added
+# def cca_reference(list_freqs, num_smpls, fs=256):  # fs parameter added
+def cca_reference(list_freqs, num_smpls):  # fs parameter added
     if list_freqs is None or num_smpls is None:
         raise ValueError('Not enough input arguments.')
 
     num_freqs = len(list_freqs)
-    tidx = np.arange(1, num_smpls + 1) / fs  # <-- use fs, not fbcca_config['samplingRate']
+    # tidx = np.arange(1, num_smpls + 1) / fs  # <-- use fs, not fbcca_config['samplingRate']
+    tidx = np.arange(1, num_smpls + 1) / fbcca_config['samplingRate']
 
     y_ref = np.zeros((num_freqs, 2 * fbcca_config['harmonics'], num_smpls))
 

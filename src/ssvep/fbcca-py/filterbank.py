@@ -2,12 +2,8 @@ import numpy as np
 from scipy.signal import cheb1ord, cheby1, filtfilt, resample, decimate
 from fbcca_config_service import fbcca_config
 
-# Cache filter coefficients per sub-band so we only design each filter once
-_FILTER_COEFF_CACHE = {}
-
-# Sub-band definitions used across calls
-_PASSBAND = [6, 14, 22, 30, 38, 46, 54, 62, 70, 78]
-_STOPBAND = [4, 10, 16, 24, 32, 40, 48, 56, 64, 72]
+# This is used to control whether to downsample the filtered EEG data to 256Hz (if original sampling rate is higher) or not.
+SHOULD_DOWNSAMPLE = False
 
 def resample_eeg(eeg, original_fs, target_fs=256):
     num_samples = int(eeg.shape[1] * target_fs / original_fs)
@@ -20,7 +16,7 @@ def downsample_eeg(eeg, original_fs, target_fs=256):
 
     return decimate(eeg, factor, axis=1, ftype='iir')  # Decimate along time axis
 
-def filterbank(eeg, idx_fb=1, target_fs=256):   
+def filterbank(eeg, idx_fb=1, target_fs=256):    
     if eeg is None or idx_fb is None:
         raise ValueError('Not enough input arguments.')
 
@@ -29,15 +25,22 @@ def filterbank(eeg, idx_fb=1, target_fs=256):
 
     num_chans, _ = eeg.shape
     fs_original = fbcca_config['samplingRate']
-    fs = fs_original / 2
+    fs = fs_original / 2  
 
-    if idx_fb not in _FILTER_COEFF_CACHE:
-        Wp = [_PASSBAND[idx_fb - 1] / fs, 90 / fs]
-        Ws = [_STOPBAND[idx_fb - 1] / fs, 100 / fs]
-        N, Wn = cheb1ord(Wp, Ws, 3, 40)
-        _FILTER_COEFF_CACHE[idx_fb] = cheby1(N, 0.5, Wn, btype='band')
+    # For public dataset frequencies (8-15.8Hz) -- ORIGINAL 
+    # passband = [6, 14, 22, 30, 38, 46, 54, 62, 70, 78]
+    # stopband = [4, 10, 16, 24, 32, 40, 48, 56, 64, 72]
 
-    B, A = _FILTER_COEFF_CACHE[idx_fb]
+    # TO FOLLOW PAPER CHEN 2015 nth times the first frequency (6Hz)
+    passband = [6, 12, 18, 24, 30, 36, 42, 48, 54, 60]
+    stopband = [4, 10, 16, 22, 28, 34, 40, 46, 52, 58]
+
+    Wp = [passband[idx_fb - 1] / fs, 90 / fs]  # Passband frequencies
+    Ws = [stopband[idx_fb - 1] / fs, 100 / fs]  # Stopband frequencies
+
+    # Design Chebyshev Type I filter
+    N, Wn = cheb1ord(Wp, Ws, 3, 40)
+    B, A = cheby1(N, 0.5, Wn, btype='band')
 
     # Filter the EEG data
     y = np.zeros_like(eeg)
@@ -46,13 +49,14 @@ def filterbank(eeg, idx_fb=1, target_fs=256):
     for ch_i in range(num_chans):
         y[ch_i, :] = filtfilt(B, A, eeg[ch_i, :], padtype = None)
         
-    if fs_original == target_fs:
-        return y
-    
-    # Downsample or resample
-    if fs_original % target_fs == 0:
-        y = downsample_eeg(y, fs_original, target_fs)
-    else:
-        y = resample_eeg(y, fs_original, target_fs)
+    if SHOULD_DOWNSAMPLE:
+        if fs_original == target_fs:
+            return y
+        
+        # Downsample or resample
+        if fs_original % target_fs == 0:
+            y = downsample_eeg(y, fs_original, target_fs)
+        else:
+            y = resample_eeg(y, fs_original, target_fs)
 
     return y

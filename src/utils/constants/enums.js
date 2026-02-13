@@ -37,8 +37,8 @@ const ConnectionTypes = Object.freeze({
         DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets.",
         IS_DATA_FILTERED: true
     },
-    PYTHON_API: {
-        NAME: "Python API",
+    UNICORN_API: {
+        NAME: "Unicorn Python API",
         DESCRIPTION: "Connects through a local Python API provided by g.tec. This option is only available for the Unicorn Hybrid Black headset.",
         IS_DATA_FILTERED: false
     }
@@ -66,7 +66,7 @@ const Headsets = Object.freeze({
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
             CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME
-            
+
         },
         REQUIRES_CREDENTIALS: {
             CONNECTION_TYPE_1: false,
@@ -96,7 +96,7 @@ const Headsets = Object.freeze({
         SAMPLING_RATE: 250,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
-            CONNECTION_TYPE_2: ConnectionTypes.PYTHON_API.NAME
+            CONNECTION_TYPE_2: ConnectionTypes.UNICORN_API.NAME
         },
         REQUIRES_CREDENTIALS: {
             CONNECTION_TYPE_1: false,
@@ -211,6 +211,7 @@ const Settings = Object.freeze({
         LABEL: "Best User Frequencies",
         DESCRIPTION: "The best frequencies for the user’s brain activity.",
         DEFAULT: "6.5, 7.5, 8.5, 7, 8",
+        // DEFAULT: "10, 13, 14, 15, 16",  // Default frequencies as suggested by Rosanne Buttigieg
         CATEGORY: SettingCategories.GENERAL,
     },
     DEFAULT_HEADSET: {

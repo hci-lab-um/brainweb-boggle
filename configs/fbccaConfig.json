@@ -1,9 +1,13 @@
 {
-    "channels": 6,
+    "channels": 4,
     "subBands": 5,
     "harmonics": 5,
     "idleStateLabel": -1,
-    "samplingRate": 250,
+    "samplingRate": 256,
     "correlationThreshold": 0.7,
-    "gazeLengthInSecs": 4
+    "gazeLengthInSecs": 4,
+    "applyBandpassFilter": false,
+    "applyNotchFilter": false,
+    "applyResampling": false,
+    "saveRawData": false
 }

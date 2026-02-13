@@ -44,17 +44,17 @@ except Exception as e:
 # v---------- CONFIGS ----------v
 
 CHANNELS = fbcca_config["channels"]              # Default number of EEG channels (will be read from device)
-SAMPLING_RATE = fbcca_config["samplingRate"]    # Hz, will be overridden by UnicornPy.SamplingRate if available
+SAMPLING_RATE = fbcca_config["samplingRate"]     # Hz, will be overridden by UnicornPy.SamplingRate if available
 
 if UnicornPy is not None and hasattr(UnicornPy, "SamplingRate"):
     SAMPLING_RATE = UnicornPy.SamplingRate
 
-SAMPLES_PER_SECOND = 250     # Max samples pushed per second to WebSocket
-APPLY_FILTERING = True       # Enable/disable bandpass + notch
-SAVE_RAW_DATA = False        # Enable/disable saving raw data to JSON
+SAMPLES_PER_SECOND = 250                                     # Max samples pushed per second to WebSocket
+APPLY_NOTCH_FILTER = fbcca_config["applyNotchFilter"]        # Set to True/False to enable/disable notch filter
+APPLY_BANDPASS_FILTER = fbcca_config["applyBandpassFilter"]  # Set to True/False to enable/disable bandpass filter
+SAVE_RAW_DATA = fbcca_config["saveRawData"]                  # Set to True/False to enable/disable saving raw data to JSON files
 
 # ^---------- CONFIGS ----------^
-
 
 # Raw data JSON storage
 RAW_JSON_FILENAME = "datasets/RAW-eeg-data_unicorn_api.json"
@@ -241,14 +241,20 @@ async def unicorn_to_websocket(websocket):
                 if SAVE_RAW_DATA:
                     save_raw_sample_to_json(raw_sample)
 
-                # Filtering
-                if APPLY_FILTERING:
-                    # APPLYING NOTCH FILTER ONLY
-                    # filtered = apply_filter(raw_sample[:CHANNELS], b_band, a_band)
+                # Applying filtering based on config
+                if APPLY_BANDPASS_FILTER and APPLY_NOTCH_FILTER: # Apply bandpass first, then notch
+                    filtered = apply_filter(raw_sample[:CHANNELS], b_band, a_band)
+                    filtered = apply_filter(filtered, b_notch, a_notch)
+                    values = list(map(float, filtered))
+                elif APPLY_BANDPASS_FILTER:                      # Apply only bandpass
+                    filtered = apply_filter(raw_sample[:CHANNELS], b_band, a_band)
+                    values = list(map(float, filtered))
+                elif APPLY_NOTCH_FILTER:                         # Apply only notch
                     filtered = apply_filter(raw_sample[:CHANNELS], b_notch, a_notch)
                     values = list(map(float, filtered))
-                else:
+                else:                                            # No filtering - data might already be filtered
                     values = list(map(float, raw_sample[:CHANNELS]))
+                
                 packet = {
                     "time": now,
                     "values": values,

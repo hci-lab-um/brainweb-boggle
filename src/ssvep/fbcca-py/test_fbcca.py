@@ -1,7 +1,9 @@
 import numpy as np
 from fbcca_config_service import fbcca_config
 from sklearn.cross_decomposition import CCA
-from filterbank import filterbank  # Make sure it downsample to 256 Hz internally
+from filterbank import filterbank
+
+SHOULD_DOWNSAMPLE = fbcca_config["applyResampling"]
 
 def test_fbcca(eeg, list_freqs):
     if eeg is None or list_freqs is None:
@@ -18,8 +20,10 @@ def test_fbcca(eeg, list_freqs):
     num_smpls_resampled = filtered_subbands[0].shape[1]
 
     # Generate reference signals to match downsampled EEG length
-    # y_ref = cca_reference(list_freqs, num_smpls_resampled, fs=256)  # <-- updated
-    y_ref = cca_reference(list_freqs, num_smpls_resampled)  # <-- updated
+    if SHOULD_DOWNSAMPLE:
+        y_ref = cca_reference(list_freqs, num_smpls_resampled, fs=256)  # fs parameter added to match downsampled EEG
+    else:
+        y_ref = cca_reference(list_freqs, num_smpls_resampled, fs=None) # fs=None indicates no downsampling, so original sampling rate will be used in reference signal generation
 
     r = np.zeros((fbcca_config['subBands'], len(list_freqs)))
 
@@ -47,15 +51,17 @@ def test_fbcca(eeg, list_freqs):
 
     return estimated_label
 
-
-# def cca_reference(list_freqs, num_smpls, fs=256):  # fs parameter added
-def cca_reference(list_freqs, num_smpls):  # fs parameter added
+def cca_reference(list_freqs, num_smpls, fs):
     if list_freqs is None or num_smpls is None:
         raise ValueError('Not enough input arguments.')
 
     num_freqs = len(list_freqs)
-    # tidx = np.arange(1, num_smpls + 1) / fs  # <-- use fs, not fbcca_config['samplingRate']
-    tidx = np.arange(1, num_smpls + 1) / fbcca_config['samplingRate']
+    
+    # fs was not provided - meaning that DOWNSAMPLING is NOT applied
+    if fs is None:
+        fs = fbcca_config['samplingRate']
+
+    tidx = np.arange(1, num_smpls + 1) / fs
 
     y_ref = np.zeros((num_freqs, 2 * fbcca_config['harmonics'], num_smpls))
 

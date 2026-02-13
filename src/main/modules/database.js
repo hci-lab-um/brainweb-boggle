@@ -214,7 +214,8 @@ function createConnectionTypesTable() {
         const createTable = `
             CREATE TABLE IF NOT EXISTS connection_types (
                 name TEXT PRIMARY KEY,
-                description TEXT NOT NULL
+                description TEXT NOT NULL,
+                is_data_filtered BOOLEAN NOT NULL DEFAULT 0
             );
         `;
         db.run(createTable, (err) => {
@@ -237,9 +238,9 @@ function populateConnectionTypesTable() {
             return;
         }
 
-        const placeholders = types.map(() => '(?, ?)').join(', ');
-        const sql = `INSERT OR IGNORE INTO connection_types (name, description) VALUES ${placeholders}`;
-        const values = types.map((type) => [ConnectionTypes[type].NAME, ConnectionTypes[type].DESCRIPTION]).flat();
+        const placeholders = types.map(() => '(?, ?, ?)').join(', ');
+        const sql = `INSERT OR IGNORE INTO connection_types (name, description, is_data_filtered) VALUES ${placeholders}`;
+        const values = types.map((type) => [ConnectionTypes[type].NAME, ConnectionTypes[type].DESCRIPTION, ConnectionTypes[type].IS_DATA_FILTERED]).flat();
         db.run(sql, values, (err) => {
             if (err) {
                 logger.error('Error populating connection_types table:', err.message);
@@ -826,13 +827,13 @@ async function getConnectionTypeData(connectionType) {
                 reject(new Error('Database not initialised'));
                 return;
             }
-            const query = `SELECT name, description FROM connection_types WHERE name = ?`;
+            const query = `SELECT name, description, is_data_filtered FROM connection_types WHERE name = ?`;
             db.get(query, [connectionType], (err, row) => {
                 if (err) {
                     logger.error('Error retrieving connection type data:', err.message);
                     reject(err);
                 } else {
-                    resolve(row ? { name: row.name, description: row.description } : null);
+                    resolve(row ? { name: row.name, description: row.description, isDataFiltered: Boolean(row.is_data_filtered) } : null);
                 }
             });
         });

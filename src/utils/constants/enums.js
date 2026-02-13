@@ -24,19 +24,23 @@ const SwitchShortcut = Object.freeze({
 const ConnectionTypes = Object.freeze({
     LSL: {
         NAME: "LSL",
-        DESCRIPTION: "Connects through a local data stream. Choose this if your headset sends data via LSL."
+        DESCRIPTION: "Connects through a local data stream. Choose this if your headset sends data via LSL.",
+        IS_DATA_FILTERED: false
     },
     TCP_IP: {
         NAME: "TCP/IP",
-        DESCRIPTION: "Connects using your network address. Choose this for direct local or remote connections."
+        DESCRIPTION: "Connects using your network address. Choose this for direct local or remote connections.",
+        IS_DATA_FILTERED: true
     },
     CORTEX_API: {
         NAME: "Cortex API",
-        DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets."
+        DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets.",
+        IS_DATA_FILTERED: true
     },
     PYTHON_API: {
         NAME: "Python API",
-        DESCRIPTION: "Connects through a local Python API provided by g.tec. This option is only available for the Unicorn Hybrid Black headset."
+        DESCRIPTION: "Connects through a local Python API provided by g.tec. This option is only available for the Unicorn Hybrid Black headset.",
+        IS_DATA_FILTERED: false
     }
 });
 

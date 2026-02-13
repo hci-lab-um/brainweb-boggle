@@ -106,7 +106,6 @@
 # =========================================================================================
 
 import asyncio
-import os
 import time
 import websockets
 import json
@@ -116,6 +115,10 @@ import numpy as np
 from scipy.signal import butter, lfilter, iirnotch
 import websocket
 from dotenv import load_dotenv
+
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load credentials from a path provided by the Electron app when available.
 _ENV_PATH = os.getenv("EMOTIV_ENV_PATH")
@@ -129,17 +132,30 @@ else:
 CLIENT_ID = os.getenv('EMOTIV_CLIENT_ID')
 CLIENT_SECRET = os.getenv('EMOTIV_CLIENT_SECRET')
 
+# Adding the sibling folder fbcca-py to sys.path so it can import fbcca_config_service.fbcca_config.
+try:
+    FBCCA_DIR = os.path.join(os.path.dirname(BASE_DIR), "fbcca-py")
+    if FBCCA_DIR not in sys.path:
+        sys.path.insert(0, FBCCA_DIR)
+
+    from fbcca_config_service import fbcca_config
+except Exception as e:
+    print(f"[ERROR] Failed to import fbcca_config_service.fbcca_config: {e}")
+    # Stop here so the rest of the script doesn't run with missing config
+    raise SystemExit(1)
+
 # === FILTER CONFIGURATION ===
-FS = 256  # EpocX sampling rate
+FS = fbcca_config["samplingRate"]   
 LOWCUT = 2.0
 HIGHCUT = 100.0
 NOTCH_FREQ = 50.0
 FILTER_ORDER = 5
 NOTCH_Q = 30.0
 EMOTIV_CHANNEL_NAMES = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"] # Emotiv Epoc X channel names always in this order
-APPLY_FILTERING = False      # Set to True/False to enable/disable bandpass and notch filters
-SAVE_RAW_DATA = False        # Set to True/False to enable/disable saving raw data to JSON files
-RECONNECT_INTERVAL = 3.0     # Seconds between reconnect/retry attempts
+APPLY_NOTCH_FILTER = fbcca_config["applyNotchFilter"]        # Set to True/False to enable/disable notch filter
+APPLY_BANDPASS_FILTER = fbcca_config["applyBandpassFilter"]  # Set to True/False to enable/disable bandpass filter
+SAVE_RAW_DATA = fbcca_config["saveRawData"]                  # Set to True/False to enable/disable saving raw data to JSON files
+RECONNECT_INTERVAL = 3.0                                     # Seconds between reconnect/retry attempts
 
 # === ELECTRODE CONFIGURATION ===
 # Epoc X electrode layout: AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4
@@ -597,11 +613,15 @@ class EmotivEEGClient:
                     if SAVE_RAW_DATA:
                         save_raw_sample_to_json(raw_values.tolist())
 
-                    # Apply filters
-                    if APPLY_FILTERING:
+                    # Applying filtering
+                    if APPLY_BANDPASS_FILTER and APPLY_NOTCH_FILTER: # Apply bandpass first, then notch
                         filtered_values = apply_filter(raw_values, b_band, a_band)
                         filtered_values = apply_filter(filtered_values, b_notch, a_notch)
-                    else:
+                    elif APPLY_BANDPASS_FILTER:                      # Apply only bandpass
+                        filtered_values = apply_filter(raw_values, b_band, a_band)
+                    elif APPLY_NOTCH_FILTER:                         # Apply only notch
+                        filtered_values = apply_filter(raw_values, b_notch, a_notch)
+                    else:                                            # No filtering - data might already be filtered   
                         filtered_values = raw_values.copy()
 
                     data_packet = {

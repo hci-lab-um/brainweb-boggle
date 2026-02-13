@@ -3,7 +3,7 @@ from scipy.signal import cheb1ord, cheby1, filtfilt, resample, decimate
 from fbcca_config_service import fbcca_config
 
 # This is used to control whether to downsample the filtered EEG data to 256Hz (if original sampling rate is higher) or not.
-SHOULD_DOWNSAMPLE = False
+SHOULD_DOWNSAMPLE = fbcca_config["applyResampling"]
 
 def resample_eeg(eeg, original_fs, target_fs=256):
     num_samples = int(eeg.shape[1] * target_fs / original_fs)

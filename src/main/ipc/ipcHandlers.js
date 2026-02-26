@@ -6,7 +6,7 @@ const { mouse, Point, keyboard, Key } = require('@nut-tree-fork/nut-js');
 const { captureSnapshot, toBoolean } = require('../../utils/utilityFunctions');
 const logger = require('../modules/logger');
 const { processDataWithFbcca, getEmotivEnvPath, stopEegInfrastructure } = require('../modules/eeg-pipeline');
-const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
+let fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 
 let bciIntervalId = null;           // This will hold the ID of the BCI interval
 let shouldCreateTabView = false;    // This will be used to determine if a new tab should be created when closing the MORE overlay
@@ -59,6 +59,54 @@ async function registerIpcHandlers(context) {
                 originalURL: tab.originalURL
             };
         }));
+    }
+
+    async function updateConfigFromDatabase() {
+        try {
+            // Getting the current connection type from the database
+            const connectionType = await db.getDefaultConnectionType();
+            const connectionData = await db.getConnectionTypeData(connectionType);
+            const isEegDataFiltered = connectionData ? connectionData.isDataFiltered : null;
+
+            // Getting the current headset from the database
+            const headset = await db.getDefaultHeadset();
+
+            // Splitting the headset name and the company by " - "
+            const headsetParts = headset.split(' - ');
+            const headsetName = headsetParts[0].trim();
+            const headsetCompany = headsetParts[1] ? headsetParts[1].trim() : '';
+
+            // Getting the channels and sampling rate for the fbccaConfig
+            const channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
+            const samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
+
+            const gazeLengthInSecs = await db.getDefaultGazeLength();
+
+            const configFilePath = path.join(__dirname, '../../../configs/fbccaConfig.json');
+            const configPath = path.resolve(configFilePath);
+            const configRaw = fs.readFileSync(configPath, "utf8");
+            const config = JSON.parse(configRaw);
+
+            // Update config fields
+            config.channels = Number(channels);
+            config.samplingRate = Number(samplingRate);
+            config.gazeLengthInSecs = Number(gazeLengthInSecs);
+
+            // If the EEG data is filtered (not raw), we disable the notch filter in the FBCCA config to prevent over-filtering.
+            // If the data is raw, we enable the notch filter to ensure powerline noise is removed.
+            config.applyNotchFilter = !isEegDataFiltered;
+
+            // Write updated config
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+
+            console.log("FBCCA Config updated successfully:", config);
+
+            // return the updated configuration for callers to use
+            return config;
+        } catch (err) {
+            logger.error('Error updating config from database:', err.message);
+            return null;
+        }
     }
 
     ipcMain.on('statusBar-updatesFromRenderer', (event, partial) => {
@@ -460,6 +508,9 @@ async function registerIpcHandlers(context) {
         try {
             // Updates the default headset in the database
             db.updateDefaultHeadset(newHeadset);
+
+            // Update EEG pipeline configuration immediately with new headset
+            updateConfigFromDatabase();                 
             broadcastStatusBarState({ headset: newHeadset });
         } catch (err) {
             logger.error('Error updating default headset:', err.message);
@@ -469,6 +520,9 @@ async function registerIpcHandlers(context) {
     ipcMain.on('defaultConnectionType-update', async (event, newConnectionType) => {
         try {
             db.updateDefaultConnectionType(newConnectionType);
+            
+            // Updates EEG pipeline configuration immediately with new headset connection type
+            updateConfigFromDatabase();                
         } catch (err) {
             logger.error('Error updating default connection type:', err.message);
         }

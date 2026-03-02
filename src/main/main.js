@@ -132,8 +132,6 @@ app.whenReady().then(async () => {
         // await db.deleteKeyboardLayoutsTable();   // For development purposes only
         // await db.deleteSettingsTable();          // For development purposes only
 
-        await updateConfigFromDatabase();
-
         bookmarksList = await db.getBookmarks();
         tabsFromDatabase = await db.getTabs();
         defaultUrl = await db.getDefaultURL();
@@ -248,52 +246,6 @@ async function setupWebSocket() {
 // ==================================
 // ======= HELPER FUNCTIONS =========
 // ==================================
-
-async function updateConfigFromDatabase() {
-    // Getting the current connection type from the database
-    db.getDefaultConnectionType().then(async (connectionType) => {
-        const isEegDataFiltered = await db.getConnectionTypeData(connectionType).then(data => data ? data.isDataFiltered : null);
-
-        // Getting the current headset from the database
-        db.getDefaultHeadset().then(async (headset) => {
-            try {
-                // Splitting the headset name and the company by " - "
-                const headsetParts = headset.split(' - ');
-                const headsetName = headsetParts[0].trim();
-                const headsetCompany = headsetParts[1] ? headsetParts[1].trim() : '';
-
-                // Getting the channels and sampling rate for the fbccaConfig
-                const channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
-                const samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
-
-                const gazeLengthInSecs = await db.getDefaultGazeLength();
-
-                const configFilePath = path.join(__dirname, '../../configs/fbccaConfig.json');
-                const configPath = path.resolve(configFilePath);
-                const configRaw = fs.readFileSync(configPath, "utf8");
-                const config = JSON.parse(configRaw);
-
-                // Update config fields
-                config.channels = Number(channels);
-                config.samplingRate = Number(samplingRate);
-                config.gazeLengthInSecs = Number(gazeLengthInSecs);
-
-                // If the EEG data is filtered (not raw), we disable the notch filter in the FBCCA config to prevent over-filtering. 
-                // If the data is raw, we enable the notch filter to ensure powerline noise is removed.
-                if (isEegDataFiltered) config.applyNotchFilter = false;
-                else config.applyNotchFilter = true;
-
-                // Write updated config
-                fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
-
-                console.log("FBCCA Config updated successfully:", config);
-            }
-            catch (err) {
-                logger.error('Error fetching headset details from database:', err.message);
-            }
-        });
-    });
-}
 
 function updateStatusBarState(partial = {}) {
     // Merging the partial updates into the current status bar state
@@ -429,7 +381,7 @@ function createMainWindow() {
                                     deleteAndInsertAllTabs,
                                     updateNavigationButtons,
                                     broadcastStatusBarState,
-                                    setupWebSocket,
+                                    setupWebSocket
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
                                 ipcHandlersReady = true;   // Set flag to indicate that IPC handlers are ready

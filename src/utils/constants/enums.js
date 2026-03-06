@@ -91,8 +91,8 @@ const Headsets = Object.freeze({
         NAME: "Unicorn Hybrid Black",
         COMPANY: "g.tec",
         // USED_ELECTRODES: ["PO3", "PO4", "O1", "O2"],
-        USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
-        // USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
+        // USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
+        USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
         SAMPLING_RATE: 250,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,

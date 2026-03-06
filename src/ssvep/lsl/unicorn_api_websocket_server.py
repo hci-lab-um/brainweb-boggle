@@ -44,17 +44,17 @@ except Exception as e:
 # v---------- CONFIGS ----------v
 
 CHANNELS = fbcca_config["channels"]              # Default number of EEG channels (will be read from device)
-SAMPLING_RATE = fbcca_config["samplingRate"]    # Hz, will be overridden by UnicornPy.SamplingRate if available
+SAMPLING_RATE = fbcca_config["samplingRate"]     # Hz, will be overridden by UnicornPy.SamplingRate if available
 
 if UnicornPy is not None and hasattr(UnicornPy, "SamplingRate"):
     SAMPLING_RATE = UnicornPy.SamplingRate
 
-SAMPLES_PER_SECOND = 250     # Max samples pushed per second to WebSocket
-APPLY_FILTERING = True       # Enable/disable bandpass + notch
-SAVE_RAW_DATA = False        # Enable/disable saving raw data to JSON
+SAMPLES_PER_SECOND = 250                                     # Max samples pushed per second to WebSocket
+APPLY_NOTCH_FILTER = fbcca_config["applyNotchFilter"]        # Set to True/False to enable/disable notch filter
+APPLY_BANDPASS_FILTER = fbcca_config["applyBandpassFilter"]  # Set to True/False to enable/disable bandpass filter
+SAVE_RAW_DATA = fbcca_config["saveRawData"]                  # Set to True/False to enable/disable saving raw data to JSON files
 
 # ^---------- CONFIGS ----------^
-
 
 # Raw data JSON storage
 RAW_JSON_FILENAME = "datasets/RAW-eeg-data_unicorn_api.json"
@@ -152,17 +152,18 @@ class UnicornDeviceWrapper:
         self.device = UnicornPy.Unicorn(selected_serial)
         print(f"[INFO] Connected to '{selected_serial}'.")
 
-        # Setting the number of channels
-        self.num_channels = CHANNELS
+        # Use full acquired channel count for buffer sizing; slice for output.
+        self.acquired_channels = self.device.GetNumberOfAcquiredChannels()
+        self.num_channels = min(CHANNELS, self.acquired_channels)
 
         self.frame_length = 1  # one sample per GetData call
-        self.buffer_length = self.frame_length * self.num_channels * 4  # float32 -> 4 bytes
+        self.buffer_length = self.frame_length * self.acquired_channels * 4  # float32 -> 4 bytes
         self.buffer = bytearray(self.buffer_length)
 
         print("[INFO] Acquisition Configuration:")
         print(f"        Sampling Rate: {UnicornPy.SamplingRate if UnicornPy is not None else SAMPLING_RATE} Hz")
         print(f"        Frame Length: {self.frame_length}")
-        print(f"        Number Of Acquired Channels: {self.device.GetNumberOfAcquiredChannels()} but USING {self.num_channels}")
+        print(f"        Number Of Acquired Channels: {self.acquired_channels} but USING {self.num_channels}")
 
         # Start data acquisition (testsig disabled -> real EEG)
         test_signals_enabled = False
@@ -179,9 +180,9 @@ class UnicornDeviceWrapper:
         self.device.GetData(self.frame_length, self.buffer, self.buffer_length)
 
         # Unpack as little-endian float32
-        total_floats = self.frame_length * self.num_channels
+        total_floats = self.frame_length * self.acquired_channels
         fmt = f"<{total_floats}f"
-        values = struct.unpack(fmt, self.buffer)
+        values = struct.unpack_from(fmt, self.buffer)
 
         # For frame_length == 1, this is exactly one sample per channel
         return [float(values[ch]) for ch in range(self.num_channels)]
@@ -240,13 +241,20 @@ async def unicorn_to_websocket(websocket):
                 if SAVE_RAW_DATA:
                     save_raw_sample_to_json(raw_sample)
 
-                # Filtering
-                if APPLY_FILTERING:
+                # Applying filtering based on config
+                if APPLY_BANDPASS_FILTER and APPLY_NOTCH_FILTER: # Apply bandpass first, then notch
                     filtered = apply_filter(raw_sample[:CHANNELS], b_band, a_band)
                     filtered = apply_filter(filtered, b_notch, a_notch)
                     values = list(map(float, filtered))
-                else:
+                elif APPLY_BANDPASS_FILTER:                      # Apply only bandpass
+                    filtered = apply_filter(raw_sample[:CHANNELS], b_band, a_band)
+                    values = list(map(float, filtered))
+                elif APPLY_NOTCH_FILTER:                         # Apply only notch
+                    filtered = apply_filter(raw_sample[:CHANNELS], b_notch, a_notch)
+                    values = list(map(float, filtered))
+                else:                                            # No filtering - data might already be filtered
                     values = list(map(float, raw_sample[:CHANNELS]))
+                
                 packet = {
                     "time": now,
                     "values": values,

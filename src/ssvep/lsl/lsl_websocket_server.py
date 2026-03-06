@@ -340,9 +340,10 @@ except Exception as e:
 CHANNELS = fbcca_config["channels"]              # Default number of EEG channels (will be read from device)
 SAMPLING_RATE = fbcca_config["samplingRate"]
 
-SAMPLES_PER_SECOND = 20000     # Adjust as needed
-APPLY_FILTERING = True         # Set to True/False to enable/disable bandpass and notch filters
-SAVE_RAW_DATA = False          # Set to True/False to enable/disable saving raw data to JSON files
+SAMPLES_PER_SECOND = 20000                                  
+APPLY_NOTCH_FILTER = fbcca_config["applyNotchFilter"]        # Set to True/False to enable/disable notch filter
+APPLY_BANDPASS_FILTER = fbcca_config["applyBandpassFilter"]  # Set to True/False to enable/disable bandpass filter
+SAVE_RAW_DATA = fbcca_config["saveRawData"]                  # Set to True/False to enable/disable saving raw data to JSON files
 # -----------------------------
 
 
@@ -437,11 +438,18 @@ def fetch_eeg_sample(inlet, b_bandpass, a_bandpass, b_notch, a_notch):
         if SAVE_RAW_DATA:
             save_raw_sample_to_json(sample)
 
-        if APPLY_FILTERING:
+        # Applying filtering based on config
+        if APPLY_BANDPASS_FILTER and APPLY_NOTCH_FILTER:    # Apply bandpass first, then notch
             filtered_sample = apply_filter(sample[:CHANNELS], b_bandpass, a_bandpass)
-            filtered_sample = apply_filter(filtered_sample, b_notch, a_notch)        
+            filtered_sample = apply_filter(filtered_sample, b_notch, a_notch)
             return {"time": timestamp, "values": filtered_sample.tolist()}
-        else:
+        elif APPLY_BANDPASS_FILTER:                         # Apply only bandpass   
+            filtered_sample = apply_filter(sample[:CHANNELS], b_bandpass, a_bandpass)
+            return {"time": timestamp, "values": filtered_sample.tolist()}
+        elif APPLY_NOTCH_FILTER:                            # Apply only notch
+            filtered_sample = apply_filter(sample[:CHANNELS], b_notch, a_notch)
+            return {"time": timestamp, "values": filtered_sample.tolist()}
+        else:                                               # No filtering - data might already be filtered
             return {"time": timestamp, "values": sample[:CHANNELS]}
     return None
 

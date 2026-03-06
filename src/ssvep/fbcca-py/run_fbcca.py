@@ -1,6 +1,7 @@
 import sys
 import json
 import os
+import time
 import numpy as np
 from test_fbcca import test_fbcca
 from fbcca_config_service import fbcca_config, total_data_point_count
@@ -69,8 +70,14 @@ def run_fbcca(eeg, scenario_id, stim_freqs=None, active_button_ids=None):
     else:
         stimuli_frequencies = get_stimuli_frequencies(scenario_id)
 
+
     if np.any(eeg_data != 0) and np.all(stimuli_frequencies != 0):
+        # Time the test_fbcca computation
+        start_time = time.time()
         freq_idx = test_fbcca(eeg_data, stimuli_frequencies)
+        end_time = time.time()
+        computation_time = end_time - start_time
+        print(f"test_fbcca computation time: {computation_time:.4f} seconds", file=sys.stderr)
 
         # Determining the selected button ID
         # If active_button_ids is provided, use it to map freq_idx to button ID. Provided = if using an adaptive switch

@@ -1,6 +1,6 @@
 const { app, BaseWindow, WebContentsView, ipcMain, globalShortcut, dialog } = require('electron')
 const { autoUpdater } = require('electron-updater');
-const { ViewNames, SwitchShortcut } = require('../utils/constants/enums')
+const { ViewNames, SwitchShortcut, Headsets } = require('../utils/constants/enums')
 const path = require('path')
 const fs = require('fs');
 const { registerIpcHandlers } = require('./ipc/ipcHandlers');
@@ -42,11 +42,11 @@ autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
 autoUpdater.on("checking-for-update", () => {
-logger.info('\tAUTO-UPDATER\tChecking for updates...');
+    logger.info('\tAUTO-UPDATER\tChecking for updates...');
 });
 
 autoUpdater.on("update-not-available", () => {
-logger.info('\tAUTO-UPDATER\tNo updates available.');
+    logger.info('\tAUTO-UPDATER\tNo updates available.');
 });
 
 autoUpdater.on("update-available", () => {
@@ -70,7 +70,7 @@ autoUpdater.on("update-downloaded", () => {
 });
 
 autoUpdater.on('error', (err) => {
-  logger.error('\tAUTO-UPDATER\tError:', err && (err.stack || err.message || err));
+    logger.error('\tAUTO-UPDATER\tError:', err && (err.stack || err.message || err));
 });
 
 autoUpdater.checkForUpdates();
@@ -131,8 +131,6 @@ app.whenReady().then(async () => {
         // await db.deleteHeadsetsTable();          // For development purposes only
         // await db.deleteKeyboardLayoutsTable();   // For development purposes only
         // await db.deleteSettingsTable();          // For development purposes only
-
-        await updateConfigFromDatabase();
 
         bookmarksList = await db.getBookmarks();
         tabsFromDatabase = await db.getTabs();
@@ -248,42 +246,6 @@ async function setupWebSocket() {
 // ==================================
 // ======= HELPER FUNCTIONS =========
 // ==================================
-
-async function updateConfigFromDatabase() {
-    // Getting the current headset from the database
-    db.getDefaultHeadset().then(async (headset) => {
-        try {
-            // Splitting the headset name and the company by " - "
-            const headsetParts = headset.split(' - ');
-            const headsetName = headsetParts[0].trim();
-            const headsetCompany = headsetParts[1] ? headsetParts[1].trim() : '';
-
-            // Getting the channels and sampling rate for the fbccaConfig
-            const channels = await db.getHeadsetChannelNumber(headsetName, headsetCompany);
-            const samplingRate = await db.getHeadsetSamplingRate(headsetName, headsetCompany);
-
-            const gazeLengthInSecs = await db.getDefaultGazeLength();
-
-            const configFilePath = path.join(__dirname, '../../configs/fbccaConfig.json');
-            const configPath = path.resolve(configFilePath);
-            const configRaw = fs.readFileSync(configPath, "utf8");
-            const config = JSON.parse(configRaw);
-
-            // Update config fields
-            config.channels = Number(channels);
-            config.samplingRate = Number(samplingRate);
-            config.gazeLengthInSecs = Number(gazeLengthInSecs);
-
-            // Write updated config
-            fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
-
-            console.log("FBCCA Config updated successfully:", config);
-        }
-        catch (err) {
-            logger.error('Error fetching headset details from database:', err.message);
-        }
-    });
-}
 
 function updateStatusBarState(partial = {}) {
     // Merging the partial updates into the current status bar state
@@ -419,7 +381,7 @@ function createMainWindow() {
                                     deleteAndInsertAllTabs,
                                     updateNavigationButtons,
                                     broadcastStatusBarState,
-                                    setupWebSocket,
+                                    setupWebSocket
                                 });
                                 isMainWindowLoaded = true; // Set flag to true when fully loaded
                                 ipcHandlersReady = true;   // Set flag to indicate that IPC handlers are ready

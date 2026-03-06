@@ -24,19 +24,23 @@ const SwitchShortcut = Object.freeze({
 const ConnectionTypes = Object.freeze({
     LSL: {
         NAME: "LSL",
-        DESCRIPTION: "Connects through a local data stream. Choose this if your headset sends data via LSL."
+        DESCRIPTION: "Connects through a local data stream. Choose this if your headset sends data via LSL.",
+        IS_DATA_FILTERED: false
     },
     TCP_IP: {
         NAME: "TCP/IP",
-        DESCRIPTION: "Connects using your network address. Choose this for direct local or remote connections."
+        DESCRIPTION: "Connects using your network address. Choose this for direct local or remote connections.",
+        IS_DATA_FILTERED: true
     },
     CORTEX_API: {
         NAME: "Cortex API",
-        DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets."
+        DESCRIPTION: "Connects through Emotiv’s official web service. Choose this for Emotiv headsets.",
+        IS_DATA_FILTERED: true
     },
-    PYTHON_API: {
-        NAME: "Python API",
-        DESCRIPTION: "Connects through a local Python API provided by g.tec. This option is only available for the Unicorn Hybrid Black headset."
+    UNICORN_API: {
+        NAME: "Unicorn Python API",
+        DESCRIPTION: "Connects through a local Python API provided by g.tec. This option is only available for the Unicorn Hybrid Black headset.",
+        IS_DATA_FILTERED: false
     }
 });
 
@@ -62,7 +66,7 @@ const Headsets = Object.freeze({
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
             CONNECTION_TYPE_2: ConnectionTypes.TCP_IP.NAME
-            
+
         },
         REQUIRES_CREDENTIALS: {
             CONNECTION_TYPE_1: false,
@@ -86,11 +90,13 @@ const Headsets = Object.freeze({
     UNICORN: {
         NAME: "Unicorn Hybrid Black",
         COMPANY: "g.tec",
+        // USED_ELECTRODES: ["PO3", "PO4", "O1", "O2"],
+        // USED_ELECTRODES: ["PO3", "POz", "PO4", "O1", "Oz", "O2"],
         USED_ELECTRODES: ["PO7", "PO3", "POz", "PO4", "PO8", "O1", "Oz", "O2"],
         SAMPLING_RATE: 250,
         CONNECTION_TYPE: {
             CONNECTION_TYPE_1: ConnectionTypes.LSL.NAME,
-            CONNECTION_TYPE_2: ConnectionTypes.PYTHON_API.NAME
+            CONNECTION_TYPE_2: ConnectionTypes.UNICORN_API.NAME
         },
         REQUIRES_CREDENTIALS: {
             CONNECTION_TYPE_1: false,
@@ -205,6 +211,7 @@ const Settings = Object.freeze({
         LABEL: "Best User Frequencies",
         DESCRIPTION: "The best frequencies for the user’s brain activity.",
         DEFAULT: "6.5, 7.5, 8.5, 7, 8",
+        // DEFAULT: "10, 13, 14, 15, 16",  // Default frequencies as suggested by Rosanne Buttigieg
         CATEGORY: SettingCategories.GENERAL,
     },
     DEFAULT_HEADSET: {

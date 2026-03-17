@@ -7,7 +7,8 @@
   "scripts": {
     "start": "sass src/pages/scss:src/pages/css && electron .",
     "sass": "sass --watch src/pages/scss:src/pages/css",
-    "dist": "sass src/pages/scss:src/pages/css && electron-builder"
+    "prepare:python-runtime": "node tools/prepare-python-runtime.js",
+    "dist": "npm run prepare:python-runtime && sass src/pages/scss:src/pages/css && electron-builder"
   },
   "author": "HCI Lab - Faculty of ICT, University of Malta",
   "license": "GPL-3.0",
@@ -76,7 +77,16 @@
         "from": "src/ssvep",
         "to": "ssvep",
         "filter": [
-          "**/*.py"
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc"
+        ]
+      },
+      {
+        "from": "build/python-runtime",
+        "to": "python-runtime",
+        "filter": [
+          "**/*"
         ]
       }
     ]

@@ -19,12 +19,14 @@ Once downloaded:
 1. Extract or install the archive for your platform.
 2. Launch the Boggle executable from the installed location.
 
+Packaged releases already include the Python runtime and required Python libraries used by Boggle's EEG pipeline (including Unicorn Python API mode), so no separate Python installation is required for end users.
+
 ### 2. Download the code and build from source
 
 **Prerequisites**
 
 - Node.js 20 LTS or newer (tested with Node 20.x).
-- Python 3.10+ available on your `PATH`.
+- Python 3.10+ available on your `PATH` (required only for local development and to build distributables).
 - `git` (optional, for cloning).
 
 **Steps**
@@ -45,12 +47,12 @@ You can build distributable binaries using
 npm run dist
 ```
 
+During `npm run dist`, Boggle automatically creates a bundled Python environment and installs `requirements.txt` into it so the packaged app is self-contained.
+
 > Note: `npm run dist` may require additional platform-specific tooling (e.g. build tools on Windows).
 
 
-## Running Boggle
-
-From the project root:
+## Running Boggle from the project root
 
 ```bash
 npm run start
@@ -68,7 +70,7 @@ On first launch Boggle will create a local SQLite database in your user data dir
 
 Boggle is designed to work with SSVEP-capable EEG headsets. Supported headsets and connection modes are currently:
 
-- **Emotiv EPOC X** (Emotiv)
+- **Emotiv EPOC X** (Emotiv) → DEFAULT
   - Connection type: **Cortex API**
   - **Requires credentials** (client ID and client secret)
 - **DSI-VR300** (Wearable Sensing)
@@ -78,8 +80,11 @@ Boggle is designed to work with SSVEP-capable EEG headsets. Supported headsets a
 - **g.USBamp** (g.tec)
   - Connection type: **LSL**
   - Does **not** require credentials
+- **Unicorn Hybrid Black** (g.tec)
+  - Connection types: **LSL**, **Python Unicorn API**
+  - Does **not** require credentials **BUT** requires a valid activated Unicorn Python API license 
 
-You can select the default headset and connection type from **More → Settings → Headset Settings** inside Boggle. These choices determine which Python WebSocket server script is launched and which EEG transport is used.
+You can update the default headset and connection type from **More → Settings → Headset Settings** inside Boggle. These choices determine which Python WebSocket server script is launched and which connection type is used.
 
 
 ## General Setup and Usage
@@ -89,8 +94,11 @@ There are two ways to perform the initial configuration:
 1. Using **NeuroTune** (recommended).
 2. Configuring everything directly inside **Boggle**.
 
-
 ### OPTION 1: Initial Setup via NeuroTune (Recommended)
+
+> ⚠️
+> NeuroTune is currently under active development and is not yet publicly available.
+> A GitHub repository link will be provided once the project is ready for release.
 
 NeuroTune is a companion calibration tool for Boggle. Using it first is recommended, especially in research or clinical setups, because it allows you to identify per-user optimal SSVEP settings and then export them into Boggle.
 
@@ -99,14 +107,40 @@ In NeuroTune, the user can:
 - Select the **headset** and **connection type** that will be used with Boggle.
 - Enter and store **credentials** when required (for example, Emotiv Cortex client ID and secret).
 - Run a **calibration process** to identify the best SSVEP **frequencies**, **colour combination**, and **stimuli pattern** for that individual.
+- Enjoy a selection of **BCI games** using the identified SSVEP configurations. 
 
-After (or, with some options greyed out, even before) completing calibration, the user can choose **Export to → Export to Boggle**. The user may select which items to include in the export; it can contain any combination of:
+#### When users can export to Boggle
 
-- Credentials (if previously entered; shown but greyed out when not available).
-- Default headset and connection type.
-- Best frequencies.
-- Best colours.
-- Best stimuli pattern.
+Users can open the Export Data flow from:
+
+- The main screen.
+- Calibration Mode.
+- The end of a completed calibration session.
+
+At the end of calibration, the export option appears as a post-calibration action, making it easy to export immediately after fresh results are generated.
+
+#### How to export to Boggle
+
+1. Open Export Data.
+2. Under Export Destination, choose **3rd Party App**.
+3. Select **Boggle**.
+4. Choose what to export:
+	 - Headset Credentials
+	 - Latest Calibration Results (Frequency, Pattern, Colour)
+5. Click **Export**.
+
+#### What is exported to Boggle
+
+When selected, NeuroTune writes the following into Boggle's database:
+
+- **Headset Credentials**
+	- Stored credentials for compatible headset connection types.
+- **Frequency Calibration**
+	- Best user frequency ranking values.
+- **Pattern Calibration**
+	- Default stimuli pattern.
+- **Colour Calibration**
+	- Default stimuli light and dark colours.
 
 Once this export is complete, Boggle will start with these values pre-configured, and the user can immediately begin using the browser.
 
@@ -122,8 +156,8 @@ If you prefer to configure everything directly in Boggle, or if NeuroTune is not
 	- For Emotiv EPOC X, ensure Emotiv Cortex is running using a valid license and that the headset is connected.
 4. Launch **Boggle**.
 5. The default headset headset is **Epoc X by Emotiv**, using the **Cortex API** as the default connection type. To change this setting, click on the `Change Defaults` button from the credentials required modal. Otherwise, close the modal and navigate **More → Settings → Headset Settings**. Here:
-	- Choose your headset (e.g. `EPOC X - Emotiv`, `DSI-VR300 - Wearable Sensing`, `g.USBamp - g.tec`).
-	- Select the appropriate **Connection Type** (e.g. `Cortex API`, `LSL`).
+	- Choose your headset (e.g. `EPOC X - Emotiv`, `DSI-VR300 - Wearable Sensing`, `g.USBamp - g.tec`, `Unicorn Hybrid Black - g.tec`).
+	- Select the appropriate **Connection Type** (e.g. `Cortex API`, `LSL`, `Python Unicorn API`).
 6. If you update the default headset settings, restart the browser to see the changes. 
 7. Monitor the **status bar** at the bottom of the main window:
 	- The headset name should match your selection.
@@ -163,6 +197,41 @@ The Emotiv EPOC X uses the **Cortex API** connection type and requires an applic
 After saving, Boggle will update its internal configuration and `.env` file and restart the EEG WebSocket server. When data begins flowing from Cortex, the headset indicator and signal quality in the status bar will update, and Boggle will be ready for brain‑controlled browsing.
 
 
+## Unicorn Hybrid Black - LSL / Python Unicorn API (No Credentials)
+
+The **Unicorn Hybrid Black** from g.tec can be used with Boggle via:
+
+- **LSL (Lab Streaming Layer)** - recommended when you already have an LSL stream.
+- **Python Unicorn API** - recommended when streaming directly from the Unicorn Python SDK.
+
+### LSL Setup
+
+1. Install and open the g.tec **Unicorn Suite Hybrid Black** software.
+2. Navigate to the `DevTools` tab, select `Unicorn LSL` and press `Open`.
+3. Your File Explorer will open and you need to open the file `UnicornLSL.exe`.
+4. Find your headset from the Available Devices.
+5. Fill the Streamname with `Unicorn`.
+6. Select `send all signals in one stream`.
+7. Press the `Open` button followed by the `Start` button.
+8. Start **Boggle**.
+9. In **More → Settings → Headset Settings**, select:
+	- Headset: `Unicorn Hybrid Black - g.tec`.
+	- Connection Type: `LSL`.
+10. Restart **Boggle** to apply the headset and connection type settings above. 
+11. Once an LSL EEG stream is detected, the Python server at `src/ssvep/lsl/lsl_websocket_server.py` will forward data to Boggle, and the headset indicator will show as connected.
+
+### Python Unicorn API Setup (⚠️ Requires a VALID Unicorn Python API License)
+
+1. Install and open the g.tec **Unicorn Suite Hybrid Black** software. 
+2. Navigate to the `Licenses` tab, select `Add license` from the side panel, input your `Product Id`, `License Key` and `Email` in the appropriate input fields, and press `Activate`. If the licenses is activated successfully you should be able to see it listed under `Installed Licenses` from the `Show licenses` side panel. 
+2. Start **Boggle**.
+3. In **More → Settings → Headset Settings**, select:
+	- Headset: `Unicorn Hybrid Black - g.tec`.
+	- Connection Type: `Python Unicorn API`.
+4. Restart **Boggle** to apply the headset and connection type settings above. 
+5. Boggle will start the Unicorn Python server at `src\ssvep\lsl\unicorn_api_websocket_server.py` and connect directly to the device. The headset indicator will show as connected once data is streaming.
+
+
 ## DSI-VR300 – LSL / TCP-IP (No Credentials)
 
 > ⚠️ **In Development** – This feature is still under active development and may change.
@@ -183,7 +252,8 @@ The **DSI-VR300** can be used via:
 4. In **More → Settings → Headset Settings** select:
 	- Headset: `DSI-VR300 - Wearable Sensing`.
 	- Connection Type: `LSL`.
-5. Once an LSL EEG stream is detected, the Python server at `src/ssvep/lsl/lsl_websocket_server.py` will forward data to Boggle, and the headset indicator will show as connected.
+5. Restart **Boggle** to apply the headset and connection type settings above. 
+6. Once an LSL EEG stream is detected, the Python server at `src/ssvep/lsl/lsl_websocket_server.py` will forward data to Boggle, and the headset indicator will show as connected.
 
 ### TCP/IP (Experimental)
 
@@ -205,7 +275,8 @@ The **g.USBamp** from g.tec is supported via **LSL** only.
 4. In **More → Settings → Headset Settings**, select:
 	- Headset: `g.USBamp - g.tec`.
 	- Connection Type: `LSL`.
-5. Confirm that Boggle shows the headset as connected and that signal quality information appears in the status bar once data is streaming.
+5. Restart **Boggle** to apply the headset and connection type settings above. 
+6. Confirm that Boggle shows the headset as connected and that signal quality information appears in the status bar once data is streaming.
 
 
 ## Experimental and Not Yet Tested

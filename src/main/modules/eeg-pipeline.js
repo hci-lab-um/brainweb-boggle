@@ -1,9 +1,11 @@
 const path = require('path');
+const fs = require('fs');
 const { app } = require('electron');
 const { PythonShell } = require('python-shell');
 const { spawn } = require('child_process');
 const WebSocket = require('ws');
 const { EventEmitter } = require('events');
+const logger = require('./logger');
 const fbccaConfiguration = require('../../../configs/fbccaConfig.json');
 const { ConnectionTypes } = require('../../utils/constants/enums');
 
@@ -24,6 +26,26 @@ let lastQualityPercent = null; // track latest Emotiv signal quality percent
 const ssvepBasePath = app.isPackaged
     ? path.join(process.resourcesPath, 'ssvep')
     : path.join(__dirname, '..', '..', 'ssvep');
+
+function getBundledPythonExecutablePath() {
+    if (!app.isPackaged) {
+        return null;
+    }
+
+    const venvPath = path.join(process.resourcesPath, 'python-runtime', 'venv');
+    const candidates = process.platform === 'win32'
+        ? [path.join(venvPath, 'Scripts', 'python.exe')]
+        : [
+            path.join(venvPath, 'bin', 'python3'),
+            path.join(venvPath, 'bin', 'python')
+        ];
+
+    return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+function getPythonExecutablePath() {
+    return getBundledPythonExecutablePath() || process.env.BOGGLE_PYTHON || 'python';
+}
 
 // Central helper for where Emotiv/Cortex credentials (.env) live.
 // In dev, we keep using the repo-local src/ssvep/lsl/.env.
@@ -80,7 +102,9 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
             EMOTIV_ENV_PATH: emotivEnvPath,
         };
 
-        const pythonProcess = spawn('python', ['-u', pythonScriptPath], { env: pythonEnv }); // -u was used to disable output buffering (allow logs to pass in stdout)
+        const pythonExecutablePath = getPythonExecutablePath();
+
+        const pythonProcess = spawn(pythonExecutablePath, ['-u', pythonScriptPath], { env: pythonEnv }); // -u was used to disable output buffering (allow logs to pass in stdout)
         pythonProcessRef = pythonProcess; // store for later kill
 
         // Buffer stdout to handle partial lines
@@ -162,6 +186,11 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
                     }
                 } else {
                     // Passive logging of non-JSON stdout lines
+                    if (line.includes('[ERROR]')) {
+                        logger.error(`[${connectionType}] ${line}`);
+                    } else if (line.includes('[WARN]')) {
+                        logger.warn(`[${connectionType}] ${line}`);
+                    }
                     console.log(`[PYTHON] ${line}`);
                 }
                 if (handledByJson) continue; // logic has been handled by handleJsonEvent
@@ -176,6 +205,9 @@ async function spawnPythonWebSocketServer(defaultConnectionType) {
         });
 
         pythonProcess.on('close', (code) => {
+            if (code !== 0) {
+                logger.error(`${defaultConnectionType}_websocket_server.py exited with code ${code}`);
+            }
             console.log(`${defaultConnectionType}_websocket_server.py process exited with code ${code}`);
         });
     });
@@ -331,7 +363,10 @@ async function ensurePythonShell() {
         pythonShellInitPromise = new Promise((resolve, reject) => {
             try {
                 const scriptPath = path.join(ssvepBasePath, 'fbcca-py', 'run_fbcca.py');
-                const shell = new PythonShell(scriptPath, { mode: 'json' });
+                const shell = new PythonShell(scriptPath, {
+                    mode: 'json',
+                    pythonPath: getPythonExecutablePath()
+                });
 
                 shell.on('stderr', (error) => {
                     console.error('Python Error:', error.toString());

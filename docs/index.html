@@ -241,11 +241,10 @@
                             <div class="w-100 d-flex justify-content-center">
                                 <p id="featureModalDescription" class="fs-5 mb-0 text-light"></p>
                             </div>
-                            <!-- Explore the Library button -->
+                            <!-- Optional feature-specific link -->
                             <div id="featureModalButtonContainer" class="w-100 d-flex justify-content-center">
-                                <a id="featureModalExploreBtn" href="#" target="_blank"
-                                    class="btn btn-primary rounded-pill btn-lg py-3 px-5">Explore
-                                    the Library</a>
+                                <a id="featureModalExploreBtn" href="#"
+                                    class="btn btn-primary rounded-pill btn-lg py-3 px-5" hidden></a>
                             </div>
                         </div>
                     </div>
@@ -269,6 +268,8 @@
                             data-title="Integrates with the ssvep-stimuli Generator Library"
                             data-description="Generates SSVEP stimuli for Boggle using an in-house library developed for SSVEP brain-computer interfaces."
                             data-video="./assets/features/ssvep-stimuli_library.mp4"
+                            data-explore-url="https://www.npmjs.com/package/ssvep-stimuli"
+                            data-explore-label="Explore the Library" data-explore-target="_blank"
                             aria-label="View more about SSVEP Stimuli Generator"></button>
                     </div>
                 </div>
@@ -375,6 +376,7 @@
                             data-bs-toggle="modal" data-bs-target="#featureModal" data-title="Highly Customisable"
                             data-description="A settings page that offers extensive customisation options to tailor the user experience according to individual preferences."
                             data-video="./assets/features/settings.mp4"
+                            data-explore-url="./neurotune/" data-explore-label="Explore NeuroTune"
                             aria-label="View more about Highly Customisable"></button>
                     </div>
                 </div>

@@ -145,7 +145,7 @@ if __name__ == "__main__":
                     stim_freqs = message.get('stim_freqs')
                 if 'active_button_ids' in message:
                     active_button_ids = message.get('active_button_ids')
-                                
+                             
                 # Run the fbcca process
                 label = run_fbcca(eeg_array, scenario_id, stim_freqs, active_button_ids)
                 

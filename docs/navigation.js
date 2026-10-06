@@ -100,6 +100,9 @@ function setupFeatureModal() {
       const title = btn.getAttribute('data-title') || '';
       const description = btn.getAttribute('data-longDescription') || '';
       const video = btn.getAttribute('data-video') || '';
+      const exploreUrl = btn.getAttribute('data-explore-url') || '';
+      const exploreLabel = btn.getAttribute('data-explore-label') || 'Explore';
+      const exploreTarget = btn.getAttribute('data-explore-target') || '_self';
 
       if (modalTitle) modalTitle.textContent = title;
       if (modalDescription) modalDescription.textContent = description;
@@ -114,12 +117,14 @@ function setupFeatureModal() {
         }
       }
 
-      // Showing the Explore the Library button only for the SSVEP Generator feature
-      if (title.toLowerCase() === "makes use of ssvep-stimuli generator library") {
-        exploreBtn.style.display = 'inline-block';
-        exploreBtn.href = "https://www.npmjs.com/package/ssvep-stimuli";
-      } else {
-        exploreBtn.style.display = 'none';
+      if (exploreBtn) {
+        exploreBtn.hidden = !exploreUrl;
+        if (exploreUrl) {
+          exploreBtn.href = exploreUrl;
+          exploreBtn.textContent = exploreLabel;
+          exploreBtn.target = exploreTarget;
+          exploreBtn.rel = exploreTarget === '_blank' ? 'noopener' : '';
+        }
       }
     });
   });

@@ -1,5 +1,5 @@
 {
-    "channels": 6,
+    "channels": 8,
     "subBands": 5,
     "harmonics": 5,
     "idleStateLabel": -1,

@@ -54,6 +54,24 @@ img {
     max-width: 100%;
 }
 
+.svg-icon {
+    width: 1em;
+    height: 1em;
+    display: block;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.link-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+}
+
 /* Progressive scroll reveals. Content stays visible until JavaScript enhances it. */
 .reveal-pending {
     opacity: 0;
@@ -775,18 +793,6 @@ h2 em {
     letter-spacing: 0.12em;
 }
 
-.panel-header {
-    justify-content: space-between;
-}
-
-.suite-pill {
-    padding: 5px 10px;
-    border: 1px solid rgba(128, 193, 255, 0.3);
-    border-radius: 999px;
-    color: var(--accent);
-    font-size: 0.58rem;
-}
-
 .calibration-list {
     margin: 0;
     padding: 12px 26px;
@@ -986,7 +992,13 @@ h2 em {
     height: 52px;
     align-items: center;
     color: var(--accent);
-    font-size: 2.5rem;
+}
+
+.play-icon .svg-icon {
+    width: 42px;
+    height: 42px;
+    fill: currentColor;
+    stroke: none;
 }
 
 .process-list h3 {

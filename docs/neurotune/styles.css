@@ -390,11 +390,6 @@ h2 em {
     margin: 0;
 }
 
-.intro-grid>p:not(:last-child) {
-    padding-right: 30px;
-    border-right: 1px solid var(--line);
-}
-
 .intro-grid strong,
 .intro-grid span {
     display: block;
@@ -792,7 +787,7 @@ h2 em {
     border-bottom: 1px solid var(--line);
     color: var(--muted);
     font-family: monospace;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     letter-spacing: 0.12em;
 }
 
@@ -818,7 +813,7 @@ h2 em {
 .calibration-index {
     color: var(--accent);
     font-family: monospace;
-    font-size: 0.66rem;
+    font-size: 0.95rem;
 }
 
 .calibration-list strong,
@@ -836,7 +831,7 @@ h2 em {
 
 .calibration-list small {
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     line-height: 1.5;
 }
 
@@ -850,7 +845,7 @@ h2 em {
     border-radius: 50%;
     color: var(--accent);
     font-family: monospace;
-    font-size: 0.68rem;
+    font-size: 0.95rem;
 }
 
 .pattern-mark {
@@ -1267,11 +1262,14 @@ h2 em {
 
     .intro-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
+        gap: 25px;
+        text-align: center;
     }
 
-    .intro-grid>p:not(:last-child) {
-        padding-right: 10px;
+    .intro-message {
+        width: 100%;
+        justify-self: stretch;
+        text-align: center;
     }
 
     .intro-grid strong {

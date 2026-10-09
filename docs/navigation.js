@@ -74,6 +74,64 @@ function initNavigation() {
   updateActiveNav();
 }
 
+// Reveal page content as it enters the viewport. Classes are added here so the
+// page remains fully readable when JavaScript is unavailable.
+function initScrollReveals() {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealGroups = [
+    { selector: '#about .text-center > h2, #about .text-center > p' },
+    { selector: '#about .stat', stagger: 90 },
+    { selector: '#about .card-bg' },
+    { selector: '#features > .container > .text-center' },
+    { selector: '#features .row > .col', stagger: 90, staggerCycle: 3 },
+    { selector: '#researchCarousel', direction: 'left' },
+    { selector: '#award .text-center' },
+    { selector: '#award img', direction: 'right' },
+    { selector: '#people > .container > .text-center' },
+    { selector: '#people .row > .col-md-4', stagger: 90, staggerCycle: 3 },
+    { selector: '#contact .text-center' }
+  ];
+
+  const revealElements = [];
+
+  revealGroups.forEach(function (group) {
+    document.querySelectorAll(group.selector).forEach(function (element, index) {
+      const staggerIndex = group.staggerCycle ? index % group.staggerCycle : index;
+      const delay = (group.delay || 0) + (group.stagger || 0) * staggerIndex;
+
+      element.classList.add('scroll-reveal');
+      if (group.direction) element.classList.add('reveal-from-' + group.direction);
+      element.style.setProperty('--reveal-delay', delay + 'ms');
+      revealElements.push(element);
+    });
+  });
+
+  document.documentElement.classList.add('motion-ready');
+
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    revealElements.forEach(function (element) {
+      element.classList.add('is-visible');
+    });
+    return;
+  }
+
+  const observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: '0px 0px -8% 0px'
+  });
+
+  revealElements.forEach(function (element) {
+    observer.observe(element);
+  });
+}
+
 
 // add function to copy citation text to clipboard
 function copyCitation() {
@@ -152,4 +210,5 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
   setupFeatureModal();
   initNavigation();
+  initScrollReveals();
 });

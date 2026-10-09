@@ -27,6 +27,54 @@ body {
   font-weight: 300;
 }
 
+/* ----------------------- */
+/*  Scroll reveal motion   */
+/* ----------------------- */
+
+/* Content stays visible until JavaScript has initialised the motion system. */
+.motion-ready .scroll-reveal {
+  opacity: 0;
+  transform: translate3d(0, 2rem, 0);
+  filter: blur(4px);
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+
+.motion-ready .scroll-reveal.reveal-from-left {
+  transform: translate3d(-2rem, 0, 0);
+}
+
+.motion-ready .scroll-reveal.reveal-from-right {
+  transform: translate3d(2rem, 0, 0);
+}
+
+.motion-ready .scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0);
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-ready .scroll-reveal,
+  .motion-ready .scroll-reveal.reveal-from-left,
+  .motion-ready .scroll-reveal.reveal-from-right {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .arrows::before,
+  .arrows::after {
+    animation: none;
+  }
+}
+
 h1,
 h2,
 h3,

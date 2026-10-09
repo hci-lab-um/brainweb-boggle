@@ -59,6 +59,17 @@ body {
   will-change: auto;
 }
 
+@media (max-width: 991.98px) {
+  .motion-ready .scroll-reveal.reveal-from-left,
+  .motion-ready .scroll-reveal.reveal-from-right {
+    transform: translate3d(0, 2rem, 0);
+  }
+
+  .motion-ready .scroll-reveal.is-visible {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .motion-ready .scroll-reveal,
   .motion-ready .scroll-reveal.reveal-from-left,

@@ -18,15 +18,15 @@ if (!reducedMotion && 'IntersectionObserver' in window) {
             }
 
             const finishReveal = (event) => {
-                if (event.propertyName === 'transform') {
+                if (event.target === entry.target && event.propertyName === 'transform') {
                     entry.target.classList.remove('reveal-pending');
                     entry.target.style.removeProperty('--reveal-delay');
                     entry.target.removeEventListener('transitionend', finishReveal);
                 }
             };
 
-            entry.target.classList.add('is-visible');
             entry.target.addEventListener('transitionend', finishReveal);
+            entry.target.classList.add('is-visible');
             observer.unobserve(entry.target);
         });
     }, {

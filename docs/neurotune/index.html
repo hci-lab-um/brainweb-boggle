@@ -38,7 +38,7 @@
             <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
             <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
             <div class="shell hero-inner">
-                <div class="hero-copy">
+                <div class="hero-copy" data-reveal="scale">
                     <p class="eyebrow"><span></span> BCI game suite <span></span></p>
                     <h1>Play with <em>focus.</em></h1>
                     <p class="hero-lead">NeuroTune brings together three attention-driven SSVEP games and a
@@ -54,10 +54,10 @@
 
         <section class="intro-strip" aria-label="NeuroTune highlights">
             <div class="shell intro-grid">
-                <p><strong>03</strong><span>Game genres</span></p>
-                <p><strong>03</strong><span>Ways to tune</span></p>
-                <p><strong>MULTI</strong><span>Headset support</span></p>
-                <p class="intro-message">Experience-first games and player-specific calibration, connected in one
+                <p data-reveal><strong>03</strong><span>Game genres</span></p>
+                <p data-reveal data-reveal-delay="80"><strong>03</strong><span>Ways to tune</span></p>
+                <p data-reveal data-reveal-delay="160"><strong>MULTI</strong><span>Headset support</span></p>
+                <p class="intro-message" data-reveal="left" data-reveal-delay="240">Experience-first games and player-specific calibration, connected in one
                     extensible suite.</p>
             </div>
         </section>
@@ -65,15 +65,15 @@
         <section class="section games-section" id="games">
             <div class="shell">
                 <div class="section-heading">
-                    <div>
+                    <div data-reveal="left">
                         <h2>Three games built<br><em>around attention.</em></h2>
                     </div>
-                    <p>A narrative puzzle, an endless runner and a strategy duel, all designed to turn selective visual attention into
+                    <p data-reveal="right" data-reveal-delay="100">A narrative puzzle, an endless runner and a strategy duel, all designed to turn selective visual attention into
                         movement, split-second reactions and social play.</p>
                 </div>
 
                 <div class="game-list">
-                    <article class="game-card game-card-dash">
+                    <article class="game-card game-card-dash" data-reveal="scale">
                         <div class="game-preview">
                             <img src="./assets/neurodash-game.png"
                                 alt="NeuroDash gameplay with Jump and Roll targets beside the runner" loading="lazy"
@@ -87,7 +87,7 @@
                         </div>
                     </article>
 
-                    <article class="game-card game-card-maze">
+                    <article class="game-card game-card-maze" data-reveal="scale" data-reveal-delay="100">
                         <div class="game-preview">
                             <img src="./assets/mazemind-game.png"
                                 alt="MazeMind gameplay with directional targets surrounding a forest maze"
@@ -101,7 +101,7 @@
                         </div>
                     </article>
 
-                    <article class="game-card game-card-connect">
+                    <article class="game-card game-card-connect" data-reveal="scale">
                         <div class="game-preview">
                             <img src="./assets/cogniconnect4-game.png"
                                 alt="CogniConnect4 gameplay with the game board and seven column targets"
@@ -123,14 +123,14 @@
             <div class="calibration-orbit orbit-one" aria-hidden="true"></div>
             <div class="calibration-orbit orbit-two" aria-hidden="true"></div>
             <div class="shell calibration-grid">
-                <div class="calibration-copy">
+                <div class="calibration-copy" data-reveal="left">
                     <h2>Tune once.<br><em>Play every game.</em></h2>
                     <p>NeuroTune's integrated calibration feature evaluates the visual settings that shape an
                         individual's SSVEP response, helping improve comfort, classification stability and in-game
                         control.</p>
                 </div>
 
-                <div class="calibration-panel">
+                <div class="calibration-panel" data-reveal="right" data-reveal-delay="120">
                     <div class="panel-header">
                         <span>PERSONALISED CALIBRATION</span>
                         <span class="suite-pill">SUITE FEATURE</span>
@@ -163,25 +163,25 @@
         <section class="section process-section" id="how-it-works">
             <div class="shell">
                 <div class="section-heading process-heading">
-                    <div>
+                    <div data-reveal="left">
                         <h2>A simple route<br><em>into the game.</em></h2>
                     </div>
-                    <p>Headset support, calibration and three distinct genres share one lightweight platform.</p>
+                    <p data-reveal="right" data-reveal-delay="100">Headset support, calibration and three distinct genres share one lightweight platform.</p>
                 </div>
                 <ol class="process-list">
-                    <li>
+                    <li data-reveal>
                         <span class="process-number">01</span>
                         <div class="process-icon" aria-hidden="true"><i></i><i></i><i></i></div>
                         <h3>Connect</h3>
                         <p>Use a supported EEG headset or connect an LSL-compatible device.</p>
                     </li>
-                    <li>
+                    <li data-reveal data-reveal-delay="100">
                         <span class="process-number">02</span>
                         <div class="process-icon tune-icon" aria-hidden="true"><i></i><i></i><i></i></div>
                         <h3>Personalise</h3>
                         <p>Tune frequency, pattern and colour around the player, before or after play.</p>
                     </li>
-                    <li>
+                    <li data-reveal data-reveal-delay="200">
                         <span class="process-number">03</span>
                         <div class="process-icon play-icon" aria-hidden="true">▶</div>
                         <h3>Play across genres</h3>
@@ -193,13 +193,14 @@
 
         <section class="suite-cta">
             <div class="shell cta-inner">
-                <div class="cta-copy">
+                <div class="cta-copy" data-reveal="scale">
                     <p class="eyebrow"><span></span> Play. Test. Tune.<span></span></p>
                     <h2>One suite,<br><em>many ways to focus.</em></h2>
                 </div>
-                <p class="cta-description">NeuroTune is part of the NeuroBCI and BrainWeb research ecosystem at the University of Malta.</p>
+                <p class="cta-description" data-reveal data-reveal-delay="100">NeuroTune is part of the NeuroBCI and BrainWeb research ecosystem at the University of Malta.</p>
                 <img class="cta-animation" src="./assets/ripple_animation-crop-no_bg.gif"
-                    alt="Animated NeuroTune and NeuroBCI logos" width="500" height="291" loading="lazy">
+                    alt="Animated NeuroTune and NeuroBCI logos" width="500" height="291" loading="lazy" data-reveal="scale"
+                    data-reveal-delay="180">
             </div>
         </section>
     </main>

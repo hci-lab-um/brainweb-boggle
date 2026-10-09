@@ -54,6 +54,37 @@ img {
     max-width: 100%;
 }
 
+/* Progressive scroll reveals. Content stays visible until JavaScript enhances it. */
+.reveal-pending {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translate3d(0, 34px, 0);
+    transition:
+        opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 700ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 850ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, filter, transform;
+}
+
+.reveal-pending[data-reveal="left"] {
+    transform: translate3d(-36px, 0, 0);
+}
+
+.reveal-pending[data-reveal="right"] {
+    transform: translate3d(36px, 0, 0);
+}
+
+.reveal-pending[data-reveal="scale"] {
+    transform: translate3d(0, 24px, 0) scale(0.97);
+}
+
+.reveal-pending.is-visible {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+}
+
 h1,
 h2,
 h3,
@@ -150,14 +181,16 @@ p {
 }
 
 .hero {
+    --hero-arc-width: 120%;
     position: relative;
     display: flex;
-    min-height: 820px;
-    padding: 176px 0 106px;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: clamp(138px, 20vh, 176px) 0 clamp(72px, 12vh, 106px);
     align-items: center;
     overflow: hidden;
     background:
-        radial-gradient(ellipse 120% 120% at 50% 88%,
+        radial-gradient(ellipse var(--hero-arc-width) 120% at 50% 88%,
             rgba(146, 158, 180, 0) 33%,
             rgba(82, 92, 107, 0.45) 45%,
             rgba(82, 92, 107, 1) 50%,
@@ -527,9 +560,17 @@ h2 em {
     background: rgba(255, 255, 255, 0.55);
 }
 
-.dash-road i:nth-child(1) { left: 8%; }
-.dash-road i:nth-child(2) { left: 42%; }
-.dash-road i:nth-child(3) { left: 76%; }
+.dash-road i:nth-child(1) {
+    left: 8%;
+}
+
+.dash-road i:nth-child(2) {
+    left: 42%;
+}
+
+.dash-road i:nth-child(3) {
+    left: 76%;
+}
 
 .stimulus-pair {
     position: absolute;
@@ -577,9 +618,17 @@ h2 em {
     background: #152e1d;
 }
 
-.maze-board i:nth-child(3n) { border-left-color: transparent; }
-.maze-board i:nth-child(4n + 1) { border-bottom-color: transparent; }
-.maze-board i:nth-child(5n) { border-top-color: transparent; }
+.maze-board i:nth-child(3n) {
+    border-left-color: transparent;
+}
+
+.maze-board i:nth-child(4n + 1) {
+    border-bottom-color: transparent;
+}
+
+.maze-board i:nth-child(5n) {
+    border-top-color: transparent;
+}
 
 .maze-player,
 .maze-gem,
@@ -588,9 +637,24 @@ h2 em {
     z-index: 2;
 }
 
-.maze-player { top: 12%; left: 10%; color: var(--accent); }
-.maze-gem { top: 52%; left: 61%; color: #f6dc62; }
-.maze-camp { right: 9%; bottom: 8%; color: #f2a875; font-size: 1.4rem; }
+.maze-player {
+    top: 12%;
+    left: 10%;
+    color: var(--accent);
+}
+
+.maze-gem {
+    top: 52%;
+    left: 61%;
+    color: #f6dc62;
+}
+
+.maze-camp {
+    right: 9%;
+    bottom: 8%;
+    color: #f2a875;
+    font-size: 1.4rem;
+}
 
 .maze-controls {
     position: absolute;
@@ -601,10 +665,25 @@ h2 em {
     pointer-events: none;
 }
 
-.maze-controls b:nth-child(1) { grid-column: 2; grid-row: 1; }
-.maze-controls b:nth-child(2) { grid-column: 1; grid-row: 2; }
-.maze-controls b:nth-child(3) { grid-column: 2; grid-row: 3; }
-.maze-controls b:nth-child(4) { grid-column: 3; grid-row: 2; }
+.maze-controls b:nth-child(1) {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.maze-controls b:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.maze-controls b:nth-child(3) {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.maze-controls b:nth-child(4) {
+    grid-column: 3;
+    grid-row: 2;
+}
 
 .game-card-connect .game-preview {
     background: radial-gradient(circle at 50% 40%, #172d46, #08111c 70%);
@@ -632,10 +711,15 @@ h2 em {
     box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
 }
 
-.connect-board i:nth-last-child(-n + 4) { background: #e9c84f; }
+.connect-board i:nth-last-child(-n + 4) {
+    background: #e9c84f;
+}
+
 .connect-board i:nth-last-child(2),
 .connect-board i:nth-last-child(5),
-.connect-board i:nth-last-child(8) { background: #e66c6c; }
+.connect-board i:nth-last-child(8) {
+    background: #e66c6c;
+}
 
 .connect-controls {
     position: absolute;
@@ -851,9 +935,17 @@ h2 em {
     background: var(--accent);
 }
 
-.process-icon i:nth-child(1) { height: 15px; }
-.process-icon i:nth-child(2) { height: 29px; }
-.process-icon i:nth-child(3) { height: 42px; }
+.process-icon i:nth-child(1) {
+    height: 15px;
+}
+
+.process-icon i:nth-child(2) {
+    height: 29px;
+}
+
+.process-icon i:nth-child(3) {
+    height: 42px;
+}
 
 .tune-icon {
     align-items: center;
@@ -878,9 +970,17 @@ h2 em {
     transform: translateY(-50%);
 }
 
-.tune-icon i:nth-child(1)::after { left: 8px; }
-.tune-icon i:nth-child(2)::after { right: 9px; }
-.tune-icon i:nth-child(3)::after { left: 24px; }
+.tune-icon i:nth-child(1)::after {
+    left: 8px;
+}
+
+.tune-icon i:nth-child(2)::after {
+    right: 9px;
+}
+
+.tune-icon i:nth-child(3)::after {
+    left: 24px;
+}
 
 .play-icon {
     height: 52px;
@@ -1029,6 +1129,31 @@ h2 em {
     }
 }
 
+@media (max-height: 700px) and (min-width: 641px) {
+    .hero {
+        padding-top: 118px;
+        padding-bottom: 48px;
+    }
+
+    .hero h1 {
+        margin-bottom: 20px;
+        font-size: clamp(4rem, 7vw, 6rem);
+    }
+
+    .eyebrow {
+        margin-bottom: 16px;
+    }
+
+    .hero-lead {
+        font-size: 1.05rem;
+        line-height: 1.6;
+    }
+
+    .hero-actions {
+        margin-top: 22px;
+    }
+}
+
 @media (max-width: 640px) {
     :root {
         --shell: calc(100% - 28px);
@@ -1056,6 +1181,7 @@ h2 em {
     }
 
     .hero {
+        --hero-arc-width: 220%;
         min-height: auto;
         padding: 122px 0 82px;
     }
@@ -1174,5 +1300,11 @@ h2 em {
     *::after {
         scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
+    }
+
+    .reveal-pending {
+        opacity: 1;
+        filter: none;
+        transform: none;
     }
 }

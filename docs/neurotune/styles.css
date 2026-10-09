@@ -1074,16 +1074,30 @@ h2 em {
 
 .footer-inner {
     display: grid;
-    grid-template-columns: 1.1fr 1fr 0.8fr;
-    gap: 40px;
-    align-items: end;
+    grid-template-areas:
+        "logos logos logos"
+        "contact links copyright";
+    grid-template-columns: minmax(220px, 0.85fr) auto minmax(310px, 1fr);
+    column-gap: 40px;
+    row-gap: 26px;
+    align-items: center;
 }
 
-.footer-brand p,
+.footer-brand img {
+    width: 96px;
+    height: 96px;
+}
+
+.footer-contact,
 .copyright {
-    margin: 5px 0 0;
+    margin: 0;
     color: var(--muted);
     font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.footer-contact {
+    grid-area: contact;
 }
 
 .footer-contact strong {
@@ -1105,12 +1119,52 @@ h2 em {
 }
 
 .footer-links {
+    grid-area: links;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    justify-content: center;
     gap: 20px;
+    white-space: nowrap;
+}
+
+.footer-logos {
+    width: 100%;
+    grid-area: logos;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.footer-partners {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.partner-logo {
+    flex: 0 0 auto;
+    object-fit: contain;
+}
+
+.partner-logo-um {
+    width: 122px;
+}
+
+.partner-logo-dar-bjorn {
+    width: 160px;
+    height: 48px;
+    object-fit: cover;
+    object-position: center;
+}
+
+.partner-logo-meyr {
+    width: 180px;
 }
 
 .copyright {
+    grid-area: copyright;
     justify-self: end;
     text-align: right;
 }
@@ -1180,12 +1234,30 @@ h2 em {
     }
 
     .footer-inner {
-        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "logos"
+            "contact"
+            "links"
+            "copyright";
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+    }
+
+    .footer-partners {
+        flex-wrap: wrap;
+    }
+
+    .footer-contact,
+    .copyright {
+        justify-self: start;
+        white-space: normal;
+    }
+
+    .footer-links {
+        justify-content: flex-start;
     }
 
     .copyright {
-        grid-column: 1 / -1;
-        justify-self: start;
         text-align: left;
     }
 }
@@ -1360,11 +1432,42 @@ h2 em {
     }
 
     .footer-inner {
-        grid-template-columns: 1fr;
+        gap: 22px;
     }
 
-    .copyright {
-        grid-column: auto;
+    .footer-logos {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .footer-partners {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .partner-logo-um,
+    .partner-logo-dar-bjorn,
+    .partner-logo-meyr {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .partner-logo-dar-bjorn {
+        height: 40px;
+    }
+
+    .footer-links {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .footer-links a {
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
     }
 }
 
